@@ -71,10 +71,14 @@ private slots:
 	//void updateFromProgram();
 
 	void showAddRemoveLandscapesDialog();
+	// GZ I make this public to have it on a hotkey...
+public slots:
         void showAtmosphereDialog();
 	void showGreatRedSpotDialog();
 	void showConfigureDSOColorsDialog();
 	void showConfigureOrbitColorsDialog();
+
+private slots:
 
 	void setLightPollutionSpinBoxStatus();
 	// Two new from the unwanted trunk-rework Not sure if we need them at all?
