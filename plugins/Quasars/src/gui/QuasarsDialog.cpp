@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
 */
 
-#include "config.h"
-
 #include <QDebug>
 #include <QTimer>
 #include <QDateTime>
@@ -39,7 +37,10 @@
 #include "StelFileMgr.hpp"
 #include "StelTranslator.hpp"
 
-QuasarsDialog::QuasarsDialog() : updateTimer(NULL)
+QuasarsDialog::QuasarsDialog()
+	: StelDialog("Quasars")
+	, qsr(Q_NULLPTR)
+	, updateTimer(Q_NULLPTR)
 {
 	ui = new Ui_quasarsDialog;
 }
@@ -50,7 +51,7 @@ QuasarsDialog::~QuasarsDialog()
 	{
 		updateTimer->stop();
 		delete updateTimer;
-		updateTimer = NULL;
+		updateTimer = Q_NULLPTR;
 	}
 	delete ui;
 }
@@ -85,6 +86,7 @@ void QuasarsDialog::createDialogContent()
 	connect(ui->updateButton, SIGNAL(clicked()), this, SLOT(updateJSON()));
 	connect(qsr, SIGNAL(updateStateChanged(Quasars::UpdateState)), this, SLOT(updateStateReceiver(Quasars::UpdateState)));
 	connect(qsr, SIGNAL(jsonUpdateComplete(void)), this, SLOT(updateCompleteReceiver(void)));
+	connect(qsr, SIGNAL(jsonUpdateComplete(void)), qsr, SLOT(reloadCatalog()));
 	connect(ui->updateFrequencySpinBox, SIGNAL(valueChanged(int)), this, SLOT(setUpdateValues(int)));
 	refreshUpdateValues(); // fetch values for last updated and so on
 	// if the state didn't change, setUpdatesEnabled will not be called, so we force it
@@ -95,6 +97,7 @@ void QuasarsDialog::createDialogContent()
 	updateTimer->start(7000);
 
 	connect(ui->closeStelWindow, SIGNAL(clicked()), this, SLOT(close()));
+	connect(ui->TitleBar, SIGNAL(movedTo(QPoint)), this, SLOT(handleMovedTo(QPoint)));
 
 	connect(ui->restoreDefaultsButton, SIGNAL(clicked()), this, SLOT(restoreDefaults()));
 	connect(ui->saveSettingsButton, SIGNAL(clicked()), this, SLOT(saveSettings()));
@@ -102,8 +105,8 @@ void QuasarsDialog::createDialogContent()
 	// About tab
 	setAboutHtml();
 	StelGui* gui = dynamic_cast<StelGui*>(StelApp::getInstance().getGui());
-	Q_ASSERT(gui);
-	ui->aboutTextBrowser->document()->setDefaultStyleSheet(QString(gui->getStelStyle().htmlStyleSheet));
+	if(gui!=Q_NULLPTR)
+		ui->aboutTextBrowser->document()->setDefaultStyleSheet(QString(gui->getStelStyle().htmlStyleSheet));
 
 	updateGuiFromSettings();
 
@@ -114,6 +117,7 @@ void QuasarsDialog::setAboutHtml(void)
 	QString html = "<html><head></head><body>";
 	html += "<h2>" + q_("Quasars Plug-in") + "</h2><table width=\"90%\">";
 	html += "<tr width=\"30%\"><td><strong>" + q_("Version") + ":</strong></td><td>" + QUASARS_PLUGIN_VERSION + "</td></tr>";
+	html += "<tr><td><strong>" + q_("License") + ":</strong></td><td>" + QUASARS_PLUGIN_LICENSE + "</td></tr>";
 	html += "<tr><td><strong>" + q_("Author") + ":</strong></td><td>Alexander Wolf &lt;alex.v.wolf@gmail.com&gt;</td></tr>";
 	html += "</table>";
 
@@ -137,9 +141,11 @@ void QuasarsDialog::setAboutHtml(void)
 	html += "</ul></p></body></html>";
 
 	StelGui* gui = dynamic_cast<StelGui*>(StelApp::getInstance().getGui());
-	Q_ASSERT(gui);
-	QString htmlStyleSheet(gui->getStelStyle().htmlStyleSheet);
-	ui->aboutTextBrowser->document()->setDefaultStyleSheet(htmlStyleSheet);
+	if(gui!=Q_NULLPTR)
+	{
+		QString htmlStyleSheet(gui->getStelStyle().htmlStyleSheet);
+		ui->aboutTextBrowser->document()->setDefaultStyleSheet(htmlStyleSheet);
+	}
 
 	ui->aboutTextBrowser->setHtml(html);
 }
@@ -157,11 +163,20 @@ void QuasarsDialog::refreshUpdateValues(void)
 	else if (secondsToUpdate <= 60)
 		ui->nextUpdateLabel->setText(q_("Next update: < 1 minute"));
 	else if (secondsToUpdate < 3600)
-		ui->nextUpdateLabel->setText(QString(q_("Next update: %1 minutes")).arg((secondsToUpdate/60)+1));
+	{
+		int n = (secondsToUpdate/60)+1;
+		ui->nextUpdateLabel->setText(qn_("Next update: %1 minute(s)", n).arg(n));
+	}
 	else if (secondsToUpdate < 86400)
-		ui->nextUpdateLabel->setText(QString(q_("Next update: %1 hours")).arg((secondsToUpdate/3600)+1));
+	{
+		int n = (secondsToUpdate/3600)+1;
+		ui->nextUpdateLabel->setText(qn_("Next update: %1 hour(s)", n).arg(n));
+	}
 	else
-		ui->nextUpdateLabel->setText(QString(q_("Next update: %1 days")).arg((secondsToUpdate/86400)+1));
+	{
+		int n = (secondsToUpdate/86400)+1;
+		ui->nextUpdateLabel->setText(qn_("Next update: %1 day(s)", n).arg(n));
+	}
 }
 
 void QuasarsDialog::setUpdateValues(int days)
@@ -225,7 +240,7 @@ void QuasarsDialog::updateCompleteReceiver(void)
 
 void QuasarsDialog::restoreDefaults(void)
 {
-	qDebug() << "Quasars::restoreDefaults";
+	qDebug() << "[Quasars] Restore defaults...";
 	qsr->restoreDefaults();
 	qsr->readSettingsFromConfig();
 	updateGuiFromSettings();

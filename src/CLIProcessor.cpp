@@ -27,6 +27,7 @@
 #include <iostream>
 
 #include <QGuiApplication>
+#include <QStandardPaths>
 #include <QDir>
 
 #include <stdio.h>
@@ -49,21 +50,41 @@ void CLIProcessor::parseCLIArgsPreConfig(const QStringList& argList)
 		          << "  "
 		          << qPrintable(binName) << " [options]\n\n"
 		          << "Options:\n"
-		          << "--version (or -v)       : Print program name and version and exit.\n"
-		          << "--help (or -h)          : This cruft.\n"
-		          << "--config-file (or -c)   : Use an alternative name for the config file\n"
-		          << "--user-dir (or -u)      : Use an alternative user data directory\n"
-		          << "--safe-mode (or -s)     : Disable GL shaders and use older GL engine\n"
-		          << "                          Try this is you have graphics problems\n"
-		          << "--full-screen (or -f)   : With argument \"yes\" or \"no\" over-rides\n"
-		          << "                          the full screen setting in the config file\n"
-		          << "--screenshot-dir        : Specify directory to save screenshots\n"
-		          << "--startup-script        : Specify name of startup script\n"
-		          << "--home-planet           : Specify observer planet (English name)\n"
-		          << "--altitude              : Specify observer altitude in meters\n"
-		          << "--longitude             : Specify longitude, e.g. +53d58\\'16.65\\\"\n"
-		          << "--latitude              : Specify latitude, e.g. -1d4\\'27.48\\\"\n"
-		          << "--list-landscapes       : Print a list of value landscape IDs\n"
+			  << "--version (or -v)       : Print program name and version and exit.\n"
+			  << "--help (or -h)          : This cruft.\n"
+			  << "--config-file (or -c)   : Use an alternative name for the config file\n"
+			  << "--user-dir (or -u)      : Use an alternative user data directory\n"
+			  << "--verbose               : Even more diagnostic output in logfile \n"
+			  << "                          (esp. multimedia handling)\n"
+			  << "--compat33 (or -C)      : Request OpenGL 3.3 Compatibility Profile\n"
+			  << "                          May help for certain driver configurations. Mac?\n"
+			  << "--fix-text (or -t)      : May fix text rendering problems\n"
+			#ifdef Q_OS_WIN
+			  << "--angle-mode (or -a)    : Use ANGLE as OpenGL ES2 rendering engine (autodetect driver)\n"
+			  << "--angle-d3d9 (or -9)    : Force use Direct3D 9 for ANGLE OpenGL ES2 rendering engine\n"
+			  << "--angle-d3d11           : Force use Direct3D 11 for ANGLE OpenGL ES2 rendering engine\n"
+			  << "--angle-warp            : Force use the Direct3D 11 software rasterizer for ANGLE OpenGL ES2 rendering engine\n"
+			  << "--mesa-mode (or -m)     : Use MESA as software OpenGL rendering engine\n"
+			  << "--safe-mode (or -s)     : Synonymous to --mesa-mode \n"
+			#endif
+			  << "--dump-opengl-details (or -d) : dump information about OpenGL support to logfile.\n"
+			  << "                          Use this is you have graphics problems\n"
+			  << "                          and want to send a bug report\n"
+			  << "--full-screen (or -f)   : With argument \"yes\" or \"no\" over-rides\n"
+			  << "                          the full screen setting in the config file\n"
+			#ifdef Q_OS_WIN
+			#ifdef ENABLE_SPOUT
+			  << "--spout (or -S) <sky|all> : Act as SPOUT sender (Sky only/including GUI)\n"
+			  << "--spout-name <name>     : Set particular name for SPOUT sender.\n"
+			#endif
+			#endif
+			  << "--screenshot-dir        : Specify directory to save screenshots\n"
+			  << "--startup-script        : Specify name of startup script\n"
+			  << "--home-planet           : Specify observer planet (English name)\n"
+			  << "--altitude              : Specify observer altitude in meters\n"
+			  << "--longitude             : Specify longitude, e.g. +53d58\\'16.65\\\"\n"
+			  << "--latitude              : Specify latitude, e.g. -1d4\\'27.48\\\"\n"
+			  << "--list-landscapes       : Print a list of valid landscape IDs\n"
 		          << "--landscape             : Start using landscape whose ID (dir name)\n"
 		          << "                          is passed as parameter to option\n"
 		          << "--sky-date              : Specify sky date in format yyyymmdd\n"
@@ -76,11 +97,47 @@ void CLIProcessor::parseCLIArgsPreConfig(const QStringList& argList)
 		exit(0);
 	}
 
+	if (argsGetOption(argList, "", "--verbose"))
+	{
+		qApp->setProperty("verbose", true);
+	}
+	if (argsGetOption(argList, "-C", "--compat33"))
+	{
+		qApp->setProperty("onetime_compat33", true);
+	}
+	if (argsGetOption(argList, "-t", "--fix-text"))
+	{
+		qApp->setProperty("text_texture", true); // Will be observed in StelPainter::drawText()
+	}
+	#ifdef Q_OS_WIN
 	if (argsGetOption(argList, "-s", "--safe-mode"))
 	{
-		qApp->setProperty("onetime_safe_mode", true);
+		qApp->setProperty("onetime_mesa_mode", true);
 	}
-
+	if (argsGetOption(argList, "-a", "--angle-mode"))
+	{
+		qApp->setProperty("onetime_angle_mode", true);
+	}
+	if (argsGetOption(argList, "-9", "--angle-d3d9"))
+	{
+		qputenv("QT_ANGLE_PLATFORM", "d3d9");
+		qApp->setProperty("onetime_angle_mode", true);
+	}
+	if (argsGetOption(argList, "", "--angle-d3d11"))
+	{
+		qputenv("QT_ANGLE_PLATFORM", "d3d11");
+		qApp->setProperty("onetime_angle_mode", true);
+	}
+	if (argsGetOption(argList, "", "--angle-warp"))
+	{
+		qputenv("QT_ANGLE_PLATFORM", "warp");
+		qApp->setProperty("onetime_angle_mode", true);
+	}
+	if (argsGetOption(argList, "-m", "--mesa-mode"))
+	{
+		qApp->setProperty("onetime_mesa_mode", true);
+	}
+	#endif
 	if (argsGetOption(argList, "", "--list-landscapes"))
 	{
 		const QSet<QString>& landscapeIds = StelFileMgr::listContents("landscapes", StelFileMgr::Directory);
@@ -109,15 +166,20 @@ void CLIProcessor::parseCLIArgsPreConfig(const QStringList& argList)
 }
 
 void CLIProcessor::parseCLIArgsPostConfig(const QStringList& argList, QSettings* confSettings)
-{
+{	
 	// Over-ride config file options with command line options
 	// We should catch exceptions from argsGetOptionWithArg...
 	int fullScreen, altitude;
 	float fov;
 	QString landscapeId, homePlanet, longitude, latitude, skyDate, skyTime;
 	QString projectionType, screenshotDir, multiresImage, startupScript;
+#ifdef ENABLE_SPOUT
+	QString spoutStr, spoutName;
+#endif
 	try
 	{
+		bool dumpOpenGLDetails = argsGetOption(argList, "-d", "--dump-opengl-details");
+		qApp->setProperty("dump_OpenGL_details", dumpOpenGLDetails);
 		fullScreen = argsGetYesNoOption(argList, "-f", "--full-screen", -1);
 		landscapeId = argsGetOptionWithArg(argList, "", "--landscape", "").toString();
 		homePlanet = argsGetOptionWithArg(argList, "", "--home-planet", "").toString();
@@ -131,6 +193,12 @@ void CLIProcessor::parseCLIArgsPostConfig(const QStringList& argList, QSettings*
 		screenshotDir = argsGetOptionWithArg(argList, "", "--screenshot-dir", "").toString();
 		multiresImage = argsGetOptionWithArg(argList, "", "--multires-image", "").toString();
 		startupScript = argsGetOptionWithArg(argList, "", "--startup-script", "").toString();
+#ifdef ENABLE_SPOUT
+		// For now, we default to spout=sky when no extra option is given. Later, we should also accept "all".
+		// Unfortunately, this still throws an exception when no optarg string is given.
+		spoutStr  = argsGetOptionWithArg(argList, "-S", "--spout", "").toString();
+		spoutName = argsGetOptionWithArg(argList, "", "--spout-name", "").toString();
+#endif
 	}
 	catch (std::runtime_error& e)
 	{
@@ -143,25 +211,11 @@ void CLIProcessor::parseCLIArgsPostConfig(const QStringList& argList, QSettings*
 		confSettings->setValue("video/fullscreen", true);
 	else if (fullScreen==0)
 		confSettings->setValue("video/fullscreen", false);
-	if (!landscapeId.isEmpty()) confSettings->setValue("init_location/landscape_name", landscapeId);
-	if (!homePlanet.isEmpty()) confSettings->setValue("init_location/home_planet", homePlanet);
-	if (altitude!=-1) confSettings->setValue("init_location/altitude", altitude);
-	if (!longitude.isEmpty())
-	{
-		QRegExp longLatRx("[\\-+]?\\d+d\\d+\\'\\d+(\\.\\d+)?\"");
-		if (longLatRx.exactMatch(longitude))
-			confSettings->setValue("init_location/longitude", longitude);
-		else
-			qWarning() << "WARNING: --longitude argument has unrecognised format";
-	}
-	if (!latitude.isEmpty())
-	{
-		QRegExp longLatRx("[\\-+]?\\d+d\\d+\\'\\d+(\\.\\d+)?\"");
-		if (longLatRx.exactMatch(latitude))
-			confSettings->setValue("init_location/latitude", latitude);
-		else
-			qWarning() << "WARNING: --latitude argument has unrecognised format";
-	}
+	if (!landscapeId.isEmpty()) confSettings->setValue("location_run_once/landscape_name", landscapeId);
+	if (!homePlanet.isEmpty()) confSettings->setValue("location_run_once/home_planet", homePlanet);
+	if (altitude!=-1) confSettings->setValue("location_run_once/altitude", altitude);
+	if (!longitude.isEmpty()) confSettings->setValue("location_run_once/longitude", StelUtils::getDecAngle(longitude)); // Store longitude in radian
+	if (!latitude.isEmpty()) confSettings->setValue("location_run_once/latitude", StelUtils::getDecAngle(latitude)); // Store latitude in radian
 
 	if (!skyDate.isEmpty() || !skyTime.isEmpty())
 	{
@@ -240,8 +294,23 @@ void CLIProcessor::parseCLIArgsPostConfig(const QStringList& argList, QSettings*
 			{
 				qWarning() << "WARNING: problem while setting screenshot from config file setting: " << e.what();
 			}
-		}
+		}		
 	}
+
+#ifdef ENABLE_SPOUT
+	if (!spoutStr.isEmpty())
+	{
+		if (spoutStr=="all")
+			qApp->setProperty("spout", "all");
+		else
+			qApp->setProperty("spout", "sky");
+	}
+	else
+		qApp->setProperty("spout", "none");
+	if (!spoutName.isEmpty())
+		qApp->setProperty("spoutName", spoutName);
+#endif
+
 }
 
 
@@ -278,7 +347,7 @@ QVariant CLIProcessor::argsGetOptionWithArg(const QStringList& args, QString sho
 		QString argStr;
 
 		// form -n=arg
-		if ((shortOpt!="" && args.at(i).left(shortOpt.length()+1)==shortOpt+"="))
+		if ((!shortOpt.isEmpty() && args.at(i).left(shortOpt.length()+1)==shortOpt+"="))
 		{
 			match=true;
 			argStr=args.at(i).right(args.at(i).length() - shortOpt.length() - 1);
@@ -290,11 +359,19 @@ QVariant CLIProcessor::argsGetOptionWithArg(const QStringList& args, QString sho
 			argStr=args.at(i).right(args.at(i).length() - longOpt.length() - 1);
 		}
 		// forms -n arg and --number arg
-		else if ((shortOpt!="" && args.at(i)==shortOpt) || args.at(i)==longOpt)
+		else if ((!shortOpt.isEmpty() && args.at(i)==shortOpt) || args.at(i)==longOpt)
 		{
 			if (i+1>=lastOptIdx)
 			{
-				throw (std::runtime_error(qPrintable("optarg_missing ("+longOpt+")")));
+				// i.e., option given as last option, but without arguments. Last chance: default value!
+				if (defaultValue.isValid())
+				{
+					return defaultValue;
+				}
+				else
+				{
+					throw (std::runtime_error(qPrintable("optarg_missing ("+longOpt+")")));
+				}
 			}
 			else
 			{

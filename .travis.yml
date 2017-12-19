@@ -1,0 +1,64 @@
+env:
+  global:
+   - secure: "nDBuoowqSmcjCOsK4uXfkRRGuvcLt434lXeZIND/bfOEDgOv7h62w5h4i3ebSgItWkBStLzGB8Owfb2v/S0jC+wSIoP+SD2wRg12LA0/eeb3OBYw/TR5FlCVx21/GzvODTNi8NdWb92AcYGhbLNPqMDIFHGscARjHiP2EnONhTs="
+
+addons:
+  coverity_scan:
+    project:
+      name: "Stellarium/stellarium"
+      description: "A realistic, real-time 3D simulation of the night sky."
+    notification_email: mcardinot@gmail.com
+    build_command_prepend: cmake -DENABLE_TESTING=1 ..
+    build_command: make -j 2
+    branch_pattern: coverity_scan
+
+language: cpp
+
+compiler:
+  - gcc
+  - clang
+
+before_install:
+  - mkdir qt5
+  - wget -q -O qt5.zip http://sourceforge.net/projects/cardinot/files/util/qt541.zip/download
+  - unzip -qq qt5.zip -d qt5
+  - export PATH=`pwd`/qt5/bin:$PATH
+  - export QT_PLUGIN_PATH=`pwd`/qt5/plugins
+  - sudo apt-get -qq install ninja-build
+
+install:
+
+before_script:
+  - export DISPLAY=:99.0
+  - sh -e /etc/init.d/xvfb start
+  - sleep 3 # give xvfb some time to start
+  - mkdir build
+  - cd build
+
+script:
+  - cmake -DENABLE_TESTING=1 .. -G "Ninja"
+  - ninja all 
+  - sudo ninja install
+  - ctest --output-on-failure
+
+after_success:
+  - if [ "$TRAVIS_BRANCH" = "master" ]; then
+  -   sudo pip install transifex-client
+  -   sudo echo $'[https://www.transifex.com]\nhostname = https://www.transifex.com\nusername = '"$TRANSIFEX_USER"$'\npassword = '"$TRANSIFEX_PASSWORD"$'\ntoken = '"$TRANSIFEX_API_TOKEN"$'\n' > ~/.transifexrc
+  -   tx push -s
+  - fi
+
+notifications:
+  recipients:
+    - mcardinot@gmail.com
+    - alex.v.wolf@gmail.com
+  email:
+    on_success: change
+    on_failure: always
+  irc:
+    channels:
+      - "irc.freenode.net#stellarium"
+    template:
+      - "Stellarium/master #%{build_number} (%{author}): %{message}"
+      - "Change view : %{compare_url}"
+      - "Build details : %{build_url}"

@@ -82,7 +82,7 @@ TuiNodeResponse TuiNodeColor::handleEditingKey(int key)
 	return response;
 }
 
-QString TuiNodeColor::getDisplayText() 
+QString TuiNodeColor::getDisplayText() const
 {
 	QString red   = QString("%1").arg(value[0], 2, 'f', 2);
 	QString green = QString("%1").arg(value[1], 2, 'f', 2);
@@ -96,17 +96,17 @@ QString TuiNodeColor::getDisplayText()
 	{
 		switch (editingPart)
 		{
-		case 0:
-			formatString = ":  RGB >%1<,%2,%3";
-			break;
-		case 1:
-			formatString = ":  RGB %1,>%2<,%3";
-			break;
-		case 2:
-			formatString = ":  RGB %1,%2,>%3<";
-			break;
-		default:
-			return QString(q_("error, unknown color part \"%1\"")).arg(editingPart);
+			case 0:
+				formatString = ":  RGB >%1<,%2,%3";
+				break;
+			case 1:
+				formatString = ":  RGB %1,>%2<,%3";
+				break;
+			case 2:
+				formatString = ":  RGB %1,%2,>%3<";
+				break;
+			default:
+				return QString(q_("error, unknown color part \"%1\"")).arg(editingPart);
 		}			
 	}
 	QString stringValue = QString(formatString).arg(red, green, blue);

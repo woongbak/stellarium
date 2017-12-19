@@ -21,8 +21,6 @@
 #ifndef _DIALOG_HPP_
 #define _DIALOG_HPP_
 
-#include "config.h"
-
 #include <QWidget>
 #include <QFrame>
 #include <QMouseEvent>
@@ -52,6 +50,9 @@ public:
 	virtual void mousePressEvent(QMouseEvent *event);
 	virtual void mouseReleaseEvent(QMouseEvent *event);
 	virtual void mouseMoveEvent(QMouseEvent *event);
+signals:
+	// should be connected to the StelDialog in createDialogContents()
+	void movedTo(QPoint newPosition);
 protected:
 	bool moving;
 };

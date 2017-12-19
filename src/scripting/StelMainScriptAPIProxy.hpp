@@ -20,8 +20,6 @@
 #ifndef _STELMAINSCRIPTAPIPROXY_HPP_
 #define _STELMAINSCRIPTAPIPROXY_HPP_
 
-#include "config.h"
-
 #include <QObject>
 
 //! @class StelMainScriptAPIProxy
@@ -46,7 +44,7 @@ class StelMainScriptAPIProxy : public QObject
 	Q_OBJECT
 
 public:
-	StelMainScriptAPIProxy(QObject* parent=0) : QObject(parent) {;}
+	StelMainScriptAPIProxy(QObject* parent=Q_NULLPTR) : QObject(parent) {;}
 	~StelMainScriptAPIProxy() {;}
 
 public slots:

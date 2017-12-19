@@ -50,6 +50,7 @@ static const int KMIN_PER_HR  = 60;
 static const int KMIN_PER_DAY = 1440;
 static const int KHR_PER_DAY  = 60;
 
+//! @ingroup satellites
 class gTimeSpan
 {
 public:
@@ -186,7 +187,7 @@ public:
 	// Operation operator=
 	//! @brief overload the = operator to assign time values to the object in
 	//!   julian days.
-	//! @param[in] t Time to be assigned
+	//! @param[in] t Time (JD) to be assigned
 	//! @return
 	//!   const gTime&  Reference to *this object modified after operation
 	const gTime& operator=(double t)

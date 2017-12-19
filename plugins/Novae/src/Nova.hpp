@@ -36,28 +36,49 @@ class StelPainter;
 //! A Nova object represents one nova on the sky.
 //! Details about the novae are passed using a QVariant which contains
 //! a map of data from the json file.
+//! @ingroup brightNovae
 
 class Nova : public StelObject
 {
 	friend class Novae;
 public:
+	static const QString NOVA_TYPE;
+
 	//! @param id The official designation for a nova, e.g. "........"
 	Nova(const QVariantMap& map);
 	~Nova();
 
-	//! Get a QVariantMap which describes the nova.  Could be used to
-	//! create a duplicate.
-	QVariantMap getMap(void);
+	//! Get a QVariantMap which describes the nova.  Could be used to create a duplicate.
+	QVariantMap getMap(void) const;
 
 	virtual QString getType(void) const
 	{
-		return "Nova";
+		return NOVA_TYPE;
+	}
+
+	virtual QString getID(void) const
+	{
+		return getDesignation();
 	}
 
 	//! Get an HTML string to describe the object
 	//! @param core A pointer to the core
 	//! @flags a set of flags with information types to include.
 	virtual QString getInfoString(const StelCore* core, const InfoStringGroup& flags) const;
+	//! Return a map like StelObject::getInfoMap(), but with a few extra tags also available in getMap().
+	// TODO: Describe the entries!
+	//! - designation
+	//! - name
+	//! - nova-type
+	//! - max-magnitude
+	//! - min-magnitude
+	//! - peakJD
+	//! - m2
+	//! - m3
+	//! - m6
+	//! - m9
+	//! - distance
+	virtual QVariantMap getInfoMap(const StelCore *core) const;
 	virtual Vec3f getInfoColor(void) const;
 	virtual Vec3d getJ2000EquatorialPos(const StelCore*) const
 	{

@@ -39,11 +39,12 @@
 //! @todo Decide whether to use a table model with multiple columns (current),
 //! or a list model dumping everything through data(). Both require enums - for
 //! column numbers or data roles.
+//! @ingroup satellites
 class SatellitesListModel : public QAbstractTableModel
 {
 	Q_OBJECT
 public:
-	SatellitesListModel(QList<SatelliteP>* satellites, QObject *parent = 0);
+	SatellitesListModel(QList<SatelliteP>* satellites, QObject *parent = Q_NULLPTR);
 	
 	void setSatelliteList(QList<SatelliteP>* satellites);
 	

@@ -6,7 +6,7 @@ ftp://ftp.imcce.fr/pub/ephem/planets/vsop87
 I (Johannes Gajdosik) have just taken the data obtained from above
 (VSOP87.mer,...,VSOP87.nep) and rearranged it into this piece of software.
 
-I can neigther allow nor forbid the usage of VSOP87.
+I can neither allow nor forbid the usage of VSOP87.
 The copyright notice below covers not the work of Bretagnon P. and Francou G.
 but just my work, that is the compilation of the VSOP87 data
 into the software supplied in this file.
@@ -41,6 +41,9 @@ Furthermore I used the addition formulas
   (cos,sin)(x+y) = ...
 so that for given T the functions cos and sin have only to be called 12 times.
 
+
+ATTENTION! Due to static caching this solution is not reentrant and cannot be parallelized to run in several threads.
+
 ****************************************************************/
 
 
@@ -51,15 +54,6 @@ so that for given T the functions cos and sin have only to be called 12 times.
 extern "C" {
 #endif
 
-#define VSOP87_MERCURY  0
-#define VSOP87_VENUS    1
-#define VSOP87_EMB      2
-#define VSOP87_MARS     3
-#define VSOP87_JUPITER  4
-#define VSOP87_SATURN   5
-#define VSOP87_URANUS   6
-#define VSOP87_NEPTUNE  7
-
 void GetVsop87Coor(double jd,int body,double *xyz);
   /* Return the rectangular coordinates of the given planet
      and the given julian date jd expressed in dynamical time (TAI+32.184s).
@@ -69,7 +63,7 @@ void GetVsop87Coor(double jd,int body,double *xyz);
   */
 
 void GetVsop87OsculatingCoor(const double jd0,const double jd, const int body,double *xyz);
-  /* The oculating orbit of epoch jd0, evatuated at jd, is returned.
+  /* The oculating orbit of epoch jd0, evaluated at jd, is returned.
   */
 
 #ifdef __cplusplus

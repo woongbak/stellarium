@@ -25,14 +25,16 @@
 #include <QVector>
 #include <QString>
 
-#include "StelUtils.hpp"
-
 class TestDeltaT : public QObject
 {
 Q_OBJECT
 private slots:
 	void initTestCase();
-	void historicalTest();
+	void testDeltaTByEspenakMeeus();
+	void testDeltaTByChaprontMeeus();
+	void testDeltaTByChaprontMeeusWideDates();
+	void testDeltaTByMorrisonStephenson1982WideDates();
+	void testDeltaTByStephensonMorrison1984WideDates();
 
 };
 

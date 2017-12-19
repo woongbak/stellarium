@@ -45,7 +45,8 @@ class StarWrapperBase : public StelObject
 protected:
 	StarWrapperBase(void) : ref_count(0) {;}
 	virtual ~StarWrapperBase(void) {;}
-	QString getType(void) const {return "Star";}
+	QString getType(void) const {return STAR_TYPE;}
+	QString getID(void) const { return getEnglishName(); } //TODO: add a proper ID here (probably based on position?)
 
 	QString getEnglishName(void) const {return "";}
 	QString getNameI18n(void) const = 0;
@@ -59,7 +60,7 @@ protected:
 	//! <li> PlainText </ul>
 	//! @param core the StelCore object
 	//! @param flags a set of InfoStringGroup items to include in the return value.
-	//! @return a QString containing an HMTL encoded description of the StarWrapperBase.
+	//! @return a QString containing an HTML encoded description of the StarWrapperBase.
 	QString getInfoString(const StelCore *core, const InfoStringGroup& flags) const;
 	virtual float getBV(void) const = 0;
 
@@ -77,17 +78,17 @@ protected:
 	{
 		static const double d2000 = 2451545.0;
 		Vec3f v;
-		s->getJ2000Pos(z, (M_PI/180.)*(0.0001/3600.) * ((core->getJDay()-d2000)/365.25) / a->star_position_scale, v);
+		s->getJ2000Pos(z, (M_PI/180.)*(0.0001/3600.) * ((core->getJDE()-d2000)/365.25) / a->star_position_scale, v);
 		return Vec3d(v[0], v[1], v[2]);
 	}
 	Vec3f getInfoColor(void) const
 	{
-		return StelSkyDrawer::indexToColor(s->bV);
+		return StelSkyDrawer::indexToColor(s->getBVIndex());
 	}
 	float getVMagnitude(const StelCore* core) const
 	{
 		Q_UNUSED(core);
-		return 0.001f*a->mag_min + s->mag*(0.001f*a->mag_range)/a->mag_steps;
+		return 0.001f*a->mag_min + s->getMag()*(0.001f*a->mag_range)/a->mag_steps;
 	}
 	float getBV(void) const {return s->getBV();}
 	QString getEnglishName(void) const {return QString();}
@@ -121,6 +122,20 @@ public:
 	//! @param flags a set of InfoStringGroup items to include in the return value.
 	//! @return a QString containing an HMTL encoded description of the StarWrapper1.
 	QString getInfoString(const StelCore *core, const InfoStringGroup& flags) const;
+	//! In addition to the entries from StelObject::getInfoMap(), StarWrapper1 objects provide
+	//! - variable-star (no|eruptive|pulsating|rotating|cataclysmic|eclipsing-binary)
+	//! - star-type (star|double-star)
+	//! - bV : B-V Color Index
+	//! A few tags are only present if data known, or for variable or double stars from the WDS catalog
+	//! - absolute-mag
+	//! - distance-ly
+	//! - parallax
+	//! - spectral-class
+	//! - period (days)
+	//! - wds-year (year of validity of wds... fields)
+	//! - wds-position-angle
+	//! - wds-separation (arcseconds; 0 for spectroscopic binaries)
+	virtual QVariantMap getInfoMap(const StelCore *core) const;
 	QString getEnglishName(void) const;
 };
 

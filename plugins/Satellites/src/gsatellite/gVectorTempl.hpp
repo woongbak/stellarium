@@ -33,6 +33,7 @@
 #include <vector> //libreria stl de vectores
 #include <iostream> // for operator<<(), see below
 
+//! @ingroup satellites
 namespace br_stl
 {
 
@@ -42,12 +43,14 @@ class gVectorTempl : public std::vector<T>
 
 public:
 
+	#ifndef _MSC_BUILD
 	//inherited types
 	typedef typename gVectorTempl::size_type size_type;
 	typedef typename gVectorTempl::iterator iterator;
 	typedef typename gVectorTempl::difference_type difference_type;
 	typedef typename gVectorTempl::reference reference;
 	typedef typename gVectorTempl::const_reference const_reference;
+	#endif
 
 
 	gVectorTempl()

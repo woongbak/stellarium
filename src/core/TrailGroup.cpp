@@ -34,19 +34,18 @@ static QVector<Vec3d> vertexArray;
 static QVector<Vec4f> colorArray;
 void TrailGroup::draw(StelCore* core, StelPainter* sPainter)
 {
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	float currentTime = core->getJDay();
+	sPainter->setBlending(true);
+	float currentTime = core->getJDE();
 	StelProjector::ModelViewTranformP transfo = core->getJ2000ModelViewTransform();
 	transfo->combine(j2000ToTrailNativeInverted);
 	sPainter->setProjector(core->getProjection(transfo));
 	foreach (const Trail& trail, allTrails)
 	{
 		Planet* hpl = dynamic_cast<Planet*>(trail.stelObject.data());
-		if (hpl!=NULL)
+		if (hpl!=Q_NULLPTR)
 		{
 			// Avoid drawing the trails if the object is the home planet
-			QString homePlanetName = hpl==NULL ? "" : hpl->getEnglishName();
+			QString homePlanetName = hpl->getEnglishName();
 			if (homePlanetName==StelApp::getInstance().getCore()->getCurrentLocation().planetName)
 				continue;
 		}
@@ -59,23 +58,19 @@ void TrailGroup::draw(StelCore* core, StelPainter* sPainter)
 			colorArray[i].set(trail.color[0], trail.color[1], trail.color[2], colorRatio*opacity);
 			vertexArray[i]=posHistory.at(i);
 		}
-		sPainter->setVertexPointer(3, GL_DOUBLE, vertexArray.constData());
-		sPainter->setColorPointer(4, GL_FLOAT, colorArray.constData());
-		sPainter->enableClientStates(true, false, true);
-		sPainter->drawFromArray(StelPainter::LineStrip, vertexArray.size(), 0, true);
-		sPainter->enableClientStates(false);
+		sPainter->drawPath(vertexArray, colorArray);
 	}
 }
 
 // Add 1 point to all the curves at current time and suppress too old points
 void TrailGroup::update()
 {
-	times.append(StelApp::getInstance().getCore()->getJDay());
+	times.append(StelApp::getInstance().getCore()->getJDE());
 	for (QList<Trail>::Iterator iter=allTrails.begin();iter!=allTrails.end();++iter)
 	{
 		iter->posHistory.append(j2000ToTrailNative*iter->stelObject->getJ2000EquatorialPos(StelApp::getInstance().getCore()));
 	}
-	if (StelApp::getInstance().getCore()->getJDay()-times.at(0)>timeExtent)
+	if (StelApp::getInstance().getCore()->getJDE()-times.at(0)>timeExtent)
 	{
 		times.pop_front();
 		for (QList<Trail>::Iterator iter=allTrails.begin();iter!=allTrails.end();++iter)
@@ -94,7 +89,7 @@ void TrailGroup::setJ2000ToTrailNative(const Mat4d& m)
 
 void TrailGroup::addObject(const StelObjectP& obj, const Vec3f* col)
 {
-	allTrails.append(TrailGroup::Trail(obj, col==NULL ? obj->getInfoColor() : *col));
+	allTrails.append(TrailGroup::Trail(obj, col==Q_NULLPTR ? obj->getInfoColor() : *col));
 }
 
 void TrailGroup::reset()

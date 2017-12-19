@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>507</width>
-    <height>213</height>
+    <height>223</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -102,7 +102,7 @@
       <item>
        <widget class="QLabel" name="stelWindowTitle">
         <property name="text">
-         <string>Find Object or Position</string>
+         <string>Search window</string>
         </property>
        </widget>
       </item>
@@ -678,49 +678,88 @@
        </property>
        <item>
         <widget class="QFrame" name="j2000Frame">
-         <layout class="QHBoxLayout" name="horizontalLayoutJ2000">
-          <item>
-           <widget class="QLabel" name="raDecLabel">
+         <layout class="QGridLayout" name="gridLayout_2">
+          <item row="2" column="0" colspan="2">
+           <widget class="QLabel" name="label">
             <property name="text">
-             <string>RA/Dec (J2000):</string>
+             <string>Note: this tool doesn't apply the refraction correction for coordinates.</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+            <property name="wordWrap">
+             <bool>true</bool>
             </property>
            </widget>
           </item>
-          <item>
-           <widget class="AngleSpinBox" name="RAAngleSpinBox">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-           </widget>
+          <item row="1" column="1">
+           <layout class="QVBoxLayout" name="AxisYLayout">
+            <item>
+             <widget class="QLabel" name="AxisYLabel">
+              <property name="text">
+               <string/>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="AngleSpinBox" name="AxisYSpinBox">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </item>
-          <item>
-           <spacer name="horizontalSpacer">
+          <item row="0" column="0" colspan="2">
+           <layout class="QHBoxLayout" name="coordinateSystemLayout">
+            <item>
+             <widget class="QLabel" name="coordinateSystemLabel">
+              <property name="text">
+               <string>Coordinate system:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="coordinateSystemComboBox"/>
+            </item>
+           </layout>
+          </item>
+          <item row="1" column="0">
+           <layout class="QVBoxLayout" name="AxisXLayout">
+            <item>
+             <widget class="QLabel" name="AxisXLabel">
+              <property name="text">
+               <string/>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="AngleSpinBox" name="AxisXSpinBox">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item row="3" column="0" colspan="2">
+           <spacer name="verticalSpacer_2">
             <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeType">
-             <enum>QSizePolicy::Fixed</enum>
+             <enum>Qt::Vertical</enum>
             </property>
             <property name="sizeHint" stdset="0">
              <size>
-              <width>8</width>
-              <height>8</height>
+              <width>20</width>
+              <height>40</height>
              </size>
             </property>
            </spacer>
-          </item>
-          <item>
-           <widget class="AngleSpinBox" name="DEAngleSpinBox">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-           </widget>
           </item>
          </layout>
         </widget>
@@ -750,6 +789,12 @@
          </property>
          <property name="toolTip">
           <string>Some objects may be found after activation respective plug-ins</string>
+         </property>
+         <property name="editable">
+          <bool>true</bool>
+         </property>
+         <property name="insertPolicy">
+          <enum>QComboBox::NoInsert</enum>
          </property>
         </widget>
        </item>
@@ -794,8 +839,20 @@
        </property>
        <item>
         <widget class="QGroupBox" name="simbadGroupBox">
+         <property name="toolTip">
+          <string>Use on-line astronomical database SIMBAD</string>
+         </property>
          <property name="title">
-          <string>On-line astronomical database SIMBAD</string>
+          <string>Use SIMBAD</string>
+         </property>
+         <property name="flat">
+          <bool>true</bool>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
+         <property name="checked">
+          <bool>false</bool>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_5">
           <property name="leftMargin">
@@ -810,13 +867,6 @@
           <property name="bottomMargin">
            <number>0</number>
           </property>
-          <item>
-           <widget class="QCheckBox" name="checkBoxUseSimbad">
-            <property name="text">
-             <string>Extend search with SIMBAD</string>
-            </property>
-           </widget>
-          </item>
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_2">
             <item>
@@ -881,8 +931,28 @@
             </property>
            </widget>
           </item>
+          <item>
+           <widget class="QCheckBox" name="checkBoxLockPosition">
+            <property name="text">
+             <string>Lock position when coordinates are used</string>
+            </property>
+           </widget>
+          </item>
          </layout>
         </widget>
+       </item>
+       <item>
+        <spacer name="verticalSpacer">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
        </item>
       </layout>
      </widget>
@@ -900,7 +970,7 @@
   <customwidget>
    <class>AngleSpinBox</class>
    <extends>QSpinBox</extends>
-   <header>AngleSpinBox.hpp</header>
+   <header location="global">AngleSpinBox.hpp</header>
   </customwidget>
   <customwidget>
    <class>CompletionLabel</class>
@@ -911,8 +981,8 @@
  <tabstops>
   <tabstop>tabWidget</tabstop>
   <tabstop>lineEditSearchSkyObject</tabstop>
-  <tabstop>RAAngleSpinBox</tabstop>
-  <tabstop>DEAngleSpinBox</tabstop>
+  <tabstop>AxisXSpinBox</tabstop>
+  <tabstop>AxisYSpinBox</tabstop>
  </tabstops>
  <resources/>
  <connections/>

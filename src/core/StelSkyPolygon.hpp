@@ -23,12 +23,11 @@
 #include "MultiLevelJsonBase.hpp"
 #include "StelSkyImageTile.hpp"
 #include <QTimeLine>
-#include <QOpenGLFunctions>
 
 class StelCore;
 
 //! Base class for any polygon with a fixed position in the sky
-class StelSkyPolygon : public MultiLevelJsonBase, protected QOpenGLFunctions
+class StelSkyPolygon : public MultiLevelJsonBase
 {
 	Q_OBJECT
 
@@ -37,7 +36,7 @@ public:
 	StelSkyPolygon() {initCtor();}
 
 	//! Constructor
-	StelSkyPolygon(const QString& url, StelSkyPolygon* parent=NULL);
+	StelSkyPolygon(const QString& url, StelSkyPolygon* parent=Q_NULLPTR);
 	//! Constructor
 	StelSkyPolygon(const QVariantMap& map, StelSkyPolygon* parent);
 

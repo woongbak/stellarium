@@ -111,7 +111,7 @@ TuiNodeResponse TuiNodeDateTime::handleEditingKey(int key)
 	return response;
 }
 
-QString TuiNodeDateTime::getDisplayText() 
+QString TuiNodeDateTime::getDisplayText() const
 {
 	QList<int> parts = getParts(value);
 	QString yy = QString("%1").arg(parts.at(0));
@@ -127,25 +127,25 @@ QString TuiNodeDateTime::getDisplayText()
 	{
 		switch (editingPart)
 		{
-		case 0:
-			formatString = ":  >%1<-%2-%3 %4:%5:%6 UTC"; //Year
-			break;
-		case 1:
-			formatString = ":  %1->%2<-%3 %4:%5:%6 UTC"; //Month
-			break;
-		case 2:
-			formatString = ":  %1-%2->%3< %4:%5:%6 UTC"; //Day
-			break;
-		case 3:
-			formatString = ":  %1-%2-%3 >%4<:%5:%6 UTC"; //Hour
-			break;
-		case 4:
-			formatString = ":  %1-%2-%3 %4:>%5<:%6 UTC"; //Minute
-			break;
-		case 5:
-			formatString = ":  %1-%2-%3 %4:%5:>%6< UTC"; //Second
-		default:
-			break;
+			case 0:
+				formatString = ":  >%1<-%2-%3 %4:%5:%6 UTC"; //Year
+				break;
+			case 1:
+				formatString = ":  %1->%2<-%3 %4:%5:%6 UTC"; //Month
+				break;
+			case 2:
+				formatString = ":  %1-%2->%3< %4:%5:%6 UTC"; //Day
+				break;
+			case 3:
+				formatString = ":  %1-%2-%3 >%4<:%5:%6 UTC"; //Hour
+				break;
+			case 4:
+				formatString = ":  %1-%2-%3 %4:>%5<:%6 UTC"; //Minute
+				break;
+			case 5:
+				formatString = ":  %1-%2-%3 %4:%5:>%6< UTC"; //Second
+			default:
+				break;
 		}
 	}
 	
@@ -195,7 +195,7 @@ void TuiNodeDateTime::incPart(int part, bool add)
 	}
 }
 
-QList<int> TuiNodeDateTime::getParts(double jd)
+QList<int> TuiNodeDateTime::getParts(double jd) const
 {
 	int year, month, day, hour, minute, second;
 	StelUtils::getDateFromJulianDay(jd, &year, &month, &day);

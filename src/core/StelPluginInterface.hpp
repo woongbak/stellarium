@@ -28,7 +28,7 @@
 struct StelPluginInfo
 {
 	StelPluginInfo() : startByDefault(false) {;}
-	//! The plugin ID. It MUST match the lib file name (case sensitive), e.g. "HelloStelModule", or "VirGO".
+	//! The plugin ID. It MUST match the lib file name (case sensitive), e.g. "HelloStelModule".
 	QString id;
 	//! The displayed name, e.g. "Artificial Satellites".
 	QString displayedName;
@@ -40,6 +40,8 @@ struct StelPluginInfo
 	QString description;	
 	//! The version of the plugin, e.g. "1.0.0"
 	QString version;
+	//! The license of the plugin, e.g. "GPLv2+"
+	QString license;
 	//! Logo or preview image to display in the information dialog or an invalid image if not applicable.
 	//! The image size should be x by x pixels.
 	QImage image;
@@ -61,8 +63,18 @@ public:
 	
 	//! Get information about the plugin.
 	virtual StelPluginInfo getPluginInfo() const = 0;
+
+	//! A mechanism to provide abitrary QObjects to the StelModuleMgr.
+	//! Introduced to provide some limited form of inter-plugin communication.
+	//! If you do not need this, return an empty list.
+	//!
+	//! The StelModuleMgr remembers all loaded extensions and provides
+	//! methods to access them. You should use qobject_cast to try to
+	//! cast each object to a specific interface in which you are interested in.
+	virtual QObjectList getExtensionList() const = 0;
 };
 
-Q_DECLARE_INTERFACE(StelPluginInterface, "stellarium.StelPluginInterface/2.0");
+#define StelPluginInterface_iid "org.stellarium.StelPluginInterface/2.0"
+Q_DECLARE_INTERFACE(StelPluginInterface, StelPluginInterface_iid)
 
 #endif // _STELPLUGININTERFACE_HPP_

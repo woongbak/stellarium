@@ -29,6 +29,7 @@ class Ui_equationOfTimeWindowForm;
 class EquationOfTime;
 
 //! Main window of the Equation of Time plug-in.
+//! @ingroup equationOfTime
 class EquationOfTimeWindow : public StelDialog
 {
 	Q_OBJECT
@@ -47,7 +48,7 @@ private:
 	Ui_equationOfTimeWindowForm* ui;
 	EquationOfTime* eq;
 
-	void updateAboutText();		
+	void setAboutHtml();
 
 private slots:
 	void saveEquationOfTimeSettings();

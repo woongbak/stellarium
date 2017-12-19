@@ -23,8 +23,6 @@
 //! @file StelTranslator.hpp
 //! Define some translation macros.
 
-#include "config.h"
-
 #include <QMap>
 #include <QString>
 
@@ -33,10 +31,20 @@
 //! The returned value is a localized QString.
 #define q_(str) StelTranslator::globalTranslator->qtranslate(str)
 
+//! @def qn_(str, n)
+//! Return the gettext translated english text @a str with plural forms for @a n using the current global translator.
+//! The returned value is a localized QString.
+#define qn_(str, n) StelTranslator::globalTranslator->qtranslate(str, "", n)
+
 //! @def qc_(str, ctxt)
 //! Return the gettext translated english text @a str in context @b ctxt using the current global translator.
 //! The returned value is a localized QString.
 #define qc_(str, ctxt) StelTranslator::globalTranslator->qtranslate(str, ctxt)
+
+//! @def qcn_(str, ctxt, n)
+//! Return the gettext translated english text @a str in context @b ctxt with plural forms for @a n using the current global translator.
+//! The returned value is a localized QString.
+#define qcn_(str, ctxt, n) StelTranslator::globalTranslator->qtranslate(str, ctxt, n)
 
 //! @def N_(str)
 //! A pseudo function call that serves as a marker for the automated extraction of messages.
@@ -64,10 +72,18 @@ public:
 	~StelTranslator();
 	
 	//! Translate input message and return it as a QString.
+	//! If the string is not translated in the current locale, the input string is returned unchanged.
 	//! @param s input string in english.
 	//! @param c disambiguation string (gettext "context" string).
 	//! @return The translated QString
-	QString qtranslate(const QString& s, const QString& c = QString()) const;
+	QString qtranslate(const QString& s, const QString& c = QString(), int n = -1) const;
+
+	//! Try to translate input message and return it as a QString. If no translation
+	//! exist for the current StelTranslator language, a null string is returned.
+	//! @param s input string in english.
+	//! @param c disambiguation string (gettext "context" string).
+	//! @return The translated QString
+	QString tryQtranslate(const QString& s, const QString& c = QString()) const;
 	
 	//! Get true translator locale name. Actual locale, never "system".
 	//! @return Locale name e.g "fr_FR"
@@ -83,7 +99,7 @@ public:
 	static StelTranslator* globalTranslator;
 
 	//! Get available language name in native language from passed locales directory
-	QStringList getAvailableLanguagesNamesNative(const QString& localeDir="") const;	
+	QStringList getAvailableLanguagesNamesNative(const QString& localeDir="", const QString &section="") const;
 
 	//! Convert from ISO639-1 langage code to native language name
 	//! @param languageCode the code to look up

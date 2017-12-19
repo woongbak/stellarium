@@ -1,6 +1,7 @@
 /*
  * Stellarium
  * Copyright (C) 2010 Bogdan Marinov
+ * Copyright (C) 2013-14 Georg Zotti (accuracy&speedup)
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -38,18 +39,19 @@ class MinorPlanet : public Planet
 {
 public:
 	MinorPlanet(const QString& englishName,
-		    int flagLighting,
 		    double radius,
 		    double oblateness,
-		    Vec3f color,
+		    Vec3f halocolor,
 		    float albedo,
+		    float roughness,
 		    const QString& texMapName,
+		    const QString& objModelName,
 		    posFuncType _coordFunc,
-		    void* userDataPtr,
+		    void* orbitPtr,
 		    OsculatingFunctType *osculatingFunc,
 		    bool closeOrbit,
 		    bool hidden,
-		    const QString &pType);
+		    const QString &pTypeStr);
 
 	~MinorPlanet();
 
@@ -75,6 +77,10 @@ public:
 	//! sets the nameI18 property with the appropriate translation.
 	//! Function overriden to handle the problem with name conflicts.
 	virtual void translateName(const StelTranslator& trans);
+	virtual QString getEnglishName(void) const;
+	virtual QString getNameI18n(void) const;
+	QString getCommonEnglishName(void) const {return englishName;}
+	QString getCommonNameI18n(void) const {return nameI18;}
 
 	//! set the minor planet's number, if any.
 	//! The number should be specified as an additional parameter, as
@@ -95,7 +101,7 @@ public:
 	//! These are the parameters in the IAU's two-parameter magnitude system
 	//! for minor planets. They are used to calculate the apparent magnitude at
 	//! different phase angles.
-	void setAbsoluteMagnitudeAndSlope(double magnitude, double slope);
+	void setAbsoluteMagnitudeAndSlope(const float magnitude, const float slope);
 
 	//! renders the subscript in a minor planet provisional designation with HTML.
 	//! \returns an emtpy string if the source string is not a provisional
@@ -105,18 +111,26 @@ public:
 	//! set value for semi-major axis in AU
 	void setSemiMajorAxis(double value);
 
+	//! set values for spectral types
+	void setSpectralType(QString sT="", QString sB="");
+
+	//! set value for color index B-V
+	void setColorIndexBV(float bv=99.f);
+
 	//! get sidereal period for minor planet
 	double getSiderealPeriod() const;
 
 private:
 	int minorPlanetNumber;
-	double absoluteMagnitude;
-	double slopeParameter;
+	float  slopeParameter;
 	double semiMajorAxis;
 
 	bool nameIsProvisionalDesignation;
 	QString provisionalDesignationHtml;
 	QString properName;
+
+	float b_v;
+	QString specT, specB;
 };
 
 #endif //_MINOR_PLANET_HPP_

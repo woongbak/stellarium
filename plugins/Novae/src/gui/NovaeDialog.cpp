@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
 */
 
-#include "config.h"
-
 #include <QDebug>
 #include <QTimer>
 #include <QDateTime>
@@ -38,7 +36,10 @@
 #include "StelFileMgr.hpp"
 #include "StelTranslator.hpp"
 
-NovaeDialog::NovaeDialog() : updateTimer(NULL)
+NovaeDialog::NovaeDialog()
+	: StelDialog("Novae")
+	, nova(Q_NULLPTR)
+	, updateTimer(Q_NULLPTR)
 {
 	ui = new Ui_novaeDialog;
 }
@@ -49,7 +50,7 @@ NovaeDialog::~NovaeDialog()
 	{
 		updateTimer->stop();
 		delete updateTimer;
-		updateTimer = NULL;
+		updateTimer = Q_NULLPTR;
 	}
 	delete ui;
 }
@@ -73,11 +74,19 @@ void NovaeDialog::createDialogContent()
 	connect(&StelApp::getInstance(), SIGNAL(languageChanged()),
 		this, SLOT(retranslate()));
 
+#ifdef Q_OS_WIN
+	//Kinetic scrolling for tablet pc and pc
+	QList<QWidget *> addscroll;
+	addscroll << ui->aboutTextBrowser;
+	installKineticScrolling(addscroll);
+#endif
+
 	// Settings tab / updates group
 	connect(ui->internetUpdatesCheckbox, SIGNAL(stateChanged(int)), this, SLOT(setUpdatesEnabled(int)));
 	connect(ui->updateButton, SIGNAL(clicked()), this, SLOT(updateJSON()));
 	connect(nova, SIGNAL(updateStateChanged(Novae::UpdateState)), this, SLOT(updateStateReceiver(Novae::UpdateState)));
 	connect(nova, SIGNAL(jsonUpdateComplete(void)), this, SLOT(updateCompleteReceiver(void)));
+	connect(nova, SIGNAL(jsonUpdateComplete(void)), nova, SLOT(reloadCatalog()));
 	connect(ui->updateFrequencySpinBox, SIGNAL(valueChanged(int)), this, SLOT(setUpdateValues(int)));
 	refreshUpdateValues(); // fetch values for last updated and so on
 	// if the state didn't change, setUpdatesEnabled will not be called, so we force it
@@ -88,18 +97,15 @@ void NovaeDialog::createDialogContent()
 	updateTimer->start(7000);
 
 	connect(ui->closeStelWindow, SIGNAL(clicked()), this, SLOT(close()));
+	connect(ui->TitleBar, SIGNAL(movedTo(QPoint)), this, SLOT(handleMovedTo(QPoint)));
 
 	connect(ui->restoreDefaultsButton, SIGNAL(clicked()), this, SLOT(restoreDefaults()));
 	connect(ui->saveSettingsButton, SIGNAL(clicked()), this, SLOT(saveSettings()));
 
 	// About tab
 	setAboutHtml();
-	StelGui* gui = dynamic_cast<StelGui*>(StelApp::getInstance().getGui());
-	Q_ASSERT(gui);
-	ui->aboutTextBrowser->document()->setDefaultStyleSheet(QString(gui->getStelStyle().htmlStyleSheet));
 
 	updateGuiFromSettings();
-
 }
 
 void NovaeDialog::setAboutHtml(void)
@@ -107,6 +113,7 @@ void NovaeDialog::setAboutHtml(void)
 	QString html = "<html><head></head><body>";
 	html += "<h2>" + q_("Bright Novae Plug-in") + "</h2><table width=\"90%\">";
 	html += "<tr width=\"30%\"><td><strong>" + q_("Version") + ":</strong></td><td>" + NOVAE_PLUGIN_VERSION + "</td></tr>";
+	html += "<tr><td><strong>" + q_("License") + ":</strong></td><td>" + NOVAE_PLUGIN_LICENSE + "</td></tr>";
 	html += "<tr><td><strong>" + q_("Author") + ":</strong></td><td>Alexander Wolf &lt;alex.v.wolf@gmail.com&gt;</td></tr>";
 	html += "</table>";
 
@@ -137,9 +144,11 @@ void NovaeDialog::setAboutHtml(void)
 	html += "</ul></p></body></html>";
 
 	StelGui* gui = dynamic_cast<StelGui*>(StelApp::getInstance().getGui());
-	Q_ASSERT(gui);
-	QString htmlStyleSheet(gui->getStelStyle().htmlStyleSheet);
-	ui->aboutTextBrowser->document()->setDefaultStyleSheet(htmlStyleSheet);
+	if(gui!=Q_NULLPTR)
+	{
+		QString htmlStyleSheet(gui->getStelStyle().htmlStyleSheet);
+		ui->aboutTextBrowser->document()->setDefaultStyleSheet(htmlStyleSheet);
+	}
 
 	ui->aboutTextBrowser->setHtml(html);
 }
@@ -157,11 +166,20 @@ void NovaeDialog::refreshUpdateValues(void)
 	else if (secondsToUpdate <= 60)
 		ui->nextUpdateLabel->setText(q_("Next update: < 1 minute"));
 	else if (secondsToUpdate < 3600)
-		ui->nextUpdateLabel->setText(QString(q_("Next update: %1 minutes")).arg((secondsToUpdate/60)+1));
+	{
+		int n = (secondsToUpdate/60)+1;
+		ui->nextUpdateLabel->setText(qn_("Next update: %1 minute(s)", n).arg(n));
+	}
 	else if (secondsToUpdate < 86400)
-		ui->nextUpdateLabel->setText(QString(q_("Next update: %1 hours")).arg((secondsToUpdate/3600)+1));
+	{
+		int n = (secondsToUpdate/3600)+1;
+		ui->nextUpdateLabel->setText(qn_("Next update: %1 hour(s)", n).arg(n));
+	}
 	else
-		ui->nextUpdateLabel->setText(QString(q_("Next update: %1 days")).arg((secondsToUpdate/86400)+1));
+	{
+		int n = (secondsToUpdate/86400)+1;
+		ui->nextUpdateLabel->setText(qn_("Next update: %1 day(s)", n).arg(n));
+	}
 }
 
 void NovaeDialog::setUpdateValues(int days)
@@ -207,7 +225,7 @@ void NovaeDialog::updateCompleteReceiver(void)
 
 void NovaeDialog::restoreDefaults(void)
 {
-	qDebug() << "Novae::restoreDefaults";
+	qDebug() << "[Novae] restore defaults";
 	nova->restoreDefaults();
 	nova->readSettingsFromConfig();
 	updateGuiFromSettings();

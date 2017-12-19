@@ -38,8 +38,8 @@ Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
 #include <cmath>
 #include <cstdlib>
 
-static const float icosahedron_G = 0.5*(1.0+sqrt(5.0));
-static const float icosahedron_b = 1.0/sqrt(1.0+icosahedron_G*icosahedron_G);
+static const float icosahedron_G = 0.5*(1.0+std::sqrt(5.0));
+static const float icosahedron_b = 1.0/std::sqrt(1.0+icosahedron_G*icosahedron_G);
 static const float icosahedron_a = icosahedron_b*icosahedron_G;
 
 static const Vec3f icosahedron_corners[12] =
@@ -123,7 +123,7 @@ StelGeodesicGrid::~StelGeodesicGrid(void)
 		delete[] triangles;
 	}
 	delete cacheSearchResult;
-	cacheSearchResult = NULL;
+	cacheSearchResult = Q_NULLPTR;
 }
 
 void StelGeodesicGrid::getTriangleCorners(int lev,int index,
@@ -143,40 +143,32 @@ void StelGeodesicGrid::getTriangleCorners(int lev,int index,
 		lev--;
 		const int i = index>>2;
 		Triangle &t(triangles[lev][i]);
+		Vec3f c0,c1,c2;
 		switch (index&3)
 		{
-		case 0:
-				{
-					Vec3f c0,c1,c2;
-				    getTriangleCorners(lev,i,c0,c1,c2);
-				    h0 = c0;
-				    h1 = t.e2;
-				    h2 = t.e1;
-				}
+			case 0:
+				getTriangleCorners(lev,i,c0,c1,c2);
+				h0 = c0;
+				h1 = t.e2;
+				h2 = t.e1;
 				break;
-		case 1:
-			{
-				Vec3f c0,c1,c2;
+			case 1:
 				getTriangleCorners(lev,i,c0,c1,c2);
 				h0 = t.e2;
 				h1 = c1;
 				h2 = t.e0;
-			}
-			break;
-		case 2:
-			{
-				Vec3f c0,c1,c2;
+				break;
+			case 2:
 				getTriangleCorners(lev,i,c0,c1,c2);
 				h0 = t.e1;
 				h1 = t.e0;
 				h2 = c2;
-			}
-			break;
-		case 3:
-			h0 = t.e0;
-			h1 = t.e1;
-			h2 = t.e2;
-			break;
+				break;
+			case 3:
+				h0 = t.e0;
+				h1 = t.e1;
+				h2 = t.e2;
+				break;
 		}
 	}
 }
@@ -190,22 +182,22 @@ int StelGeodesicGrid::getPartnerTriangle(int lev, int index) const
 	}
 	switch(index&7)
 	{
-	case 2:
-	case 6:
-		return index+1;
-	case 3:
-	case 7:
-		return index-1;
-	case 0:
-		return (lev==1) ? index+5 : (getPartnerTriangle(lev-1, index>>2)<<2)+1;
-	case 1:
-		return (lev==1) ? index+3 : (getPartnerTriangle(lev-1, index>>2)<<2)+0;
-	case 4:
-		return (lev==1) ? index-3 : (getPartnerTriangle(lev-1, index>>2)<<2)+1;
-	case 5:
-		return (lev==1) ? index-5 : (getPartnerTriangle(lev-1, index>>2)<<2)+0;
-	default:
-		Q_ASSERT(0);
+		case 2:
+		case 6:
+			return index+1;
+		case 3:
+		case 7:
+			return index-1;
+		case 0:
+			return (lev==1) ? index+5 : (getPartnerTriangle(lev-1, index>>2)<<2)+1;
+		case 1:
+			return (lev==1) ? index+3 : (getPartnerTriangle(lev-1, index>>2)<<2)+0;
+		case 4:
+			return (lev==1) ? index-3 : (getPartnerTriangle(lev-1, index>>2)<<2)+1;
+		case 5:
+			return (lev==1) ? index-5 : (getPartnerTriangle(lev-1, index>>2)<<2)+0;
+		default:
+			Q_ASSERT(0);
 	}
 	return 0;
 }
@@ -382,7 +374,7 @@ void StelGeodesicGrid::searchZones(int lev,int index,
 		if (!corner0_inside[i] && !corner1_inside[i] && !corner2_inside[i])
 		{
 			// totally outside this SphericalCap
-			return;
+			goto end;
 		}
 		else if (corner0_inside[i] && corner1_inside[i] && corner2_inside[i])
 		{
@@ -451,9 +443,11 @@ void StelGeodesicGrid::searchZones(int lev,int index,
 #endif
 		}
 	}
+end:
 #if defined __STRICT_ANSI__ || !defined __GNUC__
 	delete[] halfs_used;
 #endif
+	return;
 }
 
 /*************************************************************************

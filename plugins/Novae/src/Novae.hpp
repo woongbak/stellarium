@@ -33,34 +33,37 @@
 
 class QNetworkAccessManager;
 class QNetworkReply;
-class QProgressBar;
 class QSettings;
 class QTimer;
 class NovaeDialog;
 class StelPainter;
 
-
-typedef QSharedPointer<Nova> NovaP;
-
-/*! @mainpage notitle
-@section overview Plugin Overview
-
+/*! @defgroup brightNovae Bright Novae Plug-in
+@{
 The %Bright Novae plugin displays the positions some bright
 novae in the Milky Way galaxy.
 
-@section ncat Bright Novae Catalog
+<b>Bright Novae Catalog</b>
+
 The novae catalog is stored on the disk in [JSON](http://www.json.org/)
 format, in a file named "novae.json". A default copy is embedded in the
 plug-in at compile time. A working copy is kept in the user data directory.
 
-@section config Configuration
+<b>Configuration</b>
+
 The plug-ins' configuration data is stored in Stellarium's main configuration
-file.
+file (section [Novae]).
+
+@}
 */
+
+//! @ingroup brightNovae
+typedef QSharedPointer<Nova> NovaP;
 
 //! @class Novae
 //! Main class of the %Bright Novae plugin.
 //! @author Alexander Wolf
+//! @ingroup brightNovae
 class Novae : public StelObjectModule
 {
 	Q_OBJECT
@@ -95,37 +98,37 @@ public:
 	//! @return an list containing the satellites located inside the limitFov circle around position v.
 	virtual QList<StelObjectP> searchAround(const Vec3d& v, double limitFov, const StelCore* core) const;
 
-	//! Return the matching satellite object's pointer if exists or NULL.
+	//! Return the matching satellite object's pointer if exists or Q_NULLPTR.
 	//! @param nameI18n The case in-sensistive satellite name
 	virtual StelObjectP searchByNameI18n(const QString& nameI18n) const;
 
-	//! Return the matching satellite if exists or NULL.
+	//! Return the matching satellite if exists or Q_NULLPTR.
 	//! @param name The case in-sensistive standard program name
 	virtual StelObjectP searchByName(const QString& name) const;
 
-	//! Find and return the list of at most maxNbItem objects auto-completing the passed object I18n name.
+	virtual StelObjectP searchByID(const QString &id) const
+	{
+		return qSharedPointerCast<StelObject>(getByID(id));
+	}
+
+	//! Find and return the list of at most maxNbItem objects auto-completing the passed object name.
 	//! @param objPrefix the case insensitive first letters of the searched object
 	//! @param maxNbItem the maximum number of returned object names
 	//! @param useStartOfWords the autofill mode for returned objects names
 	//! @return a list of matching object name by order of relevance, or an empty list if nothing match
-	virtual QStringList listMatchingObjectsI18n(const QString& objPrefix, int maxNbItem=5, bool useStartOfWords=false) const;
-	//! Find and return the list of at most maxNbItem objects auto-completing the passed object English name.
-	//! @param objPrefix the case insensitive first letters of the searched object
-	//! @param maxNbItem the maximum number of returned object names
-	//! @param useStartOfWords the autofill mode for returned objects names
-	//! @return a list of matching object name by order of relevance, or an empty list if nothing match
-	virtual QStringList listMatchingObjects(const QString& objPrefix, int maxNbItem=5, bool useStartOfWords=false) const;
+	virtual QStringList listMatchingObjects(const QString& objPrefix, int maxNbItem=5, bool useStartOfWords=false, bool inEnglish=false) const;
 	virtual QStringList listAllObjects(bool inEnglish) const;
 	virtual QString getName() const { return "Bright Novae"; }
+	virtual QString getStelObjectType() const { return Nova::NOVA_TYPE; }
 
 	//! get a nova object by identifier
-	NovaP getByID(const QString& id);
+	NovaP getByID(const QString& id) const;
 
 	//! Implement this to tell the main Stellarium GUI that there is a GUI element to configure this
 	//! plugin.
 	virtual bool configureGui(bool show=true);
 
-	//! Set up the plugin with default values.  This means clearing out the Pulsars section in the
+	//! Set up the plugin with default values.  This means clearing out the Novae section in the
 	//! main config.ini (if one already exists), and populating it with default values.  It also
 	//! creates the default novae.json file from the resource embedded in the plugin lib/dll file.
 	void restoreDefaults(void);
@@ -145,17 +148,17 @@ public:
 	void setUpdatesEnabled(bool b) {updatesEnabled=b;}
 
 	//! Get the date and time the novae were updated
-	QDateTime getLastUpdate(void) {return lastUpdate;}
+	QDateTime getLastUpdate(void) const {return lastUpdate;}
 
 	//! Get the update frequency in days
-	int getUpdateFrequencyDays(void) {return updateFrequencyDays;}
+	int getUpdateFrequencyDays(void) const {return updateFrequencyDays;}
 	void setUpdateFrequencyDays(int days) {updateFrequencyDays = days;}
 
 	//! Get the number of seconds till the next update
 	int getSecondsToUpdate(void);
 
 	//! Get the current updateState
-	UpdateState getUpdateState(void) {return updateState;}
+	UpdateState getUpdateState(void) const {return updateState;}
 
 	//! Get list of novae
 	QString getNovaeList();
@@ -164,7 +167,7 @@ public:
 	float getLowerLimitBrightness();
 
 	//! Get count of novae from catalog
-	int getCountNovae(void) {return NovaCnt;}
+	int getCountNovae(void) const {return NovaCnt;}
 
 signals:
 	//! @param state the new update state.
@@ -182,7 +185,8 @@ public slots:
 
 	//! Display a message. This is used for plugin-specific warnings and such
 	void displayMessage(const QString& message, const QString hexColor="#999999");
-	void messageTimeout(void);
+
+	void reloadCatalog(void);
 
 private:
 	// Font used for displaying our text
@@ -204,11 +208,11 @@ private:
 
 	//! Get the version from the "version" value in the novae.json file
 	//! @return version string, e.g. "1"
-	int getJsonFileVersion(void);
+	int getJsonFileVersion(void) const;
 
 	//! Check format of the catalog of novae
 	//! @return valid boolean, e.g. "true"
-	bool checkJsonFileFormat(void);
+	bool checkJsonFileFormat(void) const;
 
 	//! Parse JSON file and load novae to map
 	QVariantMap loadNovaeMap(QString path=QString());
@@ -230,7 +234,6 @@ private:
 	QString updateUrl;
 	class StelProgressController* progressBar;
 	QTimer* updateTimer;
-	QTimer* messageTimer;
 	QList<int> messageIDs;
 	bool updatesEnabled;
 	QDateTime lastUpdate;
@@ -258,11 +261,12 @@ private slots:
 class NovaeStelPluginInterface : public QObject, public StelPluginInterface
 {
 	Q_OBJECT
-	Q_PLUGIN_METADATA(IID "stellarium.StelGuiPluginInterface/1.0")
+	Q_PLUGIN_METADATA(IID StelPluginInterface_iid)
 	Q_INTERFACES(StelPluginInterface)
 public:
 	virtual StelModule* getStelModule() const;
 	virtual StelPluginInfo getPluginInfo() const;
+	virtual QObjectList getExtensionList() const { return QObjectList(); }
 };
 
 #endif /*_NOVAE_HPP_*/

@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
 */
 
-#include "config.h"
-
 #include <QDebug>
 #include <QTimer>
 #include <QDateTime>
@@ -39,7 +37,10 @@
 #include "StelFileMgr.hpp"
 #include "StelTranslator.hpp"
 
-SupernovaeDialog::SupernovaeDialog() : updateTimer(NULL)
+SupernovaeDialog::SupernovaeDialog()
+	: StelDialog("Supernovae")
+	, sn(Q_NULLPTR)
+	, updateTimer(Q_NULLPTR)
 {
 	ui = new Ui_supernovaeDialog;
 }
@@ -50,7 +51,7 @@ SupernovaeDialog::~SupernovaeDialog()
 	{
 		updateTimer->stop();
 		delete updateTimer;
-		updateTimer = NULL;
+		updateTimer = Q_NULLPTR;
 	}
 	delete ui;
 }
@@ -74,11 +75,19 @@ void SupernovaeDialog::createDialogContent()
 	connect(&StelApp::getInstance(), SIGNAL(languageChanged()),
 		this, SLOT(retranslate()));
 
+#ifdef Q_OS_WIN
+	//Kinetic scrolling for tablet pc and pc
+	QList<QWidget *> addscroll;
+	addscroll << ui->aboutTextBrowser;
+	installKineticScrolling(addscroll);
+#endif
+
 	// Settings tab / updates group
 	connect(ui->internetUpdatesCheckbox, SIGNAL(stateChanged(int)), this, SLOT(setUpdatesEnabled(int)));
 	connect(ui->updateButton, SIGNAL(clicked()), this, SLOT(updateJSON()));
 	connect(sn, SIGNAL(updateStateChanged(Supernovae::UpdateState)), this, SLOT(updateStateReceiver(Supernovae::UpdateState)));
 	connect(sn, SIGNAL(jsonUpdateComplete(void)), this, SLOT(updateCompleteReceiver(void)));
+	connect(sn, SIGNAL(jsonUpdateComplete(void)), sn, SLOT(reloadCatalog()));
 	connect(ui->updateFrequencySpinBox, SIGNAL(valueChanged(int)), this, SLOT(setUpdateValues(int)));
 	refreshUpdateValues(); // fetch values for last updated and so on
 	// if the state didn't change, setUpdatesEnabled will not be called, so we force it
@@ -89,15 +98,16 @@ void SupernovaeDialog::createDialogContent()
 	updateTimer->start(7000);
 
 	connect(ui->closeStelWindow, SIGNAL(clicked()), this, SLOT(close()));
+	connect(ui->TitleBar, SIGNAL(movedTo(QPoint)), this, SLOT(handleMovedTo(QPoint)));
 
 	connect(ui->restoreDefaultsButton, SIGNAL(clicked()), this, SLOT(restoreDefaults()));
 	connect(ui->saveSettingsButton, SIGNAL(clicked()), this, SLOT(saveSettings()));
 
 	// About tab
 	setAboutHtml();
-	StelGui* gui = dynamic_cast<StelGui*>(StelApp::getInstance().getGui());
-	Q_ASSERT(gui);
-	ui->aboutTextBrowser->document()->setDefaultStyleSheet(QString(gui->getStelStyle().htmlStyleSheet));
+	StelGui* gui = dynamic_cast<StelGui*>(StelApp::getInstance().getGui());	
+	if(gui!=Q_NULLPTR)
+		ui->aboutTextBrowser->document()->setDefaultStyleSheet(QString(gui->getStelStyle().htmlStyleSheet));
 
 	updateGuiFromSettings();
 
@@ -108,6 +118,7 @@ void SupernovaeDialog::setAboutHtml(void)
 	QString html = "<html><head></head><body>";
 	html += "<h2>" + q_("Historical Supernovae Plug-in") + "</h2><table width=\"90%\">";
 	html += "<tr width=\"30%\"><td><strong>" + q_("Version") + ":</strong></td><td>" + SUPERNOVAE_PLUGIN_VERSION + "</td></tr>";
+	html += "<tr><td><strong>" + q_("License") + ":</strong></td><td>" + SUPERNOVAE_PLUGIN_LICENSE + "</td></tr>";
 	html += "<tr><td><strong>" + q_("Author") + ":</strong></td><td>Alexander Wolf &lt;alex.v.wolf@gmail.com&gt;</td></tr>";
 	html += "</table>";
 
@@ -140,9 +151,11 @@ void SupernovaeDialog::setAboutHtml(void)
 	html += "</ul></p></body></html>";
 
 	StelGui* gui = dynamic_cast<StelGui*>(StelApp::getInstance().getGui());
-	Q_ASSERT(gui);
-	QString htmlStyleSheet(gui->getStelStyle().htmlStyleSheet);
-	ui->aboutTextBrowser->document()->setDefaultStyleSheet(htmlStyleSheet);
+	if(gui!=Q_NULLPTR)
+	{
+		QString htmlStyleSheet(gui->getStelStyle().htmlStyleSheet);
+		ui->aboutTextBrowser->document()->setDefaultStyleSheet(htmlStyleSheet);
+	}
 
 	ui->aboutTextBrowser->setHtml(html);
 }
@@ -160,11 +173,20 @@ void SupernovaeDialog::refreshUpdateValues(void)
 	else if (secondsToUpdate <= 60)
 		ui->nextUpdateLabel->setText(q_("Next update: < 1 minute"));
 	else if (secondsToUpdate < 3600)
-		ui->nextUpdateLabel->setText(QString(q_("Next update: %1 minutes")).arg((secondsToUpdate/60)+1));
+	{
+		int n = (secondsToUpdate/60)+1;
+		ui->nextUpdateLabel->setText(qn_("Next update: %1 minute(s)", n).arg(n));
+	}
 	else if (secondsToUpdate < 86400)
-		ui->nextUpdateLabel->setText(QString(q_("Next update: %1 hours")).arg((secondsToUpdate/3600)+1));
+	{
+		int n = (secondsToUpdate/3600)+1;
+		ui->nextUpdateLabel->setText(qn_("Next update: %1 hour(s)", n).arg(n));
+	}
 	else
-		ui->nextUpdateLabel->setText(QString(q_("Next update: %1 days")).arg((secondsToUpdate/86400)+1));
+	{
+		int n = (secondsToUpdate/86400)+1;
+		ui->nextUpdateLabel->setText(qn_("Next update: %1 day(s)", n).arg(n));
+	}
 }
 
 void SupernovaeDialog::setUpdateValues(int days)
@@ -210,7 +232,7 @@ void SupernovaeDialog::updateCompleteReceiver(void)
 
 void SupernovaeDialog::restoreDefaults(void)
 {
-	qDebug() << "Supernovae::restoreDefaults";
+	qDebug() << "[Supernovae] restore defaults";
 	sn->restoreDefaults();
 	sn->readSettingsFromConfig();
 	updateGuiFromSettings();

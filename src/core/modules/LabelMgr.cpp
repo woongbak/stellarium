@@ -1,7 +1,8 @@
 /*
  * Stellarium
  * This file Copyright (C) 2008 Matthew Gates
- * 
+ * Horizon system labels (c) 2015 Georg Zotti
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
@@ -33,9 +34,9 @@
 #include "VecMath.hpp"
 #include "StelPainter.hpp"
 
-#include <vector>
 #include <QString>
 #include <QDebug>
+#include <QTimer>
 
 // Base class from which other label types inherit
 class StelLabel
@@ -50,21 +51,23 @@ public:
 	//! update fade for on/off action
 	virtual void update(double deltaTime);
 	//! Set the duration used for the fade in / fade out of the label.
-	virtual void setFadeDuration(float duration);
+	void setFadeDuration(float duration);
 	//! Set the font color used for the font
-	virtual void setFontColor(const Vec3f& color);
+	void setFontColor(const Vec3f& color);
 	//! Show or hide the label.  It will fade in/out.
-	virtual void setFlagShow(bool b);
+	void setFlagShow(bool b);
 	//! Get value of flag used to turn on and off the label
-	virtual bool getFlagShow(void);
+	bool getFlagShow(void);
 	//! Get value of flag used to turn on and off the label
-	virtual void setText(const QString& newText);
+	void setText(const QString& newText);
 
-protected:
 	QString labelText;
 	QFont labelFont;
 	Vec3f labelColor;
 	LinearFader labelFader;
+	bool autoDelete;
+	int id;
+	QTimer* timer;
 };
 
 //! @class SkyLabel
@@ -83,12 +86,13 @@ public:
 	//! Constructor of a SkyLabel which is attached to an existing object
 	//! @param text the text which will be displayed
 	//! @param bindObject a pointer to an existing object to which the label will be attached
-	//! @param font a pointer the font to use for this label
+	//! @param font a pointer to the font to use for this label
 	//! @param color choose a color for the label
 	//! @param side which side of the object to draw the label, values N, S, E, W, NE, NW, SE, SW, C (C is centred on the object)
 	//! @param distance the distance from the object to draw the label.  If < 0.0, placement is automatic.
 	//! @param style determines how the label is drawn
 	//! @param enclosureSize determines the size of the enclosure for styles Box and Circle
+	// TBD: Apparently styles Box and Circle have been removed?
 	SkyLabel(const QString& text, StelObjectP bindObject, const QFont& font, Vec3f color,
 			 QString side="NE", double distance=-1.0, SkyLabel::Style style=TextOnly, 
 	double enclosureSize=0.0);
@@ -111,12 +115,35 @@ private:
 	double labelEnclosureSize;
 };
 
+//! @class HorizonLabel
+//! Used to create user labels which are bound to azimuthal coordinates.
+class HorizonLabel : public StelLabel
+{
+public:
+	//! Constructor of a HorizonLabel which is to be displayed on an alt-azimuthal position.
+	//! @param text the text for the label
+	//! @param az  the azimuth, degrees
+	//! @param alt the altitude, degrees
+	//! @param font the font to use
+	//! @param color the color for the label
+	HorizonLabel(const QString& text, const float az, const float alt, const QFont& font, const Vec3f& color);
+	virtual ~HorizonLabel();
+
+	//! draw the label on the screen
+	//! @param core the StelCore object
+	//! @param sPainter the StelPainter to use for drawing operations
+	virtual bool draw(StelCore* core, StelPainter& sPainter);
+private:
+	Vec3d altaz; // the vector to the coordinates
+};
+
+
 //! @class ScreenLabel
 //! Used to create user labels which are bound to a fixed point on the screen.
 class ScreenLabel : public StelLabel
 {
 public:
-	//! Constructor of a SkyLabel which is to be displayed at a fixed position on the screen.
+	//! Constructor of a ScreenLabel which is to be displayed at a fixed position on the screen.
 	//! @param text the text for the label
 	//! @param x the x-position on the screen (pixels from the left side)
 	//! @param y the y-position on the screen (pixels from the top side)
@@ -125,7 +152,7 @@ public:
 	ScreenLabel(const QString& text, int x, int y, const QFont& font, const Vec3f& color);
 	virtual ~ScreenLabel();
 
-	//! draw the label on the sky
+	//! draw the label on the screen
 	//! @param core the StelCore object
 	//! @param sPainter the StelPainter to use for drawing operations
 	virtual bool draw(StelCore* core, StelPainter& sPainter);
@@ -141,7 +168,9 @@ private:
 StelLabel::StelLabel(const QString& text, const QFont& font, const Vec3f& color)
 	: labelText(text),
 	  labelFont(font),
-	  labelColor(color)
+	  labelColor(color),
+	  autoDelete(false),
+	  timer(NULL)
 {
 }
 
@@ -270,9 +299,7 @@ bool SkyLabel::draw(StelCore* core, StelPainter& sPainter)
 
 	if (labelStyle == SkyLabel::Line)
 	{
-		sPainter.enableTexture2d(false);
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		sPainter.setBlending(true);
 
 		// screen coordinates of object
 		Vec3d objXY;
@@ -299,6 +326,33 @@ bool SkyLabel::draw(StelCore* core, StelPainter& sPainter)
 	return true;
 }
 
+///////////////////////
+// HorizonLabel class //
+///////////////////////
+HorizonLabel::HorizonLabel(const QString& text, const float az, const float alt, const QFont& font, const Vec3f& color)
+	: StelLabel(text, font, color)
+{
+	StelUtils::spheToRect((180.0f-az)*M_PI/180.0, alt*M_PI/180.0, altaz);
+}
+
+HorizonLabel::~HorizonLabel()
+{
+}
+
+bool HorizonLabel::draw(StelCore *core, StelPainter& sPainter)
+{
+	if (labelFader.getInterstate() <= 0.0)
+		return false;
+
+	sPainter.setColor(labelColor[0], labelColor[1], labelColor[2], labelFader.getInterstate());
+	sPainter.setFont(labelFont);
+	StelProjectorP keepProj=sPainter.getProjector(); // we must reset after painting!
+	StelProjectorP altazProjector=core->getProjection(StelCore::FrameAltAz, StelCore::RefractionOff);
+	sPainter.setProjector(altazProjector);
+	sPainter.drawText(altaz, labelText, 0, 0, 0, false);
+	sPainter.setProjector(keepProj);
+	return true;
+}
 
 ///////////////////////
 // ScreenLabel class //
@@ -329,7 +383,7 @@ bool ScreenLabel::draw(StelCore*, StelPainter& sPainter)
 ///////////////////////
 // LabelMgr class //
 ///////////////////////
-LabelMgr::LabelMgr()
+LabelMgr::LabelMgr() : counter(0)
 {
 	setObjectName("LabelMgr");
 }
@@ -345,19 +399,70 @@ void LabelMgr::init()
 void LabelMgr::draw(StelCore* core)
 {
 	StelPainter sPainter(core->getProjection(StelCore::FrameJ2000));
-	foreach(StelLabel* l, allLabels) 
-		if (l!=NULL)
-			l->draw(core, sPainter);
+	foreach(StelLabel* l, allLabels)
+	{
+		l->draw(core, sPainter);
+	}
 }
-	
+
+void LabelMgr::messageTimeout2()
+{
+	QObject* obj = QObject::sender();
+	foreach(StelLabel* l, allLabels)
+	{
+		if (l->timer == obj)
+		{
+			deleteLabel(l->id);
+			return;
+		}
+	}
+}
+
+void LabelMgr::messageTimeout1()
+{
+	QObject* obj = QObject::sender();
+	foreach(StelLabel* l, allLabels)
+	{
+		if (l->timer == obj)
+		{
+			disconnect(l->timer, SIGNAL(timeout()), this, SLOT(messageTimeout1()));
+			connect(l->timer, SIGNAL(timeout()), this, SLOT(messageTimeout2()));
+			l->setFlagShow(false);
+			l->timer->setInterval(l->labelFader.getDuration()*1000);
+			l->timer->start();
+			return;
+		}
+	}
+}
+
+int LabelMgr::appendLabel(StelLabel* l, int autoDeleteTimeoutMs)
+{
+	if (autoDeleteTimeoutMs > 0)
+	{
+		QTimer* timer = new QTimer(this);
+		l->timer = timer;
+		timer->setSingleShot(true);
+		timer->setInterval(autoDeleteTimeoutMs);
+		connect(timer, SIGNAL(timeout()), this, SLOT(messageTimeout1()));
+		timer->start();
+	}
+
+	counter++;
+	l->id = counter;
+	allLabels[counter] = l;
+	return counter;
+}
+
 int LabelMgr::labelObject(const QString& text,
                           const QString& objectName,
                           bool visible,
                           float fontSize,
                           const QString& fontColor,
                           const QString& side,
-                          double labelDistance,
-                          const QString& style)
+			  double labelDistance,
+			  const QString& style,
+			  bool autoDelete,
+			  int autoDeleteTimeoutMs)
 {
 	QFont font;
 	font.setPixelSize(fontSize);
@@ -369,73 +474,94 @@ int LabelMgr::labelObject(const QString& text,
 	}
 	
 	StelLabel* l = new SkyLabel(text, obj, font, StelUtils::htmlColorToVec3f(fontColor), side, labelDistance, SkyLabel::stringToStyle(style));
-	if (l==NULL)
+	if (l==Q_NULLPTR)
 		return -1;
 
 	if (visible)
 		l->setFlagShow(true);
 
-	allLabels.append(l);
-	return allLabels.size()-1;
+	l->autoDelete = autoDelete;
+
+	return appendLabel(l, autoDeleteTimeoutMs);
+}
+
+int LabelMgr::labelHorizon(const QString& text,
+		float az,
+		float alt,
+		bool visible,
+		float fontSize,
+		const QString& fontColor,
+		bool autoDelete,
+		int autoDeleteTimeoutMs)
+{
+	QFont font;
+	font.setPixelSize(fontSize);
+	HorizonLabel* l = new HorizonLabel(text, az, alt, font, StelUtils::htmlColorToVec3f(fontColor));
+	if (l==Q_NULLPTR)
+		return -1;
+
+	if (visible)
+		l->setFlagShow(true);
+
+	l->autoDelete = autoDelete;
+
+	return appendLabel(l, autoDeleteTimeoutMs);
 }
 
 int LabelMgr::labelScreen(const QString& text,
                           int x,
                           int y,
                           bool visible,
-                          float fontSize,
-                          const QString& fontColor)
+			  float fontSize,
+			  const QString& fontColor,
+			  bool autoDelete,
+			  int autoDeleteTimeoutMs)
 {
 	QFont font;
 	font.setPixelSize(fontSize);
 	ScreenLabel* l = new ScreenLabel(text, x, y, font, StelUtils::htmlColorToVec3f(fontColor));
-	if (l==NULL)
+	if (l==Q_NULLPTR)
 		return -1;
 
 	if (visible)
 		l->setFlagShow(true);
 
-	allLabels.append(l);
-	return allLabels.size()-1;
+	l->autoDelete = autoDelete;
+
+	return appendLabel(l, autoDeleteTimeoutMs);
 }
 
 bool LabelMgr::getLabelShow(int id)
 {
-	if (allLabels.at(id)!=NULL)
-		return allLabels.at(id)->getFlagShow();
-	else
-		return false;
+	return allLabels[id]->getFlagShow();
 }
 	
 void LabelMgr::setLabelShow(int id, bool show)
 {
-	if (allLabels.at(id)!=NULL)
-		allLabels.at(id)->setFlagShow(show);
+	allLabels[id]->setFlagShow(show);
 }
 
 void LabelMgr::setLabelText(int id, const QString& newText)
 {
-	if (allLabels.at(id)!=NULL)
-		allLabels.at(id)->setText(newText);
+	allLabels[id]->setText(newText);
 }
 	
-bool LabelMgr::deleteLabel(int id)
+void LabelMgr::deleteLabel(int id)
 {
-	if (allLabels.at(id)!=NULL)
-	{
-		delete allLabels.at(id);
-		allLabels[id] = NULL;
-		return true;
-	}
-	else
-		return false;
+	if (id<0 || !allLabels.contains(id))
+		return;
+
+	if (allLabels[id]->timer != NULL)
+		allLabels[id]->timer->deleteLater();
+
+	delete allLabels[id];
+	allLabels.remove(id);
 }
 	
 void LabelMgr::update(double deltaTime)
 {
 	foreach(StelLabel* l, allLabels) 
-		if (l!=NULL)
-			l->update(deltaTime);
+		l->update(deltaTime);
 }
 	
 double LabelMgr::getCallOrder(StelModuleActionName actionName) const
@@ -448,14 +574,10 @@ double LabelMgr::getCallOrder(StelModuleActionName actionName) const
 int LabelMgr::deleteAllLabels(void)
 {
 	int count=0;
-	foreach(StelLabel* l, allLabels) 
+	foreach(StelLabel* l, allLabels)
 	{
-		if (l!=NULL)
-		{
-			delete l;
-			l=NULL;
-			count++;
-		}
+		delete l;
+		count++;
 	}
 	allLabels.clear();
 	return count;

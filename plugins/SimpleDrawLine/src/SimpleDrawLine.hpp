@@ -48,11 +48,12 @@ private:
 class SimpleDrawLineStelPluginInterface : public QObject, public StelPluginInterface
 {
 	Q_OBJECT
-	Q_PLUGIN_METADATA(IID "stellarium.StelGuiPluginInterface/1.0")
+	Q_PLUGIN_METADATA(IID StelPluginInterface_iid)
 	Q_INTERFACES(StelPluginInterface)
 public:
 	virtual StelModule* getStelModule() const;
 	virtual StelPluginInfo getPluginInfo() const;
+	virtual QObjectList getExtensionList() const { return QObjectList(); }
 };
 
 #endif /*SIMPLEDRAWLINE_HPP_*/

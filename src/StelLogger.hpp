@@ -20,10 +20,9 @@
 #ifndef STELLOGGER_HPP
 #define STELLOGGER_HPP
 
-#include "config.h"
-
 #include <QString>
 #include <QFile>
+#include <QMutex>
 
 //! @class StelLogger
 //! Class wit only static members used to manage logging for Stellarium.
@@ -41,7 +40,7 @@ public:
 	static void deinit();
 
 	//! Handler for qDebug() and friends. Writes message to log file at $USERDIR/log.txt and echoes to stderr.
-	static void debugLogHandler(QtMsgType, const QMessageLogContext&, const QString& str);
+	static void debugLogHandler(QtMsgType type, const QMessageLogContext& ctx, const QString& str);
 
 	//! Return a copy of text of the log file.
 	static const QString& getLog() {return log;}
@@ -57,6 +56,7 @@ public:
 private:
 	static QFile logFile;
 	static QString log;
+	static QMutex fileMutex;
 	
 	static QString getMsvcVersionString(int ver);
 };

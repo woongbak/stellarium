@@ -23,20 +23,19 @@
 #ifndef _ATMOSPHEREDIALOG_HPP_
 #define _ATMOSPHEREDIALOG_HPP_
 
-#include "config.h"
 #include <QObject>
 #include "StelDialog.hpp"
 #include "RefractionExtinction.hpp"
 
-class Ui_AtmosphereDialogForm;
+class Ui_atmosphereDialogForm;
 
 class AtmosphereDialog : public StelDialog
 {
-    Q_OBJECT
+	Q_OBJECT
 
 public:
-    AtmosphereDialog();
-    virtual ~AtmosphereDialog();
+	AtmosphereDialog();
+	virtual ~AtmosphereDialog();
 
 public slots:
         void retranslate();
@@ -44,7 +43,7 @@ public slots:
 protected:
         //! Initialize the dialog widgets and connect the signals/slots.
         virtual void createDialogContent();
-        Ui_AtmosphereDialogForm *ui;
+        Ui_atmosphereDialogForm *ui;
 
 private:
         Refraction *refraction;

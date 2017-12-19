@@ -1,3 +1,240 @@
+0.16.1 [2017-09-22]
+Version 0.16.1 is based on Qt 5.6.2, but it can still be built from sources with Qt 5.4.
+This version is bugfix release with some important features:
+- Added moons of Saturn, Uranus and Pluto
+- Added improvements for AstroCalc tool
+- DSO catalog was updated to version 3.2:
+-- Added support 'The Strasbourg-ESO Catalogue of Galactic Planetary Nebulae' (Acker+, 1992)
+-- Added support 'A catalogue of Galactic supernova remnants' (Green, 2014)
+-- Added support 'A Catalog of Rich Clusters of Galaxies' (Abell+, 1989)
+- Added support asterisms and outlines for DSO
+- Added improvements for the GUI
+
+Full list of changes: https://launchpad.net/stellarium/0.16/0.16.1
+
+0.16.0 [2017-06-21]
+Version 0.16.0 is based on Qt5.6.2. It can still be built from sources with Qt5.4. 
+
+5 blueprints and 38 bugs and wishlist items have been targeted.
+New features include
+- RemoteSync plugin, which allows running several connected instances of Stellarium. 
+- Non-spherical models for solar system objects like asteroids and small moons. 
+- Solar system config file is now split into two parts. 
+- AstroCalc feature extension: What's Up Tonight, graphs, ... 
+- DSO: Addition of catalogs of peculiar galaxies 
+- New Skycultures: Belarusian, Hawaiian Star Lines
+- Telescope plugin: support for the RTS2 telescope system.
+- Location can now be read from a GPS device.
+
+Full list of changes: https://launchpad.net/stellarium/0.16/0.16.0
+
+0.15.2 [2017-03-21]
+The Stellarium development team after three months of development is proud to announce 
+the second correcting release of Stellarium in series 0.15.x - version 0.15.2. This 
+version contains few closed bugs (ported from series 1.x) and some new additions and 
+improvements.
+
+A huge thanks to our community whose contributions help to make Stellarium better!
+
+Full list of changes: https://launchpad.net/stellarium/0.15/0.15.2
+
+0.15.1 [2016-12-25]
+
+Version 0.15.1 introduces a few new exciting features.
+- The Digital Sky Survey (DSS) can be shown (requires online connection).
+- AstroCalc is now available from the main menu and gives interesting new computational insight.
+- Stellarium can act as Spout sender (important for multimedia environments; Windows only).
+In addition, a lot of bugs have been fixed.
+- wait() and waitFor() in the Scripting Engine no longer inhibits performance of moves.
+- DE430/431 DeltaT may be OK now. We still want to test a bit more, though.
+- ArchaeoLines also offers two arbitrary declination lines.
+- Added support of time zones dependent by location.
+- Added new skyculture: Sardinian.
+- Added updates and improvements in catalogs.
+- Added improvements in the GUI.
+- Added cross identification data for stars from Bright Star Catalogue, 5th Revised Ed. (Hoffleit+, 1991).
+
+Full list of changes: https://launchpad.net/stellarium/0.15/0.15.1
+
+0.15.0 [2016-07-31]
+In memory of our team member Barry Gerdes.
+
+Version 0.15.0 is based on Qt5.6. Starting with this version, some graphics cards 
+have been blacklisted by Qt and are automatically forced to use ANGLE on Windows. 
+We introduce a major internal change with the StelProperty system. 
+This allows simpler access to internal variables and therefore more ways of operation. 
+Most notably this version introduces an alternative control option via RemoteControl, 
+a new webserver interface plugin. 
+We also introduce another milestone towards providing better astronomical accuracy for 
+historical applications: experimental support of getting planetary positions from JPL DE430 and 
+  DE431 ephemerides. This feature is however not fully tested yet. 
+The major changes:
+- Added StelProperty system
+- Added new plugin for exhibitions and planetariums - Remote Control
+- Added new skycultures: Macedonian, Ojibwe, Dakota/Lakota/Nakota, 
+  Kamilaroi/Euahlayi
+- Updated code of plugins
+- Added Bookmarks tool and updated AstroCalc tool
+- Added new functions for Scripting Engine and new scripts
+- Added Miller Cylindrical Projection
+- Added updates and improvements in DSO and star catalogues (include initial 
+  support of The Washington Double Star Catalog)
+- azimuth lines (also targetting geographic locations) in ArchaeoLines plugin	
+- Many fixes and improvements...
+
+In addition, we prepared a new user guide.
+	
+Full list of changes: https://launchpad.net/stellarium/0.15/0.15.0
+
+0.14.3 [2016-03-20]
+Bugfix release:
+- Added Bengali description for landscapes (LP: #1548627)
+- Added background transparency in Oculars plugin (LP: #1511393)
+- Fixed serial port issue on Windows version (LP: #1543813)
+- Fixed MESA mode on Windows (LP: #1509735)
+- Fixed Stellarium crashes in ocular view of Saturn/Neptune/Uranus (LP: #1495232)
+- Fixed artifacts in rendering of Mercury in the Sun (LP: #1533647)
+- Fixed loading scenes for Scenery 3D plugin (LP: #1533069)
+- Fixed movement of radiant when time is switched manually (LP: #1535950)
+- Fixed changing name of planet (LP: #1548008)
+
+0.14.2 [2016-01-08]
+Bugfix release:
+- Reduce planet brightness in daylight (LP: #1503248)
+- Fixed perspective mode with offset viewport in scenery3d (LP: #1509728)
+- Fixed wrong altitudes for some locations (LP: #1530759)
+- Fixed some skyculture links
+- Fixed editing some shortcut keys (LP: #1530567)
+- Fixed drawing reticle for telescope (LP: #1526348)
+- Refactoring coloring markers of the DSO
+- Removed info about Moon phases (avoid inconsistency for strings).
+- Updated default config options
+- Updated icons for View dialog
+- Updated Stellarium DSO Catalog
+- Added list of dwarf galaxies (Search Tool)
+- Added improvements in Scenery 3D plugin
+
+0.14.1 [2015-12-02]
+Bugfix release:
+- Added support for side-by-side assembly technology (LP: #1400045)
+- Enhancements of the Ocular plugin: add OAG support (LP: #1354427)
+- Added Belarusian translation for landscapes and sky cultures (LP: #1520303)
+- Added designations for few stars in Scorpius (LP: #1518437)
+- Fixed constellation art brightness and zooming (LP: #1520783)
+- Fixed number of satellite orbit segments resets (LP: #1510592)
+- Fixed certain outplanet moons with wrong Longitudes (LP: #1509693, #1509692)
+- Fixed saving settings for some View panel options (LP: #1509639)
+- Fixed fails to run up on Windows when invoked from a different directory (LP: #1410529)
+- Fixed wrong value of ecliptic obliquity (LP: #1520792)
+- Fixed segmentation fault (core dumped) while try update stars catalog (LP: #1514542)
+- Tentative fix for support 4K resolution (GUI scaling) (LP: #1372781)
+
+0.14.0 [2015-10-24]
+A big leap forward in astronomical accuracy for historical applications:
+ - Precession now follows the IAU2006 model in the long-time version from Vondrak 
+   et al. 2011.
+ - Nutation is applied (IAU2000B solution). Given that nobody has observed it without 
+   telescope and the model does not give limits of applicability, we limit its application 
+   to 1500..2500
+ - Application of DeltaT has been simplified and made a bit more intuitive.
+
+We now dare to add another coordinate system: Ecliptic coordinates of date.
+
+We can therefore now show that planetary positions given by the commonly used solution 
+VSOP87 is applicable to -4000..+8000 only, and its use outside this range will give 
+somewhat artificial results. There is more to follow in future versions.
+
+The other big addition is a greatly improved collection of DSO data with lots of 
+possibilities in a new GUI tab to select for object type and/or catalog. In total, 
+15 catalogs are now built-in!
+
+Also the Meteor Shower, Satellites, Telescope Control and 3D Sceneries plugins have 
+been improved.
+
+Landscapes can have switchable labels, so you can e.g. indicate mountain peaks.
+
+In total 83 bugs and wishlist items were fixed or at least decided.
+
+A platform-specific change for Windows: OpenGL binding is now dynamic. That means, there are 
+no more separate OpenGL/ANGLE/MESA downloads, but after installation you will have separate 
+commands in the start menu which force ANGLE or MESA modes.
+
+Full list of changes: https://launchpad.net/stellarium/0.14/0.14.0
+
+0.13.3 [2015-04-25]
+Bugfix release with few new features.
+
+This version is contains over 30 closed bugs, who include some wishes and new nice features - like
+visualization of the 3D landscapes and extra DSO catalogs.
+
+Full list of changes: https://launchpad.net/stellarium/0.13/0.13.3
+
+0.13.2 [2015-01-20]
+Major bugfix release with few new features.
+
+This version is contains over 70 closed bugs, who include some wishes and new nice features - like
+visualization of the zodiacal light and new sky cultures.
+
+Full list of changes: https://launchpad.net/stellarium/0.13/0.13.2
+
+0.13.1 [2014-10-19]
+Bugfix release with few new features.
+- Added: Light layer for old_style landscapes
+- Added: Auto-detect location via network lookup.
+- Added: Seasonal rules for displaying constellations
+- Added: Coordinates can be displayed as decimal degrees (LP: #1106743)
+- Added: Support of multi-touch gestures on Windows 8 (LP: #1165754)
+- Added: FOV on bottom bar can be displayed in DMS rather than fractional degrees (LP: #1361582)
+- Added: Oculars plugins support eyepieces with permanent crosshairs (LP: #1364139)
+- Added: Pointer Coordinates Plugin can displayed not only RA/Dec (J2000.0) (LP: #1365784, #1377995)
+- Added: Angle Measure Plugin can measure positional angles to the horizon now (LP: #1208143)
+- Added: Search tool can search position not only for RA/Dec (J2000.0) (LP: #1358706)
+- Fixed: Galactic plane renamed to correct: Galactic equator (LP: #1367744)
+- Fixed: Speed issues when computing lots of comets (LP: #1350418)
+- Fixed: Spherical mirror distortion work correctly now (LP: #676260, #1338252)
+- Fixed: Location coordinates on the bottom bar displayed correctly now (LP: #1357799)
+- Fixed: Ecliptic coordinates for J2000.0 and grids diplayed correctly now (LP: #1366567, #1369166)
+- Fixed: Rule for select a celestial objects (LP: #1357917)
+- Fixed: Loading extra star catalogs (LP: #1329500, #1379241)
+- Fixed: Creates spurious directory on startup (LP: #1357758)
+- Fixed: Various GUI/rendering improvements (LP: #1380502, #1320065, #1338252, #1096050, #1376550, #1382689)
+- Fixed: "missing disk in drive <whatever>" (LP: #1371183)
+
+Full list of changes: https://launchpad.net/stellarium/0.13/0.13.1
+
+0.13.0 [2014-07-19]
+This version based on Qt 5 and has new modulated core, and new features (example: normal mapping) and fixes for 115 bugs, including:
+New plugin: Equation of Time - provides solution for Equation of Time.
+New plugin: Field of View - provides shortcuts for quick changes field of view.
+New plugin: Navigational Stars - marks 58 navigational stars on the sky.
+New plugin: Pointer Coordinates - shows the coordinates of the mouse pointer.
+New plugin: Meteor Showers - provides visualization of meteor showers.
+New translatable strings and new textures.
+Improved Landscapes: New Polygonal type, texture saving for shperical, and optional light pollution/streetlight layer.
+Comet Tails
+New version of the Satellites plugin: introduces star-like satellites and bug fixes.
+New version of the Exoplanets plugin: displaying of the potential habitable exoplanets; improvements for performance and code refactoring.
+New version of the Angle Measure plugin: displaying of the position angle.
+New version of the Quasars plugin: improvements for performance; added marker_color parameter.
+New version of the Pulsars plugin: improvements for performance; display pulsars with glitches; setting color for marker for different types of the pulsars.
+New versions of the Compass Marks, Oculars, Historical Supernovae, Observability analysis and Bright Novae plugins: bug fixing, code refactoring and improvements.
+
+Full list of changes: https://launchpad.net/stellarium/0.13/0.13.0
+
+0.12.4 [2013-09-26]
+Bugfix release.
+- fixed crash Stellarium when enabled binoculars in the Oculars plugin (LP: #1222742);
+- added render nighttime landscapes without lighting (LP: #1223052);
+
+0.12.3 [2013-09-08]
+Bugfix release with new plugin.
+- new plugin - Bright Novae;
+- added intermediate value to ZHR of shooting stars between 80 and 10000 (LP: #1208106);
+- fixed search tool (LP: #1208296, #1211198);
+- fixed behaviour for shortkeys of few plugins (LP: #1208291);
+- fixed Flamsteed designations for few Virgo stars (LP: #1222094);
+- fixed saving Milky Way brightness via GUI (LP: #1220477)
+
 0.12.2 [2013-08-04]
 Bugfix release with few new features.
 New version of the Satellites plug-in (0.8.1):

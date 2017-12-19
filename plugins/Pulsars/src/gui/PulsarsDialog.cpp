@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
 */
 
-#include "config.h"
-
 #include <QDebug>
 #include <QTimer>
 #include <QDateTime>
@@ -39,7 +37,10 @@
 #include "StelFileMgr.hpp"
 #include "StelTranslator.hpp"
 
-PulsarsDialog::PulsarsDialog() : updateTimer(NULL)
+PulsarsDialog::PulsarsDialog()
+	: StelDialog("Pulsars")
+	, psr(Q_NULLPTR)
+	, updateTimer(Q_NULLPTR)
 {
 	ui = new Ui_pulsarsDialog;
 }
@@ -50,7 +51,7 @@ PulsarsDialog::~PulsarsDialog()
 	{
 		updateTimer->stop();
 		delete updateTimer;
-		updateTimer = NULL;
+		updateTimer = Q_NULLPTR;
 	}
 	delete ui;
 }
@@ -74,6 +75,13 @@ void PulsarsDialog::createDialogContent()
 	connect(&StelApp::getInstance(), SIGNAL(languageChanged()),
 		this, SLOT(retranslate()));
 
+#ifdef Q_OS_WIN
+	//Kinetic scrolling for tablet pc and pc
+	QList<QWidget *> addscroll;
+	addscroll << ui->aboutTextBrowser;
+	installKineticScrolling(addscroll);
+#endif
+
 	// Settings tab / updates group
 	ui->displayModeCheckBox->setChecked(psr->getDisplayMode());
 	connect(ui->displayModeCheckBox, SIGNAL(stateChanged(int)), this, SLOT(setDistributionEnabled(int)));
@@ -87,6 +95,7 @@ void PulsarsDialog::createDialogContent()
 	connect(ui->updateButton, SIGNAL(clicked()), this, SLOT(updateJSON()));
 	connect(psr, SIGNAL(updateStateChanged(Pulsars::UpdateState)), this, SLOT(updateStateReceiver(Pulsars::UpdateState)));
 	connect(psr, SIGNAL(jsonUpdateComplete(void)), this, SLOT(updateCompleteReceiver(void)));
+	connect(psr, SIGNAL(jsonUpdateComplete(void)), psr, SLOT(reloadCatalog()));
 	connect(ui->updateFrequencySpinBox, SIGNAL(valueChanged(int)), this, SLOT(setUpdateValues(int)));
 	refreshUpdateValues(); // fetch values for last updated and so on
 	// if the state didn't change, setUpdatesEnabled will not be called, so we force it
@@ -97,6 +106,7 @@ void PulsarsDialog::createDialogContent()
 	updateTimer->start(7000);
 
 	connect(ui->closeStelWindow, SIGNAL(clicked()), this, SLOT(close()));
+	connect(ui->TitleBar, SIGNAL(movedTo(QPoint)), this, SLOT(handleMovedTo(QPoint)));
 
 	connect(ui->restoreDefaultsButton, SIGNAL(clicked()), this, SLOT(restoreDefaults()));
 	connect(ui->saveSettingsButton, SIGNAL(clicked()), this, SLOT(saveSettings()));
@@ -104,8 +114,8 @@ void PulsarsDialog::createDialogContent()
 	// About tab
 	setAboutHtml();
 	StelGui* gui = dynamic_cast<StelGui*>(StelApp::getInstance().getGui());
-	Q_ASSERT(gui);
-	ui->aboutTextBrowser->document()->setDefaultStyleSheet(QString(gui->getStelStyle().htmlStyleSheet));
+	if(gui!=Q_NULLPTR)
+		ui->aboutTextBrowser->document()->setDefaultStyleSheet(QString(gui->getStelStyle().htmlStyleSheet));
 
 	updateGuiFromSettings();
 
@@ -116,6 +126,7 @@ void PulsarsDialog::setAboutHtml(void)
 	QString html = "<html><head></head><body>";
 	html += "<h2>" + q_("Pulsars Plug-in") + "</h2><table width=\"90%\">";
 	html += "<tr width=\"30%\"><td><strong>" + q_("Version") + ":</strong></td><td>" + PULSARS_PLUGIN_VERSION + "</td></tr>";
+	html += "<tr><td><strong>" + q_("License") + ":</strong></td><td>" + PULSARS_PLUGIN_LICENSE + "</td></tr>";
 	html += "<tr><td><strong>" + q_("Author") + ":</strong></td><td>Alexander Wolf &lt;alex.v.wolf@gmail.com&gt;</td></tr>";
 	html += "</table>";
 
@@ -153,9 +164,11 @@ void PulsarsDialog::setAboutHtml(void)
 	html += "</ul></p></body></html>";
 
 	StelGui* gui = dynamic_cast<StelGui*>(StelApp::getInstance().getGui());
-	Q_ASSERT(gui);
-	QString htmlStyleSheet(gui->getStelStyle().htmlStyleSheet);
-	ui->aboutTextBrowser->document()->setDefaultStyleSheet(htmlStyleSheet);
+	if(gui!=Q_NULLPTR)
+	{
+		QString htmlStyleSheet(gui->getStelStyle().htmlStyleSheet);
+		ui->aboutTextBrowser->document()->setDefaultStyleSheet(htmlStyleSheet);
+	}
 
 	ui->aboutTextBrowser->setHtml(html);
 }
@@ -173,11 +186,20 @@ void PulsarsDialog::refreshUpdateValues(void)
 	else if (secondsToUpdate <= 60)
 		ui->nextUpdateLabel->setText(q_("Next update: < 1 minute"));
 	else if (secondsToUpdate < 3600)
-		ui->nextUpdateLabel->setText(QString(q_("Next update: %1 minutes")).arg((secondsToUpdate/60)+1));
+	{
+		int n = (secondsToUpdate/60)+1;
+		ui->nextUpdateLabel->setText(qn_("Next update: %1 minute(s)", n).arg(n));
+	}
 	else if (secondsToUpdate < 86400)
-		ui->nextUpdateLabel->setText(QString(q_("Next update: %1 hours")).arg((secondsToUpdate/3600)+1));
+	{
+		int n = (secondsToUpdate/3600)+1;
+		ui->nextUpdateLabel->setText(qn_("Next update: %1 hour(s)", n).arg(n));
+	}
 	else
-		ui->nextUpdateLabel->setText(QString(q_("Next update: %1 days")).arg((secondsToUpdate/86400)+1));
+	{
+		int n = (secondsToUpdate/86400)+1;
+		ui->nextUpdateLabel->setText(qn_("Next update: %1 day(s)", n).arg(n));
+	}
 }
 
 void PulsarsDialog::setUpdateValues(int days)
@@ -247,7 +269,7 @@ void PulsarsDialog::updateCompleteReceiver(void)
 
 void PulsarsDialog::restoreDefaults(void)
 {
-	qDebug() << "Pulsars::restoreDefaults";
+	qDebug() << "[Pulsars] Restore defaults...";
 	psr->restoreDefaults();
 	psr->readSettingsFromConfig();
 	updateGuiFromSettings();

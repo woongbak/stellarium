@@ -36,7 +36,7 @@ inline bool intersectsBoundingCap(const Vec3d& n1, double d1, const Vec3d& n2, d
 inline bool containsBoundingCap(const Vec3d& n1, double d1, const Vec3d& n2, double d2)
 {
 	const double a = n1*n2-d1*d2;
-	return d1<=d1 && ( a>=1. || (a>=0. && a*a >= (1.-d1*d1)*(1.-d2*d2)));
+	return d1<=d2 && ( a>=1. || (a>=0. && a*a >= (1.-d1*d1)*(1.-d2*d2)));
 }
 
 static int getSide(const Vec3d& v, int onLine)
@@ -91,7 +91,7 @@ QString SubContour::toJSON() const
 	}
 	res[res.size()-1]=']';
 	return res;
-};
+}
 
 OctahedronPolygon::OctahedronPolygon(const QVector<Vec3d>& contour) : fillCachedVertexArray(StelVertexArray::Triangles), outlineCachedVertexArray(StelVertexArray::Lines)
 {
@@ -523,7 +523,7 @@ void combineLineLoopCallback(double coords[3], EdgeVertex* vertex_data[4], GLflo
 	bool newFlag=false;
 	for (int i=0;i<4;++i)
 	{
-		if (vertex_data[i]==NULL)
+		if (vertex_data[i]==Q_NULLPTR)
 			break;
 		newFlag = newFlag || vertex_data[i]->edgeFlag;
 	}

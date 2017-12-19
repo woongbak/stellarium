@@ -32,11 +32,12 @@
 //!
 //! @author Timothy Reaves <treaves@silverfieldstech.com>
 //! @ref http://doc.qt.nokia.com/latest/properties.html
+//! @ingroup oculars
 class PropertyBasedTableModel : public QAbstractTableModel
 {
 	Q_OBJECT
 public:
-	PropertyBasedTableModel(QObject *parent = 0);
+	PropertyBasedTableModel(QObject *parent = Q_NULLPTR);
 	virtual ~PropertyBasedTableModel();
 
 	//! Initializes this instance for use.  If you do not call this method, and use this class, your app will crash.

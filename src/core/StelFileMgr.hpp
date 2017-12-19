@@ -20,7 +20,7 @@
 #ifndef _STELFILEMGR_HPP_
 #define _STELFILEMGR_HPP_
 
-#define CHECK_FILE "data/ssystem.ini"
+#define CHECK_FILE "data/ssystem_major.ini"
 
 #include <stdexcept>
 #include <QSet>
@@ -44,12 +44,12 @@ class StelFileMgr
 public:
 	//! @enum Flags used as named bitfield flags as specifiers to filter results of StelFileMgr methods.
 	enum Flags {
-		RemovableMedia = 0x00000001,  //!< Search on removable media if present (default is not to).
-		Writable       = 0x00000002,  //!< Only return writable paths. For directories this means
-									  //!< that it is possible to create files within the directory.
-		Directory      = 0x00000004, //!< Exclude non-directories.
-		File           = 0x00000008, //!< Exclude non-files.
-		New            = 0x00000010 //!< Exclude existing paths.
+		RemovableMedia = 0x00000001,	//!< Search on removable media if present (default is not to).
+		Writable       = 0x00000002,	//!< Only return writable paths. For directories this means
+						//!< that it is possible to create files within the directory.
+		Directory      = 0x00000004,	//!< Exclude non-directories.
+		File           = 0x00000008,	//!< Exclude non-files.
+		New            = 0x00000010	//!< Exclude existing paths.
 	};
 
 	//! Initialize the directories.
@@ -67,7 +67,7 @@ public:
 	//! unambigiously identifies one and only one file on multi-root OSes), it will
 	//! be tested for compliance with other conditions - the regular search path will
 	//! not be tested.
-	//! If you wish to search for a non-exiting file which is not in the search path
+	//! If you wish to search for a non-existing file which is not in the search path
 	//! you should explicitly prefix it with "./", or otherwise have a . at the start of
 	//! the path parameter, e.g. path="./my_config_file_in_the_pwd.ini"
 	//! @param path the name of the file to search for, for example "textures/fog.png".
@@ -118,7 +118,7 @@ public:
 
 	//! Check if a path is writable
 	//! For files, true is returned if the file exists and is writable
-	//! or if the file doesn't exist, but it's parent directory does,
+	//! or if the file doesn't exist, but its parent directory does,
 	//! if the file can be created.
 	//! In the case of directories, return true if the directory can
 	//! have files created in it.
@@ -214,7 +214,7 @@ private:
 	//! Used to store the screenshot directory
 	static QString screenshotDir;
 
-	//! Used to store the screenshot directory
+	//! Used to store the application data directory
 	static QString installDir;
 	
 #ifdef Q_OS_WIN

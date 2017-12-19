@@ -32,19 +32,17 @@
 #include "StelObjectMgr.hpp"
 #include "LandscapeMgr.hpp"
 #include "StarMgr.hpp"
-#include "ConstellationMgr.hpp"
-#include "GridLinesMgr.hpp"
 #include "NebulaMgr.hpp"
 #include "StelLocaleMgr.hpp"
 #include "StelActionMgr.hpp"
+#include "StelPropertyMgr.hpp"
 
+#include "SporadicMeteorMgr.hpp"
 #include "StelObjectType.hpp"
 #include "StelObject.hpp"
 #include "SolarSystem.hpp"
-#include "StelSkyLayerMgr.hpp"
 #include "StelStyle.hpp"
 #include "StelSkyDrawer.hpp"
-#include "MeteorMgr.hpp"
 #ifdef ENABLE_SCRIPT_CONSOLE
 #include "ScriptConsole.hpp"
 #endif
@@ -59,6 +57,8 @@
 #include "SearchDialog.hpp"
 #include "ViewDialog.hpp"
 #include "ShortcutsDialog.hpp"
+#include "AstroCalcDialog.hpp"
+#include "BookmarksDialog.hpp"
 
 #include <QDebug>
 #include <QTimeLine>
@@ -73,78 +73,109 @@
 #include <QPalette>
 #include <QColor>
 #include <QAction>
+#include <QKeySequence>
 
-StelGuiBase* StelStandardGuiPluginInterface::getStelGuiBase() const
-{
-	// Allow to load the resources when used as a static plugin
-	Q_INIT_RESOURCE(guiRes);
-
-	return new StelGui();
-}
-
-StelGui::StelGui() :
-	topLevelGraphicsWidget(NULL),
-	locationDialog(0),
-	helpDialog(0),
-	dateTimeDialog(0),
-	searchDialog(0),
-	viewDialog(0),
-	shortcutsDialog(0),
-	configurationDialog(0),
+StelGui::StelGui()
+	: topLevelGraphicsWidget(Q_NULLPTR)
+	, skyGui(Q_NULLPTR)
+	, buttonTimeRewind(Q_NULLPTR)
+	, buttonTimeRealTimeSpeed(Q_NULLPTR)
+	, buttonTimeCurrent(Q_NULLPTR)
+	, buttonTimeForward(Q_NULLPTR)
+	, buttonGotoSelectedObject(Q_NULLPTR)
+	, locationDialog(Q_NULLPTR)
+	, helpDialog(Q_NULLPTR)
+	, dateTimeDialog(Q_NULLPTR)
+	, searchDialog(Q_NULLPTR)
+	, viewDialog(Q_NULLPTR)
+	, shortcutsDialog(Q_NULLPTR)
+	, configurationDialog(Q_NULLPTR)
 #ifdef ENABLE_SCRIPT_CONSOLE
-    scriptConsole(0),
+	, scriptConsole(Q_NULLPTR)
 #endif
-    initDone(false)
+	, astroCalcDialog(Q_NULLPTR)
+	, bookmarksDialog(Q_NULLPTR)
+	, flagShowFlipButtons(false)
+	, flipVert(Q_NULLPTR)
+	, flipHoriz(Q_NULLPTR)
+	, flagShowNebulaBackgroundButton(false)
+	, btShowNebulaeBackground(Q_NULLPTR)
+	, flagShowToastSurveyButton(false)
+	, btShowToastSurvey(Q_NULLPTR)
+	, flagShowBookmarksButton(false)
+	, btShowBookmarks(Q_NULLPTR)
+	, flagShowICRSGridButton(false)
+	, btShowICRSGrid(Q_NULLPTR)
+	, flagShowGalacticGridButton(false)
+	, btShowGalacticGrid(Q_NULLPTR)
+	, flagShowEclipticGridButton(false)
+	, btShowEclipticGrid(Q_NULLPTR)
+	, flagShowConstellationBoundariesButton(false)
+	, btShowConstellationBoundaries(Q_NULLPTR)
+	, initDone(false)
+#ifndef DISABLE_SCRIPTING
+	  // We use a QStringList to save the user-configured buttons while script is running, and restore them later.
+	, scriptSaveSpeedbuttons()
+  #endif
+
 {
+	setObjectName("StelGui");
 	// QPixmapCache::setCacheLimit(30000); ?
-	flipHoriz = NULL;
-	flipVert = NULL;
-	btShowNebulaeBackground = NULL;
 }
 
 StelGui::~StelGui()
 {
 	delete skyGui;
-	skyGui = NULL;
-	
+	skyGui = Q_NULLPTR;
+
 	if (locationDialog)
 	{
 		delete locationDialog;
-		locationDialog = 0;
+		locationDialog = Q_NULLPTR;
 	}
 	if (helpDialog)
 	{
 		delete helpDialog;
-		helpDialog = 0;
+		helpDialog = Q_NULLPTR;
 	}
 	if (dateTimeDialog)
 	{
 		delete dateTimeDialog;
-		dateTimeDialog = 0;
+		dateTimeDialog = Q_NULLPTR;
 	}
 	if (searchDialog)
 	{
 		delete searchDialog;
-		searchDialog = 0;
+		searchDialog = Q_NULLPTR;
 	}
 	if (viewDialog)
 	{
 		delete viewDialog;
-		viewDialog = 0;
+		viewDialog = Q_NULLPTR;
 	}
 	if (shortcutsDialog)
 	{
 		delete shortcutsDialog;
-		shortcutsDialog = NULL;
+		shortcutsDialog = Q_NULLPTR;
 	}
 	// configurationDialog is automatically deleted with its parent widget.
 #ifdef ENABLE_SCRIPT_CONSOLE
 	if (scriptConsole)
 	{
 		delete scriptConsole;
-		scriptConsole = 0;
+		scriptConsole = Q_NULLPTR;
 	}
 #endif
+	if (astroCalcDialog)
+	{
+		delete astroCalcDialog;
+		astroCalcDialog = Q_NULLPTR;
+	}
+	if (bookmarksDialog)
+	{
+		delete bookmarksDialog;
+		bookmarksDialog = Q_NULLPTR;
+	}
 }
 
 void StelGui::init(QGraphicsWidget *atopLevelGraphicsWidget)
@@ -161,8 +192,10 @@ void StelGui::init(QGraphicsWidget *atopLevelGraphicsWidget)
 	shortcutsDialog = new ShortcutsDialog(atopLevelGraphicsWidget);
 	configurationDialog = new ConfigurationDialog(this, atopLevelGraphicsWidget);
 #ifdef ENABLE_SCRIPT_CONSOLE
-	scriptConsole = new ScriptConsole();
+	scriptConsole = new ScriptConsole(atopLevelGraphicsWidget);
 #endif
+	astroCalcDialog = new AstroCalcDialog(atopLevelGraphicsWidget);
+	bookmarksDialog = new BookmarksDialog(atopLevelGraphicsWidget);
 
 	///////////////////////////////////////////////////////////////////////
 	// Create all the main actions of the program, associated with shortcuts
@@ -175,7 +208,7 @@ void StelGui::init(QGraphicsWidget *atopLevelGraphicsWidget)
 	QString datetimeGroup = N_("Date and Time");
 	QString windowsGroup = N_("Windows");
 	QString miscGroup = N_("Miscellaneous");
-	actionsMgr->addAction("actionQuit_Global", miscGroup, N_("Quit"), this, "quit()", "Ctrl+Q");
+	actionsMgr->addAction("actionQuit_Global", miscGroup, N_("Quit"), this, "quit()", "Ctrl+Q", "Ctrl+X");
 	actionsMgr->addAction("actionIncrease_Script_Speed", datetimeGroup, N_("Speed up the script execution rate"), this, "increaseScriptSpeed()");
 	actionsMgr->addAction("actionDecrease_Script_Speed", datetimeGroup, N_("Slow down the script execution rate"), this, "decreaseScriptSpeed()");
 	actionsMgr->addAction("actionSet_Real_Script_Speed", datetimeGroup, N_("Set the normal script execution rate"), this, "setRealScriptSpeed()");
@@ -194,8 +227,9 @@ void StelGui::init(QGraphicsWidget *atopLevelGraphicsWidget)
 	actionsMgr->addAction("actionShow_DateTime_Window_Global", windowsGroup, N_("Date/time window"), dateTimeDialog, "visible", "F5", "", true);
 	actionsMgr->addAction("actionShow_Location_Window_Global", windowsGroup, N_("Location window"), locationDialog, "visible", "F6", "", true);
 	actionsMgr->addAction("actionShow_Shortcuts_Window_Global", windowsGroup, N_("Shortcuts window"), shortcutsDialog, "visible", "F7", "", true);
-	actionsMgr->addAction("actionSave_Copy_Object_Information_Global", miscGroup, N_("Copy selected object information to clipboard"), this, "copySelectedObjectInfo()", "Ctrl+C", "", true);
-	actionsMgr->addAction("actionToggle_GuiHidden_Global", miscGroup, N_("Toggle visibility of GUI"), this, "visible", "Ctrl+T", "", true);
+	actionsMgr->addAction("actionShow_AstroCalc_Window_Global", windowsGroup, N_("Astronomical calculations window"), astroCalcDialog, "visible", "F10", "", true);
+	actionsMgr->addAction("actionShow_Bookmarks_Window_Global", windowsGroup, N_("Bookmarks"), bookmarksDialog, "visible", "Alt+B", "", true);
+	actionsMgr->addAction("actionSave_Copy_Object_Information_Global", miscGroup, N_("Copy selected object information to clipboard"), this, "copySelectedObjectInfo()", "Ctrl+C", "", true);	
 
 	QSettings* conf = StelApp::getInstance().getSettings();
 	Q_ASSERT(conf);
@@ -204,11 +238,16 @@ void StelGui::init(QGraphicsWidget *atopLevelGraphicsWidget)
 	actionsMgr->addAction("actionAutoHideHorizontalButtonBar", miscGroup, N_("Auto hide horizontal button bar"), this, "autoHideHorizontalButtonBar");
 	actionsMgr->addAction("actionAutoHideVerticalButtonBar", miscGroup, N_("Auto hide vertical button bar"), this, "autoHideVerticalButtonBar");
 
+	setGuiVisible(conf->value("gui/flag_show_gui", true).toBool());
+	actionsMgr->addAction("actionToggle_GuiHidden_Global", miscGroup, N_("Toggle visibility of GUI"), this, "visible", "Ctrl+T", "", true);
+
 #ifndef DISABLE_SCRIPTING
 	StelScriptMgr* scriptMgr = &StelApp::getInstance().getScriptMgr();
 	connect(scriptMgr, SIGNAL(scriptRunning()), this, SLOT(scriptStarted()));
 	connect(scriptMgr, SIGNAL(scriptStopped()), this, SLOT(scriptStopped()));
 #endif
+	// Put StelGui under the StelProperty system (simpler and more consistent GUI)
+	StelApp::getInstance().getStelPropertyManager()->registerObject(this);
 
 	///////////////////////////////////////////////////////////////////////////
 	//// QGraphicsView based GUI
@@ -219,136 +258,146 @@ void StelGui::init(QGraphicsWidget *atopLevelGraphicsWidget)
 	QPixmap pxmapGlow(":/graphicGui/glow.png");
 	QPixmap pxmapOn(":/graphicGui/2-on-location.png");
 	QPixmap pxmapOff(":/graphicGui/2-off-location.png");
-	StelButton*  b = new StelButton(NULL, pxmapOn, pxmapOff, pxmapGlow, "actionShow_Location_Window_Global");
+	StelButton*  b = new StelButton(Q_NULLPTR, pxmapOn, pxmapOff, pxmapGlow, "actionShow_Location_Window_Global");
 	skyGui->winBar->addButton(b);
 
 	pxmapOn = QPixmap(":/graphicGui/1-on-time.png");
 	pxmapOff = QPixmap(":/graphicGui/1-off-time.png");
-	b = new StelButton(NULL, pxmapOn, pxmapOff, pxmapGlow, "actionShow_DateTime_Window_Global");
+	b = new StelButton(Q_NULLPTR, pxmapOn, pxmapOff, pxmapGlow, "actionShow_DateTime_Window_Global");
 	skyGui->winBar->addButton(b);
 
 	pxmapOn = QPixmap(":/graphicGui/5-on-labels.png");
 	pxmapOff = QPixmap(":/graphicGui/5-off-labels.png");
-	b = new StelButton(NULL, pxmapOn, pxmapOff, pxmapGlow, "actionShow_SkyView_Window_Global");
+	b = new StelButton(Q_NULLPTR, pxmapOn, pxmapOff, pxmapGlow, "actionShow_SkyView_Window_Global");
 	skyGui->winBar->addButton(b);
 
 	pxmapOn = QPixmap(":/graphicGui/6-on-search.png");
 	pxmapOff = QPixmap(":/graphicGui/6-off-search.png");
-	b = new StelButton(NULL, pxmapOn, pxmapOff, pxmapGlow, "actionShow_Search_Window_Global");
+	b = new StelButton(Q_NULLPTR, pxmapOn, pxmapOff, pxmapGlow, "actionShow_Search_Window_Global");
 	skyGui->winBar->addButton(b);
 
 	pxmapOn = QPixmap(":/graphicGui/8-on-settings.png");
 	pxmapOff = QPixmap(":/graphicGui/8-off-settings.png");
-	b = new StelButton(NULL, pxmapOn, pxmapOff, pxmapGlow, "actionShow_Configuration_Window_Global");
+	b = new StelButton(Q_NULLPTR, pxmapOn, pxmapOff, pxmapGlow, "actionShow_Configuration_Window_Global");
+	skyGui->winBar->addButton(b);
+
+	// NOTE: Should be a toggle of visibility for this button?	
+	pxmapOn = QPixmap(":/graphicGui/11-on-AstroCalc.png");
+	pxmapOff = QPixmap(":/graphicGui/11-off-AstroCalc.png");
+	b = new StelButton(Q_NULLPTR, pxmapOn, pxmapOff, pxmapGlow, "actionShow_AstroCalc_Window_Global");
 	skyGui->winBar->addButton(b);
 
 	pxmapOn = QPixmap(":/graphicGui/9-on-help.png");
 	pxmapOff = QPixmap(":/graphicGui/9-off-help.png");
-	b = new StelButton(NULL, pxmapOn, pxmapOff, pxmapGlow, "actionShow_Help_Window_Global");
+	b = new StelButton(Q_NULLPTR, pxmapOn, pxmapOff, pxmapGlow, "actionShow_Help_Window_Global");
 	skyGui->winBar->addButton(b);
 
 	QPixmap pxmapGlow32x32(":/graphicGui/glow32x32.png");
 
 	pxmapOn = QPixmap(":/graphicGui/btConstellationLines-on.png");
 	pxmapOff = QPixmap(":/graphicGui/btConstellationLines-off.png");
-	b = new StelButton(NULL, pxmapOn, pxmapOff, pxmapGlow32x32, "actionShow_Constellation_Lines");
+	b = new StelButton(Q_NULLPTR, pxmapOn, pxmapOff, pxmapGlow32x32, "actionShow_Constellation_Lines");
 	skyGui->buttonBar->addButton(b, "010-constellationsGroup");
 
 	pxmapOn = QPixmap(":/graphicGui/btConstellationLabels-on.png");
 	pxmapOff = QPixmap(":/graphicGui/btConstellationLabels-off.png");
-	b = new StelButton(NULL, pxmapOn, pxmapOff, pxmapGlow32x32, "actionShow_Constellation_Labels");
+	b = new StelButton(Q_NULLPTR, pxmapOn, pxmapOff, pxmapGlow32x32, "actionShow_Constellation_Labels");
 	skyGui->buttonBar->addButton(b, "010-constellationsGroup");
 
 	pxmapOn = QPixmap(":/graphicGui/btConstellationArt-on.png");
 	pxmapOff = QPixmap(":/graphicGui/btConstellationArt-off.png");
-	b = new StelButton(NULL, pxmapOn, pxmapOff, pxmapGlow32x32, "actionShow_Constellation_Art");
+	b = new StelButton(Q_NULLPTR, pxmapOn, pxmapOff, pxmapGlow32x32, "actionShow_Constellation_Art");
 	skyGui->buttonBar->addButton(b, "010-constellationsGroup");
 
 	pxmapOn = QPixmap(":/graphicGui/btEquatorialGrid-on.png");
 	pxmapOff = QPixmap(":/graphicGui/btEquatorialGrid-off.png");
-	b = new StelButton(NULL, pxmapOn, pxmapOff, pxmapGlow32x32, "actionShow_Equatorial_Grid");
+	b = new StelButton(Q_NULLPTR, pxmapOn, pxmapOff, pxmapGlow32x32, "actionShow_Equatorial_Grid");
 	skyGui->buttonBar->addButton(b, "020-gridsGroup");
 
 	pxmapOn = QPixmap(":/graphicGui/btAzimuthalGrid-on.png");
 	pxmapOff = QPixmap(":/graphicGui/btAzimuthalGrid-off.png");
-	b = new StelButton(NULL, pxmapOn, pxmapOff, pxmapGlow32x32, "actionShow_Azimuthal_Grid");
+	b = new StelButton(Q_NULLPTR, pxmapOn, pxmapOff, pxmapGlow32x32, "actionShow_Azimuthal_Grid");
 	skyGui->buttonBar->addButton(b, "020-gridsGroup");
 
 	pxmapOn = QPixmap(":/graphicGui/btGround-on.png");
 	pxmapOff = QPixmap(":/graphicGui/btGround-off.png");
-	b = new StelButton(NULL, pxmapOn, pxmapOff, pxmapGlow32x32, "actionShow_Ground");
+	b = new StelButton(Q_NULLPTR, pxmapOn, pxmapOff, pxmapGlow32x32, "actionShow_Ground");
 	skyGui->buttonBar->addButton(b, "030-landscapeGroup");
 
 	pxmapOn = QPixmap(":/graphicGui/btCardinalPoints-on.png");
 	pxmapOff = QPixmap(":/graphicGui/btCardinalPoints-off.png");
-	b = new StelButton(NULL, pxmapOn, pxmapOff, pxmapGlow32x32, "actionShow_Cardinal_Points");
+	b = new StelButton(Q_NULLPTR, pxmapOn, pxmapOff, pxmapGlow32x32, "actionShow_Cardinal_Points");
 	skyGui->buttonBar->addButton(b, "030-landscapeGroup");
 
 	pxmapOn = QPixmap(":/graphicGui/btAtmosphere-on.png");
 	pxmapOff = QPixmap(":/graphicGui/btAtmosphere-off.png");
-	b = new StelButton(NULL, pxmapOn, pxmapOff, pxmapGlow32x32, "actionShow_Atmosphere");
+	b = new StelButton(Q_NULLPTR, pxmapOn, pxmapOff, pxmapGlow32x32, "actionShow_Atmosphere");
 	skyGui->buttonBar->addButton(b, "030-landscapeGroup");
 
 	pxmapOn = QPixmap(":/graphicGui/btNebula-on.png");
 	pxmapOff = QPixmap(":/graphicGui/btNebula-off.png");
-	b = new StelButton(NULL, pxmapOn, pxmapOff, pxmapGlow32x32, "actionShow_Nebulas");
+	b = new StelButton(Q_NULLPTR, pxmapOn, pxmapOff, pxmapGlow32x32, "actionShow_Nebulas");
 	skyGui->buttonBar->addButton(b, "040-nebulaeGroup");
 
 	pxmapOn = QPixmap(":/graphicGui/btPlanets-on.png");
 	pxmapOff = QPixmap(":/graphicGui/btPlanets-off.png");
-	b = new StelButton(NULL, pxmapOn, pxmapOff, pxmapGlow32x32, "actionShow_Planets_Labels");
+	b = new StelButton(Q_NULLPTR, pxmapOn, pxmapOff, pxmapGlow32x32, "actionShow_Planets_Labels");
 	skyGui->buttonBar->addButton(b, "040-nebulaeGroup");
 
 	pxmapOn = QPixmap(":/graphicGui/btEquatorialMount-on.png");
 	pxmapOff = QPixmap(":/graphicGui/btEquatorialMount-off.png");
-	b = new StelButton(NULL, pxmapOn, pxmapOff, pxmapGlow32x32, "actionSwitch_Equatorial_Mount");
+	b = new StelButton(Q_NULLPTR, pxmapOn, pxmapOff, pxmapGlow32x32, "actionSwitch_Equatorial_Mount");
 	skyGui->buttonBar->addButton(b, "060-othersGroup");
 
 	pxmapOn = QPixmap(":/graphicGui/btGotoSelectedObject-on.png");
 	pxmapOff = QPixmap(":/graphicGui/btGotoSelectedObject-off.png");
-	buttonGotoSelectedObject = new StelButton(NULL, pxmapOn, pxmapOff, pxmapGlow32x32, "actionGoto_Selected_Object");
+	buttonGotoSelectedObject = new StelButton(Q_NULLPTR, pxmapOn, pxmapOff, pxmapGlow32x32, "actionGoto_Selected_Object");
 	skyGui->buttonBar->addButton(buttonGotoSelectedObject, "060-othersGroup");
 
 	pxmapOn = QPixmap(":/graphicGui/btNightView-on.png");
 	pxmapOff = QPixmap(":/graphicGui/btNightView-off.png");
-	b = new StelButton(NULL, pxmapOn, pxmapOff, pxmapGlow32x32, "actionShow_Night_Mode");
+	b = new StelButton(Q_NULLPTR, pxmapOn, pxmapOff, pxmapGlow32x32, "actionShow_Night_Mode");
 	skyGui->buttonBar->addButton(b, "060-othersGroup");
 
 	pxmapOn = QPixmap(":/graphicGui/btFullScreen-on.png");
 	pxmapOff = QPixmap(":/graphicGui/btFullScreen-off.png");
-	b = new StelButton(NULL, pxmapOn, pxmapOff, pxmapGlow32x32, "actionSet_Full_Screen_Global");
+	b = new StelButton(Q_NULLPTR, pxmapOn, pxmapOff, pxmapGlow32x32, "actionSet_Full_Screen_Global");
 	skyGui->buttonBar->addButton(b, "060-othersGroup");
 
 	pxmapOn = QPixmap(":/graphicGui/btTimeRewind-on.png");
 	pxmapOff = QPixmap(":/graphicGui/btTimeRewind-off.png");
-	buttonTimeRewind = new StelButton(NULL, pxmapOn, pxmapOff, pxmapGlow32x32, "actionDecrease_Time_Speed");
+	buttonTimeRewind = new StelButton(Q_NULLPTR, pxmapOn, pxmapOff, pxmapGlow32x32, "actionDecrease_Time_Speed");
 	skyGui->buttonBar->addButton(buttonTimeRewind, "070-timeGroup");
 
 	pxmapOn = QPixmap(":/graphicGui/btTimeRealtime-on.png");
 	pxmapOff = QPixmap(":/graphicGui/btTimeRealtime-off.png");
 	pxmapDefault = QPixmap(":/graphicGui/btTimePause-on.png");
-	buttonTimeRealTimeSpeed = new StelButton(NULL, pxmapOn, pxmapOff, pxmapDefault, pxmapGlow32x32, "actionSet_Real_Time_Speed");
+	buttonTimeRealTimeSpeed = new StelButton(Q_NULLPTR, pxmapOn, pxmapOff, pxmapDefault, pxmapGlow32x32, "actionSet_Real_Time_Speed");
 	skyGui->buttonBar->addButton(buttonTimeRealTimeSpeed, "070-timeGroup");
 
 	pxmapOn = QPixmap(":/graphicGui/btTimeNow-on.png");
 	pxmapOff = QPixmap(":/graphicGui/btTimeNow-off.png");
-	buttonTimeCurrent = new StelButton(NULL, pxmapOn, pxmapOff, pxmapGlow32x32, "actionReturn_To_Current_Time");
+	buttonTimeCurrent = new StelButton(Q_NULLPTR, pxmapOn, pxmapOff, pxmapGlow32x32, "actionReturn_To_Current_Time");
 	skyGui->buttonBar->addButton(buttonTimeCurrent, "070-timeGroup");
 
 	pxmapOn = QPixmap(":/graphicGui/btTimeForward-on.png");
 	pxmapOff = QPixmap(":/graphicGui/btTimeForward-off.png");
-	buttonTimeForward = new StelButton(NULL, pxmapOn, pxmapOff, pxmapGlow32x32, "actionIncrease_Time_Speed");
+	buttonTimeForward = new StelButton(Q_NULLPTR, pxmapOn, pxmapOff, pxmapGlow32x32, "actionIncrease_Time_Speed");
 	skyGui->buttonBar->addButton(buttonTimeForward, "070-timeGroup");
 
-	skyGui->buttonBar->setGroupMargin("070-timeGroup", 32, 0);
-
 	pxmapOn = QPixmap(":/graphicGui/btQuit.png");
-	b = new StelButton(NULL, pxmapOn, pxmapOn, pxmapGlow32x32, "actionQuit_Global");
+	b = new StelButton(Q_NULLPTR, pxmapOn, pxmapOn, pxmapGlow32x32, "actionQuit_Global");
 	skyGui->buttonBar->addButton(b, "080-quitGroup");
 
 	// add the flip buttons if requested in the config
 	setFlagShowFlipButtons(conf->value("gui/flag_show_flip_buttons", false).toBool());
 	setFlagShowNebulaBackgroundButton(conf->value("gui/flag_show_nebulae_background_button", false).toBool());
+	setFlagShowToastSurveyButton(conf->value("gui/flag_show_toast_survey_button", false).toBool());
+	setFlagShowBookmarksButton(conf->value("gui/flag_show_bookmarks_button", false).toBool());
+	setFlagShowICRSGridButton(conf->value("gui/flag_show_icrs_grid_button", false).toBool());
+	setFlagShowGalacticGridButton(conf->value("gui/flag_show_galactic_grid_button", false).toBool());
+	setFlagShowEclipticGridButton(conf->value("gui/flag_show_ecliptic_grid_button", false).toBool());
+	setFlagShowConstellationBoundariesButton(conf->value("gui/flag_show_boundaries_button", false).toBool());
 
 	///////////////////////////////////////////////////////////////////////
 	// Create the main base widget
@@ -360,6 +409,14 @@ void StelGui::init(QGraphicsWidget *atopLevelGraphicsWidget)
 	atopLevelGraphicsWidget->setLayout(l);
 
 	setStelStyle(StelApp::getInstance().getCurrentStelStyle());
+
+	int margin = conf->value("gui/space_between_groups", 5).toInt();
+	skyGui->buttonBar->setGroupMargin("020-gridsGroup", margin, 0);
+	skyGui->buttonBar->setGroupMargin("030-landscapeGroup", margin, 0);
+	skyGui->buttonBar->setGroupMargin("040-nebulaeGroup", margin, 0);
+	skyGui->buttonBar->setGroupMargin("060-othersGroup", margin, margin);
+	skyGui->buttonBar->setGroupMargin("070-timeGroup", margin, 0);
+	skyGui->buttonBar->setGroupMargin("080-quitGroup", margin, 0);
 
 	skyGui->setGeometry(atopLevelGraphicsWidget->geometry());
 	skyGui->updateBarsPos();
@@ -385,10 +442,7 @@ void StelGui::init(QGraphicsWidget *atopLevelGraphicsWidget)
 
 void StelGui::quit()
 {
-#ifndef DISABLE_SCRIPTING
-	StelApp::getInstance().getScriptMgr().stopScript();
-#endif
-	QCoreApplication::exit();
+	StelApp::getInstance().quit();
 }
 
 //! Reload the current Qt Style Sheet (Debug only)
@@ -405,28 +459,23 @@ void StelGui::setStelStyle(const QString& section)
 		// Load the style sheets
 		currentStelStyle.confSectionName = section;
 
-		QString qtStyleFileName;
-		QString htmlStyleFileName;
-
-		if (section=="night_color")
-		{
-			qtStyleFileName = ":/graphicGui/nightStyle.css";
-			htmlStyleFileName = ":/graphicGui/nightHtml.css";
-		}
-		else if (section=="color")
-		{
-			qtStyleFileName = ":/graphicGui/normalStyle.css";
-			htmlStyleFileName = ":/graphicGui/normalHtml.css";
-		}
+		QString qtStyleFileName = ":/graphicGui/normalStyle.css";
+		QString htmlStyleFileName = ":/graphicGui/normalHtml.css";
 
 		// Load Qt style sheet
 		QFile styleFile(qtStyleFileName);
-		styleFile.open(QIODevice::ReadOnly);
-		currentStelStyle.qtStyleSheet = styleFile.readAll();
+		if(styleFile.open(QIODevice::ReadOnly))
+		{
+			currentStelStyle.qtStyleSheet = styleFile.readAll();
+			styleFile.close();
+		}
 
 		QFile htmlStyleFile(htmlStyleFileName);
-		htmlStyleFile.open(QIODevice::ReadOnly);
-		currentStelStyle.htmlStyleSheet = htmlStyleFile.readAll();
+		if(htmlStyleFile.open(QIODevice::ReadOnly))
+		{
+			currentStelStyle.htmlStyleSheet = htmlStyleFile.readAll();
+			htmlStyleFile.close();
+		}
 	}
 	
 	locationDialog->styleChanged();
@@ -436,7 +485,9 @@ void StelGui::setStelStyle(const QString& section)
 	viewDialog->styleChanged();
 #ifdef ENABLE_SCRIPT_CONSOLE
 	scriptConsole->styleChanged();
-#endif // ENABLE_SCRIPT_CONSOLE
+#endif // ENABLE_SCRIPT_CONSOLE	
+	astroCalcDialog->styleChanged();
+	bookmarksDialog->styleChanged();
 }
 
 
@@ -461,18 +512,18 @@ void StelGui::update()
 {
 	StelCore* core = StelApp::getInstance().getCore();
 	if (core->getTimeRate()<-0.99*StelCore::JD_SECOND) {
-		if (buttonTimeRewind->isChecked()==false)
+        if ( ! buttonTimeRewind->isChecked())
 			buttonTimeRewind->setChecked(true);
 	} else {
-		if (buttonTimeRewind->isChecked()==true)
+        if (buttonTimeRewind->isChecked())
 			buttonTimeRewind->setChecked(false);
 	}
 	if (core->getTimeRate()>1.01*StelCore::JD_SECOND) {
-		if (buttonTimeForward->isChecked()==false) {
+        if ( ! buttonTimeForward->isChecked()) {
 			buttonTimeForward->setChecked(true);
 		}
 	} else {
-		if (buttonTimeForward->isChecked()==true)
+        if (buttonTimeForward->isChecked())
 			buttonTimeForward->setChecked(false);
 	}
 	if (core->getTimeRate() == 0) {
@@ -485,21 +536,41 @@ void StelGui::update()
 		buttonTimeRealTimeSpeed->setChecked(StelButton::ButtonStateOff);
 	}
 	const bool isTimeNow=core->getIsTimeNow();
-	if (buttonTimeCurrent->isChecked()!=isTimeNow) {
+	if (static_cast<bool>(buttonTimeCurrent->isChecked())!=isTimeNow) {
 		buttonTimeCurrent->setChecked(isTimeNow);
 	}
 	StelMovementMgr* mmgr = GETSTELMODULE(StelMovementMgr);
 	const bool b = mmgr->getFlagTracking();
-	if (buttonGotoSelectedObject->isChecked()!=b) {
+	if (static_cast<bool>(buttonGotoSelectedObject->isChecked())!=b) {
 		buttonGotoSelectedObject->setChecked(b);
 	}
 
+	StelPropertyMgr* propMgr = StelApp::getInstance().getStelPropertyManager();
 	bool flag;
 
-	// XXX: this should probably be removed, we can use property NOTIFY instead.
-	flag = GETSTELMODULE(StelSkyLayerMgr)->getFlagShow();
-	if (getAction("actionShow_DSS")->isChecked() != flag)
-		getAction("actionShow_DSS")->setChecked(flag);
+	flag = propMgr->getProperty("StelSkyLayerMgr.flagShow")->getValue().toBool();
+	if (getAction("actionShow_DSO_Textures")->isChecked() != flag)
+		getAction("actionShow_DSO_Textures")->setChecked(flag);
+
+	flag = propMgr->getProperty("ToastMgr.surveyDisplayed")->getValue().toBool();
+	if (getAction("actionShow_Toast_Survey")->isChecked() != flag)
+		getAction("actionShow_Toast_Survey")->setChecked(flag);
+
+	flag = propMgr->getProperty("GridLinesMgr.equatorJ2000GridDisplayed")->getValue().toBool();
+	if (getAction("actionShow_Equatorial_J2000_Grid")->isChecked() != flag)
+		getAction("actionShow_Equatorial_J2000_Grid")->setChecked(flag);
+
+	flag = propMgr->getProperty("GridLinesMgr.galacticGridDisplayed")->getValue().toBool();
+	if (getAction("actionShow_Galactic_Grid")->isChecked() != flag)
+		getAction("actionShow_Galactic_Grid")->setChecked(flag);
+
+	flag = propMgr->getProperty("GridLinesMgr.eclipticGridDisplayed")->getValue().toBool();
+	if (getAction("actionShow_Ecliptic_Grid")->isChecked() != flag)
+		getAction("actionShow_Ecliptic_Grid")->setChecked(flag);
+
+	flag = propMgr->getProperty("ConstellationMgr.boundariesDisplayed")->getValue().toBool();
+	if (getAction("actionShow_Constellation_Boundaries")->isChecked() != flag)
+		getAction("actionShow_Constellation_Boundaries")->setChecked(flag);
 
 	flag = StelApp::getInstance().getVisionModeNight();
 	if (getAction("actionShow_Night_Mode")->isChecked() != flag)
@@ -515,32 +586,60 @@ void StelGui::update()
 	if (savedProgressBarSize!=skyGui->progressBarMgr->boundingRect().size())
 	{
 		savedProgressBarSize=skyGui->progressBarMgr->boundingRect().size();
-		skyGui->updateBarsPos();
+		forceRefreshGui();
 	}
-
-	dateTimeDialog->setDateTime(core->getJDay());
 }
 
 #ifndef DISABLE_SCRIPTING
 void StelGui::setScriptKeys(bool b)
 {
+	// Allows use of buttons from conf! Bug LP:1530567 -- GZ
+	// The swap of keys happens first immediately after program start by execution of startup.ssc
+	// Allow different script keys if you properly configure them!
+
+	QSettings* conf = StelApp::getInstance().getSettings();
+	Q_ASSERT(conf);
+
 	if (b)
 	{
+		scriptSaveSpeedbuttons.clear();
+		scriptSaveSpeedbuttons << getAction("actionDecrease_Time_Speed")->getShortcut().toString(QKeySequence::PortableText)
+				       << getAction("actionIncrease_Time_Speed")->getShortcut().toString(QKeySequence::PortableText)
+				       << getAction("actionSet_Real_Time_Speed")->getShortcut().toString(QKeySequence::PortableText);
+
+		// During script execution we disable normal time control.
+		// If script keys have not been configured, take those time control keys.
 		getAction("actionDecrease_Time_Speed")->setShortcut("");
 		getAction("actionIncrease_Time_Speed")->setShortcut("");
 		getAction("actionSet_Real_Time_Speed")->setShortcut("");
-		getAction("actionDecrease_Script_Speed")->setShortcut("J");
-		getAction("actionIncrease_Script_Speed")->setShortcut("L");
-		getAction("actionSet_Real_Script_Speed")->setShortcut("K");
+		QString str;
+		str=conf->value("shortcuts/actionDecrease_Script_Speed",scriptSaveSpeedbuttons.at(0)).toString();
+		getAction("actionDecrease_Script_Speed")->setShortcut(str);
+		str=conf->value("shortcuts/actionIncrease_Script_Speed",scriptSaveSpeedbuttons.at(1)).toString();
+		getAction("actionIncrease_Script_Speed")->setShortcut(str);
+		str=conf->value("shortcuts/actionSet_Real_Script_Speed",scriptSaveSpeedbuttons.at(2)).toString();
+		getAction("actionSet_Real_Script_Speed")->setShortcut(str);
 	}
 	else
 	{
-		getAction("actionDecrease_Script_Speed")->setShortcut("");
-		getAction("actionIncrease_Script_Speed")->setShortcut("");
-		getAction("actionSet_Real_Script_Speed")->setShortcut("");
-		getAction("actionDecrease_Time_Speed")->setShortcut("J");
-		getAction("actionIncrease_Time_Speed")->setShortcut("L");
-		getAction("actionSet_Real_Time_Speed")->setShortcut("K");
+		if (scriptSaveSpeedbuttons.length()<3)
+		{
+			scriptSaveSpeedbuttons.clear();
+			scriptSaveSpeedbuttons << "J" << "L" << "K";
+			qWarning() << "StelGui: Saved speed buttons reset to J/K/L";
+			qWarning() << "         This is very odd, should not happen.";
+		}
+		// It is only safe to clear the script speed keys if they are the same as the regular speed keys
+		// i.e. if they had been set before running the script.
+		if (getAction("actionDecrease_Script_Speed")->getShortcut().toString() == scriptSaveSpeedbuttons.at(0))
+			getAction("actionDecrease_Script_Speed")->setShortcut("");
+		if (getAction("actionIncrease_Script_Speed")->getShortcut().toString() == scriptSaveSpeedbuttons.at(1))
+			getAction("actionIncrease_Script_Speed")->setShortcut("");
+		if (getAction("actionSet_Real_Script_Speed")->getShortcut().toString() == scriptSaveSpeedbuttons.at(2))
+			getAction("actionSet_Real_Script_Speed")->setShortcut("");
+		getAction("actionDecrease_Time_Speed")->setShortcut(scriptSaveSpeedbuttons.at(0));
+		getAction("actionIncrease_Time_Speed")->setShortcut(scriptSaveSpeedbuttons.at(1));
+		getAction("actionSet_Real_Time_Speed")->setShortcut(scriptSaveSpeedbuttons.at(2));
 	}
 }
 
@@ -578,22 +677,18 @@ void StelGui::resumeScript()
 void StelGui::setFlagShowFlipButtons(bool b)
 {
 	if (b==true) {
-		if (flipVert==NULL) {
+		if (flipVert==Q_NULLPTR) {
 			// Create the vertical flip button
 			QPixmap pxmapGlow32x32(":/graphicGui/glow32x32.png");
-			flipVert = new StelButton(NULL,
-																QPixmap(":/graphicGui/btFlipVertical-on.png"),
-																QPixmap(":/graphicGui/btFlipVertical-off.png"),
-																pxmapGlow32x32,
-																"actionVertical_Flip");
+			QPixmap pxmapOn(":/graphicGui/btFlipVertical-on.png");
+			QPixmap pxmapOff(":/graphicGui/btFlipVertical-off.png");
+			flipVert = new StelButton(Q_NULLPTR, pxmapOn, pxmapOff, pxmapGlow32x32, "actionVertical_Flip");
 		}
-		if (flipHoriz==NULL) {
+		if (flipHoriz==Q_NULLPTR) {
 			QPixmap pxmapGlow32x32(":/graphicGui/glow32x32.png");
-			flipHoriz = new StelButton(NULL,
-																 QPixmap(":/graphicGui/btFlipHorizontal-on.png"),
-																 QPixmap(":/graphicGui/btFlipHorizontal-off.png"),
-																 pxmapGlow32x32,
-																 "actionHorizontal_Flip");
+			QPixmap pxmapOn(":/graphicGui/btFlipHorizontal-on.png");
+			QPixmap pxmapOff(":/graphicGui/btFlipHorizontal-off.png");
+			flipHoriz = new StelButton(Q_NULLPTR, pxmapOn, pxmapOff, pxmapGlow32x32, "actionHorizontal_Flip");
 		}
 		getButtonBar()->addButton(flipVert, "060-othersGroup", "actionQuit_Global");
 		getButtonBar()->addButton(flipHoriz, "060-othersGroup", "actionVertical_Flip");
@@ -605,28 +700,163 @@ void StelGui::setFlagShowFlipButtons(bool b)
 	if (initDone) {
 		skyGui->updateBarsPos();
 	}
+	emit flagShowFlipButtonsChanged(b);
 }
-
 
 // Define whether the button toggling nebulae backround images should be visible
 void StelGui::setFlagShowNebulaBackgroundButton(bool b)
 {
 	if (b==true) {
-		if (btShowNebulaeBackground==NULL) {
+		if (btShowNebulaeBackground==Q_NULLPTR) {
 			// Create the nebulae background button
 			QPixmap pxmapGlow32x32(":/graphicGui/glow32x32.png");
-			btShowNebulaeBackground = new StelButton(NULL, QPixmap(":/graphicGui/btDSS-on.png"), QPixmap(":/graphicGui/btDSS-off.png"), pxmapGlow32x32, "actionShow_DSS");
+			QPixmap pxmapOn(":/graphicGui/btDSS-on.png");
+			QPixmap pxmapOff(":/graphicGui/btDSS-off.png");
+			btShowNebulaeBackground = new StelButton(Q_NULLPTR, pxmapOn, pxmapOff, pxmapGlow32x32, "actionShow_DSO_Textures");
 		}
 		getButtonBar()->addButton(btShowNebulaeBackground, "040-nebulaeGroup");
 	} else {
-		getButtonBar()->hideButton("actionShow_DSS");
+		getButtonBar()->hideButton("actionShow_DSO_Textures");
 	}
 	flagShowNebulaBackgroundButton = b;
+	if (initDone) {
+		skyGui->updateBarsPos();
+	}
+	emit flagShowNebulaBackgroundButtonChanged(b);
+}
+
+// Define whether the button toggling bookmarks should be visible
+void StelGui::setFlagShowBookmarksButton(bool b)
+{
+	if (b==true) {
+		if (btShowBookmarks==Q_NULLPTR) {
+			// Create the nebulae background button
+			QPixmap pxmapGlow32x32(":/graphicGui/glow32x32.png");			
+			QPixmap pxmapOn(":/graphicGui/btBookmarksA-on.png");
+			QPixmap pxmapOff(":/graphicGui/btBookmarksA-off.png");
+			btShowBookmarks = new StelButton(Q_NULLPTR, pxmapOn, pxmapOff, pxmapGlow32x32, "actionShow_Bookmarks_Window_Global");
+		}
+		getButtonBar()->addButton(btShowBookmarks, "060-othersGroup");
+	} else {
+		getButtonBar()->hideButton("actionShow_Bookmarks_Window_Global");
+	}
+	flagShowBookmarksButton = b;
+	if (initDone) {
+		skyGui->updateBarsPos();
+	}
+	emit flagShowBookmarksButtonChanged(b);
+}
+
+// Define whether the button toggling ICRS grid should be visible
+void StelGui::setFlagShowICRSGridButton(bool b)
+{
+	if (b==true) {
+		if (btShowICRSGrid==Q_NULLPTR) {
+			// Create the nebulae background button
+			QPixmap pxmapGlow32x32(":/graphicGui/glow32x32.png");
+			QPixmap pxmapOn(":/graphicGui/btEquatorialJ2000Grid-on.png");
+			QPixmap pxmapOff(":/graphicGui/btEquatorialJ2000Grid-off.png");
+			btShowICRSGrid = new StelButton(Q_NULLPTR, pxmapOn, pxmapOff, pxmapGlow32x32, "actionShow_Equatorial_J2000_Grid");
+		}
+		getButtonBar()->addButton(btShowICRSGrid, "020-gridsGroup");
+	} else {
+		getButtonBar()->hideButton("actionShow_Equatorial_J2000_Grid");
+	}
+	flagShowICRSGridButton = b;
+	if (initDone) {
+		skyGui->updateBarsPos();
+	}
+	emit flagShowICRSGridButtonChanged(b);
+}
+
+// Define whether the button toggling galactic grid should be visible
+void StelGui::setFlagShowGalacticGridButton(bool b)
+{
+	if (b==true) {
+		if (btShowGalacticGrid==Q_NULLPTR) {
+			// Create the nebulae background button
+			QPixmap pxmapGlow32x32(":/graphicGui/glow32x32.png");
+			QPixmap pxmapOn(":/graphicGui/btGalacticGrid-on.png");
+			QPixmap pxmapOff(":/graphicGui/btGalacticGrid-off.png");
+			btShowGalacticGrid = new StelButton(Q_NULLPTR, pxmapOn, pxmapOff, pxmapGlow32x32, "actionShow_Galactic_Grid");
+		}
+		getButtonBar()->addButton(btShowGalacticGrid, "020-gridsGroup");
+	} else {
+		getButtonBar()->hideButton("actionShow_Galactic_Grid");
+	}
+	flagShowGalacticGridButton = b;
+	if (initDone) {
+		skyGui->updateBarsPos();
+	}
+	emit flagShowGalacticGridButtonChanged(b);
+}
+
+// Define whether the button toggling ecliptic grid should be visible
+void StelGui::setFlagShowEclipticGridButton(bool b)
+{
+	if (b==true) {
+		if (btShowEclipticGrid==Q_NULLPTR) {
+			// Create the nebulae background button
+			QPixmap pxmapGlow32x32(":/graphicGui/glow32x32.png");
+			QPixmap pxmapOn(":/graphicGui/btEclipticGrid-on.png");
+			QPixmap pxmapOff(":/graphicGui/btEclipticGrid-off.png");
+			btShowEclipticGrid = new StelButton(Q_NULLPTR, pxmapOn, pxmapOff, pxmapGlow32x32, "actionShow_Ecliptic_Grid");
+		}
+		getButtonBar()->addButton(btShowEclipticGrid, "020-gridsGroup");
+	} else {
+		getButtonBar()->hideButton("actionShow_Ecliptic_Grid");
+	}
+	flagShowEclipticGridButton = b;
+	if (initDone) {
+		skyGui->updateBarsPos();
+	}
+}
+
+// Define whether the button toggling constellation boundaries should be visible
+void StelGui::setFlagShowConstellationBoundariesButton(bool b)
+{
+	if (b==true) {
+		if (btShowConstellationBoundaries==Q_NULLPTR) {
+			// Create the nebulae background button
+			QPixmap pxmapGlow32x32(":/graphicGui/glow32x32.png");
+			QPixmap pxmapOn(":/graphicGui/btConstellationBoundaries-on.png");
+			QPixmap pxmapOff(":/graphicGui/btConstellationBoundaries-off.png");
+			btShowConstellationBoundaries = new StelButton(Q_NULLPTR, pxmapOn, pxmapOff, pxmapGlow32x32, "actionShow_Constellation_Boundaries");
+		}
+		getButtonBar()->addButton(btShowConstellationBoundaries, "010-constellationsGroup");
+	} else {
+		getButtonBar()->hideButton("actionShow_Constellation_Boundaries");
+	}
+	flagShowConstellationBoundariesButton = b;
+	if (initDone) {
+		skyGui->updateBarsPos();
+	}
+	emit flagShowConstellationBoundariesButtonChanged(b);
+}
+
+// Define whether the button toggling TOAST survey images should be visible
+void StelGui::setFlagShowToastSurveyButton(bool b)
+{
+	if (b==true) {
+		if (btShowToastSurvey==Q_NULLPTR) {
+			// Create the nebulae background button
+			QPixmap pxmapGlow32x32(":/graphicGui/glow32x32.png");
+			QPixmap pxmapOn(":/graphicGui/btToastSurvey-on.png");
+			QPixmap pxmapOff(":/graphicGui/btToastSurvey-off.png");
+			btShowToastSurvey = new StelButton(Q_NULLPTR, pxmapOn, pxmapOff, pxmapGlow32x32, "actionShow_Toast_Survey");
+		}
+		getButtonBar()->addButton(btShowToastSurvey, "040-nebulaeGroup");
+	} else {
+		getButtonBar()->hideButton("actionShow_Toast_Survey");
+	}
+	flagShowToastSurveyButton = b;
+	emit flagShowToastSurveyButtonChanged(b);
 }
 
 void StelGui::setVisible(bool b)
 {
-	skyGui->setVisible(b);
+	skyGui->setVisible(b);	
+	emit visibleChanged(b);
 }
 
 bool StelGui::getVisible() const
@@ -639,13 +869,13 @@ bool StelGui::isCurrentlyUsed() const
 	return skyGui->buttonBar->isUnderMouse() || skyGui->winBar->isUnderMouse();
 }
 
-void setScriptKeys()
-{
-}
+	//void setScriptKeys()
+	//{
+	//}
 
-void setNormalKeys()
-{
-}
+	//void setNormalKeys()
+	//{
+	//}
 
 void StelGui::setInfoTextFilters(const StelObject::InfoStringGroup& aflags)
 {
@@ -679,7 +909,11 @@ bool StelGui::getAutoHideHorizontalButtonBar() const
 
 void StelGui::setAutoHideHorizontalButtonBar(bool b)
 {
-	skyGui->autoHideHorizontalButtonBar=b;
+	if (skyGui->autoHideHorizontalButtonBar!=b)
+	{
+		skyGui->autoHideHorizontalButtonBar=b;
+		emit autoHideHorizontalButtonBarChanged(b);
+	}
 }
 
 bool StelGui::getAutoHideVerticalButtonBar() const
@@ -689,7 +923,11 @@ bool StelGui::getAutoHideVerticalButtonBar() const
 
 void StelGui::setAutoHideVerticalButtonBar(bool b)
 {
-	skyGui->autoHideVerticalButtonBar=b;
+	if (skyGui->autoHideVerticalButtonBar!=b)
+	{
+		skyGui->autoHideVerticalButtonBar=b;
+		emit autoHideVerticalButtonBarChanged(b);
+	}
 }
 
 bool StelGui::getFlagShowFlipButtons() const
@@ -700,6 +938,36 @@ bool StelGui::getFlagShowFlipButtons() const
 bool StelGui::getFlagShowNebulaBackgroundButton() const
 {
 	return flagShowNebulaBackgroundButton;
+}
+
+bool StelGui::getFlagShowToastSurveyButton() const
+{
+	return flagShowToastSurveyButton;
+}
+
+bool StelGui::getFlagShowBookmarksButton() const
+{
+	return flagShowBookmarksButton;
+}
+
+bool StelGui::getFlagShowICRSGridButton() const
+{
+	return flagShowICRSGridButton;
+}
+
+bool StelGui::getFlagShowGalacticGridButton() const
+{
+	return flagShowGalacticGridButton;
+}
+
+bool StelGui::getFlagShowEclipticGridButton() const
+{
+	return flagShowEclipticGridButton;
+}
+
+bool StelGui::getFlagShowConstellationBoundariesButton() const
+{
+	return flagShowConstellationBoundariesButton;
 }
 
 bool StelGui::initComplete(void) const
@@ -727,6 +995,7 @@ void StelGui::scriptStopped()
 void StelGui::setGuiVisible(bool b)
 {
 	setVisible(b);
+	emit visibleChanged(b);
 }
 
 StelAction* StelGui::getAction(const QString& actionName)
@@ -734,29 +1003,12 @@ StelAction* StelGui::getAction(const QString& actionName)
 	return StelApp::getInstance().getStelActionManager()->findAction(actionName);
 }
 
-/* ****************************************************************************************************************** */
-#if 0
-#pragma mark -
-#pragma mark Process changes from the ConstellationMgr
-#endif
-/* ****************************************************************************************************************** */
-
-/* ****************************************************************************************************************** */
-#if 0
-#pragma mark -
-#pragma mark Process changes from the GridLinesMgr
-#endif
-/* ****************************************************************************************************************** */
-
-/* ****************************************************************************************************************** */
-#if 0
-#pragma mark -
-#pragma mark Process changes from the GridLinesMgr
-#endif
-/* ****************************************************************************************************************** */
-
-
 void StelGui::copySelectedObjectInfo(void)
 {
 	QGuiApplication::clipboard()->setText(skyGui->infoPanel->getSelectedText());
+}
+
+bool StelGui::getAstroCalcVisible()
+{
+	return astroCalcDialog && astroCalcDialog->visible();
 }

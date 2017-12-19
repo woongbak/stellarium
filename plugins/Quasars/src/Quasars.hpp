@@ -22,7 +22,6 @@
 #include "StelObjectModule.hpp"
 #include "StelObject.hpp"
 #include "StelTextureTypes.hpp"
-#include "StelPainter.hpp"
 #include "Quasar.hpp"
 #include <QFont>
 #include <QVariantMap>
@@ -40,13 +39,41 @@ class QPixmap;
 class StelButton;
 class QuasarsDialog;
 
+/*! @defgroup quasars Quasars Plug-in
+@{
+The %Quasars plugin provides visualization of some quasars brighter than 16
+visual magnitude. A catalogue of quasars compiled from "Quasars and Active
+Galactic Nuclei" (13th Ed.) (Veron+ 2010).
+
+<b>Quasars Catalog</b>
+
+The quasars catalog is stored on the disk in [JSON](http://www.json.org/)
+format, in a file named "quasars.json". A default copy is embedded in the
+plug-in at compile time. A working copy is kept in the user data directory.
+
+<b>Configuration</b>
+
+The plug-ins' configuration data is stored in Stellarium's main configuration
+file (section [Quasars]).
+
+@}
+*/
+
+//! @ingroup quasars
 typedef QSharedPointer<Quasar> QuasarP;
 
-//! This is an example of a plug-in which can be dynamically loaded into stellarium
+//! @class Quasars
+//! Main class of the %Quasars plugin.
+//! @author Alexander Wolf
+//! @ingroup quasars
 class Quasars : public StelObjectModule
 {
 	Q_OBJECT
-	Q_PROPERTY(bool quasarsVisible READ getFlagShowQuasars WRITE setFlagShowQuasars)
+	Q_PROPERTY(bool quasarsVisible
+		   READ getFlagShowQuasars
+		   WRITE setFlagShowQuasars
+		   NOTIFY flagQuasarsVisibilityChanged
+		   )
 public:
 	//! @enum UpdateState
 	//! Used for keeping for track of the download/update status
@@ -79,33 +106,34 @@ public:
 	//! @return an list containing the satellites located inside the limitFov circle around position v.
 	virtual QList<StelObjectP> searchAround(const Vec3d& v, double limitFov, const StelCore* core) const;
 
-	//! Return the matching satellite object's pointer if exists or NULL.
+	//! Return the matching satellite object's pointer if exists or Q_NULLPTR.
 	//! @param nameI18n The case in-sensistive satellite name
 	virtual StelObjectP searchByNameI18n(const QString& nameI18n) const;
 
-	//! Return the matching satellite if exists or NULL.
+	//! Return the matching satellite if exists or Q_NULLPTR.
 	//! @param name The case in-sensistive standard program name
 	virtual StelObjectP searchByName(const QString& name) const;
 
-	//! Find and return the list of at most maxNbItem objects auto-completing the passed object I18n name.
-	//! @param objPrefix the case insensitive first letters of the searched object
-	//! @param maxNbItem the maximum number of returned object names
-	//! @param useStartOfWords the autofill mode for returned objects names
-	//! @return a list of matching object name by order of relevance, or an empty list if nothing match
-	virtual QStringList listMatchingObjectsI18n(const QString& objPrefix, int maxNbItem=5, bool useStartOfWords=false) const;
+	virtual StelObjectP searchByID(const QString &id) const
+	{
+		return qSharedPointerCast<StelObject>(getByID(id));
+	}
 
-	//! Find and return the list of at most maxNbItem objects auto-completing the passed object English name.
+	//! Find and return the list of at most maxNbItem objects auto-completing the passed object name.
 	//! @param objPrefix the case insensitive first letters of the searched object
 	//! @param maxNbItem the maximum number of returned object names
 	//! @param useStartOfWords the autofill mode for returned objects names
 	//! @return a list of matching object name by order of relevance, or an empty list if nothing match
-	virtual QStringList listMatchingObjects(const QString& objPrefix, int maxNbItem=5, bool useStartOfWords=false) const;
+	virtual QStringList listMatchingObjects(const QString& objPrefix, int maxNbItem=5, bool useStartOfWords=false, bool inEnglish=false) const;
 
 	virtual QStringList listAllObjects(bool inEnglish) const;
+
 	virtual QString getName() const { return "Quasars"; }
 
+	virtual QString getStelObjectType() const { return Quasar::QUASAR_TYPE; }
+
 	//! get a Quasar object by identifier
-	QuasarP getByID(const QString& id);
+	QuasarP getByID(const QString& id) const;
 
 	//! Implement this to tell the main Stellarium GUI that there is a GUI element to configure this
 	//! plugin.
@@ -113,7 +141,7 @@ public:
 
 	//! Set up the plugin with default values.  This means clearing out the Quasars section in the
 	//! main config.ini (if one already exists), and populating it with default values.  It also
-	//! creates the default pulsars.json file from the resource embedded in the plugin lib/dll file.
+	//! creates the default quasars.json file from the resource embedded in the plugin lib/dll file.
 	void restoreDefaults(void);
 
 	//! Read (or re-read) settings from the main config file.  This will be called from init and also
@@ -130,10 +158,6 @@ public:
 	//! @param b if true, updates will be enabled, else they will be disabled
 	void setUpdatesEnabled(bool b) {updatesEnabled=b;}
 
-	bool getDisplayMode(void);
-	void setDisplayMode(bool b);
-	QString getMarkerColor(void);
-	void setMarkerColor(QString c);
 	void setEnableAtStartup(bool b) { enableAtStartup=b; }
 	bool getEnableAtStartup(void) { return enableAtStartup; }
 
@@ -150,9 +174,6 @@ public:
 	//! Get the current updateState
 	UpdateState getUpdateState(void) {return updateState;}
 
-	//! Get count of quasars from catalog
-	int getCountQuasars(void) {return QsrCount;}
-
 signals:
 	//! @param state the new update state.
 	void updateStateChanged(Quasars::UpdateState state);
@@ -160,21 +181,45 @@ signals:
 	//! emitted after a JSON update has run.
 	void jsonUpdateComplete(void);
 
+	void flagQuasarsVisibilityChanged(bool b);
+
 public slots:
 	//! Download JSON from web recources described in the module section of the
 	//! module.ini file and update the local JSON file.
 	void updateJSON(void);
 
-	void setFlagShowQuasars(bool b) { flagShowQuasars=b; }
+	//! Enable/disable display of markers of quasars
+	//! @param b boolean flag
+	void setFlagShowQuasars(bool b);
+	//! Get status to display of markers of quasars
+	//! @return true if it's visible
 	bool getFlagShowQuasars(void) { return flagShowQuasars; }
 
 	//! Define whether the button toggling quasars should be visible
 	void setFlagShowQuasarsButton(bool b);
 	bool getFlagShowQuasarsButton(void) { return flagShowQuasarsButton; }
 
-	//! Display a message. This is used for plugin-specific warnings and such
-	void displayMessage(const QString& message, const QString hexColor="#999999");
-	void messageTimeout(void);
+	//! Get count of quasars from catalog
+	//! @return count of quasars
+	int getCountQuasars(void) {return QsrCount;}
+
+	//! Get status to display of distribution of quasars
+	//! @return true if distribution of quasars is enabled
+	bool getDisplayMode(void);
+	//! Enable/disable display of distribution of quasars
+	//! @param b (set true for display quasars as markers)
+	void setDisplayMode(bool b);
+
+	//! Get color for quasars markers
+	//! @return color
+	Vec3f getMarkerColor(void);
+	//! Set color for quasars markers
+	//! @param c color
+	//! @code
+	//! // example of usage in scripts
+	//! Quasars.setMarkerColor(Vec3f(1.0,0.0,0.0));
+	//! @endcode
+	void setMarkerColor(const Vec3f& c);
 
 private:
 	// Font used for displaying our text
@@ -249,6 +294,10 @@ private slots:
 	void checkForUpdate(void);
 	void updateDownloadComplete(QNetworkReply* reply);
 
+	//! Display a message. This is used for plugin-specific warnings and such
+	void displayMessage(const QString& message, const QString hexColor="#999999");
+
+	void reloadCatalog(void);
 };
 
 
@@ -260,11 +309,12 @@ private slots:
 class QuasarsStelPluginInterface : public QObject, public StelPluginInterface
 {
 	Q_OBJECT
-	Q_PLUGIN_METADATA(IID "stellarium.StelGuiPluginInterface/1.0")
+	Q_PLUGIN_METADATA(IID StelPluginInterface_iid)
 	Q_INTERFACES(StelPluginInterface)
 public:
 	virtual StelModule* getStelModule() const;
 	virtual StelPluginInfo getPluginInfo() const;
+	virtual QObjectList getExtensionList() const { return QObjectList(); }
 };
 
 #endif /*_QUASARS_HPP_*/

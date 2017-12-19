@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2009 Matthew Gates
+ * Copyright (C) 2014 Georg Zotti
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -26,7 +27,6 @@
 #include "StelModuleMgr.hpp"
 #include "StelGui.hpp"
 #include "StelGuiItems.hpp"
-#include "StelIniParser.hpp"
 #include "StelVertexArray.hpp"
 #include "AngleMeasure.hpp"
 #include "AngleMeasureDialog.hpp"
@@ -34,7 +34,6 @@
 #include <QDebug>
 #include <QTimer>
 #include <QPixmap>
-#include <QtNetwork>
 #include <QSettings>
 #include <QKeyEvent>
 #include <QMouseEvent>
@@ -58,16 +57,39 @@ StelPluginInfo AngleMeasureStelPluginInterface::getPluginInfo() const
 	info.authors = "Matthew Gates";
 	info.contact = "http://porpoisehead.net/";
 	info.description = N_("Provides an angle measurement tool");
-	info.version = ANGLEMEASURE_VERSION;
+	info.version = ANGLEMEASURE_PLUGIN_VERSION;
+	info.license = ANGLEMEASURE_PLUGIN_LICENSE;
 	return info;
 }
 
 AngleMeasure::AngleMeasure()
-	: flagShowAngleMeasure(false),
-	  dragging(false),
-	  angle(0.),
-	  toolbarButton(NULL)
+	: flagShowAngleMeasure(false)
+	, withDecimalDegree(false)
+	, dragging(false)
+	, angle(0.)
+	, flagUseDmsFormat(false)
+	, flagShowPA(false)
+	, flagShowEquatorial(false)
+	, flagShowHorizontal(false)
+	, flagShowHorizontalPA(false)
+	, flagShowHorizontalStartSkylinked(false)
+	, flagShowHorizontalEndSkylinked(false)
+	, angleHor(0.)
+	, toolbarButton(Q_NULLPTR)
 {
+	startPoint.set(0.,0.,0.);
+	endPoint.set(0.,0.,0.);
+	perp1StartPoint.set(0.,0.,0.);
+	perp1EndPoint.set(0.,0.,0.);
+	perp2StartPoint.set(0.,0.,0.);
+	perp2EndPoint.set(0.,0.,0.);
+	startPointHor.set(0.,0.,0.);
+	endPointHor.set(0.,0.,0.);
+	perp1StartPointHor.set(0.,0.,0.);
+	perp1EndPointHor.set(0.,0.,0.);
+	perp2StartPointHor.set(0.,0.,0.);
+	perp2EndPointHor.set(0.,0.,0.);
+
 	setObjectName("AngleMeasure");
 	font.setPixelSize(16);
 
@@ -105,20 +127,14 @@ double AngleMeasure::getCallOrder(StelModuleActionName actionName) const
 
 void AngleMeasure::init()
 {
-	loadSettings();
+	if (!conf->childGroups().contains("AngleMeasure"))
+		restoreDefaultSettings();
 
-	startPoint.set(0.,0.,0.);
-	endPoint.set(0.,0.,0.);
-	perp1StartPoint.set(0.,0.,0.);
-	perp1EndPoint.set(0.,0.,0.);
-	perp2StartPoint.set(0.,0.,0.);
-	perp2EndPoint.set(0.,0.,0.);
+	loadSettings();
 
 	StelApp& app = StelApp::getInstance();
 
-	// Create action for enable/disable & hook up signals
-	StelGui* gui = dynamic_cast<StelGui*>(app.getGui());
-	Q_ASSERT(gui);
+	// Create action for enable/disable & hook up signals	
 	addAction("actionShow_Angle_Measure", N_("Angle Measure"), N_("Angle measure"), "enabled", "Ctrl+A");
 
 	// Initialize the message strings and make sure they are translated when
@@ -129,9 +145,16 @@ void AngleMeasure::init()
 	// Add a toolbar button
 	try
 	{
-		toolbarButton = new StelButton(NULL, QPixmap(":/angleMeasure/bt_anglemeasure_on.png"), QPixmap(":/angleMeasure/bt_anglemeasure_off.png"),
-																	 QPixmap(":/graphicGui/glow32x32.png"), "actionShow_Angle_Measure");
-		gui->getButtonBar()->addButton(toolbarButton, "065-pluginsGroup");
+		StelGui* gui = dynamic_cast<StelGui*>(app.getGui());
+		if (gui!=Q_NULLPTR)
+		{
+			toolbarButton = new StelButton(Q_NULLPTR,
+						       QPixmap(":/angleMeasure/bt_anglemeasure_on.png"),
+						       QPixmap(":/angleMeasure/bt_anglemeasure_off.png"),
+						       QPixmap(":/graphicGui/glow32x32.png"),
+						       "actionShow_Angle_Measure");
+			gui->getButtonBar()->addButton(toolbarButton, "065-pluginsGroup");
+		}
 	}
 	catch (std::runtime_error& e)
 	{
@@ -143,53 +166,85 @@ void AngleMeasure::update(double deltaTime)
 {
 	messageFader.update((int)(deltaTime*1000));
 	lineVisible.update((int)(deltaTime*1000));
+	static StelCore *core=StelApp::getInstance().getCore();
+
+	withDecimalDegree = StelApp::getInstance().getFlagShowDecimalDegrees();
+
+	// if altAz endpoint linked to the rotating sky, move respective point(s)
+	if (flagShowHorizontalStartSkylinked)
+	{
+		startPointHor = core->equinoxEquToAltAz(startPoint, StelCore::RefractionAuto);
+		calculateEnds();
+	}
+	if (flagShowHorizontalEndSkylinked)
+	{
+		endPointHor = core->equinoxEquToAltAz(endPoint, StelCore::RefractionAuto);
+		calculateEnds();
+	}
 }
 
-//! Draw any parts on the screen which are for our module
-void AngleMeasure::draw(StelCore* core)
+void AngleMeasure::drawOne(StelCore *core, const StelCore::FrameType frameType, const StelCore::RefractionMode refractionMode, const Vec3f txtColor, const Vec3f lineColor)
 {
-	if (lineVisible.getInterstate() < 0.000001f && messageFader.getInterstate() < 0.000001f)
-		return;
-	
-	const StelProjectorP prj = core->getProjection(StelCore::FrameEquinoxEqu);
+	const StelProjectorP prj = core->getProjection(frameType, refractionMode);
 	StelPainter painter(prj);
 	painter.setFont(font);
+	painter.setBlending(true);
 
 	if (lineVisible.getInterstate() > 0.000001f)
 	{
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glEnable(GL_BLEND);
-		glEnable(GL_TEXTURE_2D);
-		
 		Vec3d xy;
 		QString displayedText;
-		if (prj->project(perp1EndPoint,xy))
+		if (frameType==StelCore::FrameEquinoxEqu)
 		{
-			painter.setColor(textColor[0], textColor[1], textColor[2], lineVisible.getInterstate());
-			if (flagShowPA)
-				displayedText = QString("%1 (%2%3)").arg(calculateAngle(), messagePA, calculatePositionAngle(startPoint, endPoint));
-			else
-				displayedText = calculateAngle();
-			painter.drawText(xy[0], xy[1], displayedText, 0, 15, 15);
+			if (prj->project(perp1EndPoint,xy))
+			{
+				painter.setColor(txtColor[0], txtColor[1], txtColor[2], lineVisible.getInterstate());
+				if (flagShowPA)
+					displayedText = QString("%1 (%2%3)").arg(calculateAngle(), messagePA, calculatePositionAngle(startPoint, endPoint));
+				else
+					displayedText = calculateAngle();
+				painter.drawText(xy[0], xy[1], displayedText, 0, 15, 15);
+			}
+		}
+		else
+		{
+			if (prj->project(perp1EndPointHor,xy))
+			{
+				painter.setColor(txtColor[0], txtColor[1], txtColor[2], lineVisible.getInterstate());
+				if (flagShowHorizontalPA)
+					displayedText = QString("%1 (%2%3)").arg(calculateAngle(true), messagePA, calculatePositionAngle(startPointHor, endPointHor));
+				else
+					displayedText = calculateAngle(true);
+				painter.drawText(xy[0], xy[1], displayedText, 0, 15, -5);
+			}
 		}
 
-		glDisable(GL_TEXTURE_2D);
-		// OpenGL ES 2.0 doesn't have GL_LINE_SMOOTH
-		// glEnable(GL_LINE_SMOOTH);
-		glEnable(GL_BLEND);
-		
-		// main line is a great circle		
+		painter.setLineSmooth(true);
+
+		// main line is a great circle
 		painter.setColor(lineColor[0], lineColor[1], lineColor[2], lineVisible.getInterstate());
-		painter.drawGreatCircleArc(startPoint, endPoint, NULL);
+		if (frameType==StelCore::FrameEquinoxEqu)
+		{
+			painter.drawGreatCircleArc(startPoint, endPoint, Q_NULLPTR);
 
-		// End lines
-		painter.drawGreatCircleArc(perp1StartPoint, perp1EndPoint, NULL);
-		painter.drawGreatCircleArc(perp2StartPoint, perp2EndPoint, NULL);
+			// End lines
+			painter.drawGreatCircleArc(perp1StartPoint, perp1EndPoint, Q_NULLPTR);
+			painter.drawGreatCircleArc(perp2StartPoint, perp2EndPoint, Q_NULLPTR);
+		}
+		else
+		{
+			painter.drawGreatCircleArc(startPointHor, endPointHor, Q_NULLPTR);
+
+			// End lines
+			painter.drawGreatCircleArc(perp1StartPointHor, perp1EndPointHor, Q_NULLPTR);
+			painter.drawGreatCircleArc(perp2StartPointHor, perp2EndPointHor, Q_NULLPTR);
+		}
+
+		painter.setLineSmooth(false);
 	}
-
 	if (messageFader.getInterstate() > 0.000001f)
 	{
-		painter.setColor(textColor[0], textColor[1], textColor[2], messageFader.getInterstate());
+		painter.setColor(txtColor[0], txtColor[1], txtColor[2], messageFader.getInterstate());
 		int x = 83;
 		int y = 120;
 		int ls = painter.getFontMetrics().lineSpacing();
@@ -199,28 +254,54 @@ void AngleMeasure::draw(StelCore* core)
 		y -= ls;
 		painter.drawText(x, y, messageRightButton);
 	}
+	painter.setBlending(false);
+}
+
+//! Draw any parts on the screen which are for our module
+void AngleMeasure::draw(StelCore* core)
+{
+	if (startPoint.lengthSquared()==0.0) // avoid crash on switch-on, lp:#1455839
+		return;
+	if (lineVisible.getInterstate() < 0.000001f && messageFader.getInterstate() < 0.000001f)
+		return;
+	if (flagShowHorizontal)
+	{
+		drawOne(core, StelCore::FrameAltAz, StelCore::RefractionOff, horTextColor, horLineColor);
+	}
+	if (flagShowEquatorial)
+	{
+		drawOne(core, StelCore::FrameEquinoxEqu, StelCore::RefractionAuto, textColor, lineColor);
+	}
 }
 
 QString AngleMeasure::calculatePositionAngle(const Vec3d p1, const Vec3d p2) const
 {
 	double y = cos(p2.latitude())*sin(p2.longitude()-p1.longitude());
 	double x = cos(p1.latitude())*sin(p2.latitude()) - sin(p1.latitude())*cos(p2.latitude())*cos(p2.longitude()-p1.longitude());
-	double r = std::atan(y/x);
-	if (x<0)
-		r += M_PI;
-	if (y<0)
-		r += 2*M_PI;
-	if (r>(2*M_PI))
-		r -= 2*M_PI;
+	double r = std::atan2(y,x);
+	if (r<0)
+		r+= 2*M_PI;
 
 	unsigned int d, m;
 	double s;
 	bool sign;
-	StelUtils::radToDms(r, sign, d, m, s);
-	if (flagUseDmsFormat)
-		return QString("%1d %2m %3s").arg(d).arg(m).arg(s, 0, 'f', 2);
+
+	if (withDecimalDegree)
+	{
+		StelUtils::radToDecDeg(r, sign, s);
+		if (flagUseDmsFormat)
+			return QString("%1d").arg(s, 0, 'f', 5);
+		else
+			return QString("%1%2").arg(s, 0, 'f', 5).arg(QChar(0x00B0));
+	}
 	else
-		return QString("%1%2 %3' %4\"").arg(d).arg(QChar(0x00B0)).arg(m).arg(s, 0, 'f', 2);
+	{
+		StelUtils::radToDms(r, sign, d, m, s);
+		if (flagUseDmsFormat)
+			return QString("%1d %2m %3s").arg(d).arg(m).arg(s, 0, 'f', 2);
+		else
+			return QString("%1%2 %3' %4\"").arg(d).arg(QChar(0x00B0)).arg(m).arg(s, 0, 'f', 2);
+	}
 }
 
 void AngleMeasure::handleKeys(QKeyEvent* event)
@@ -239,13 +320,24 @@ void AngleMeasure::handleMouseClicks(class QMouseEvent* event)
 	if (event->type()==QEvent::MouseButtonPress && event->button()==Qt::LeftButton)
 	{
 		const StelProjectorP prj = StelApp::getInstance().getCore()->getProjection(StelCore::FrameEquinoxEqu);
-		prj->unProject(event->x(),event->y(),startPoint);
+		if (prj->unProject(event->x(),event->y(),startPoint))
+		{ // Nick Fedoseev patch: improve click match
+			Vec3d win;
+			prj->project(startPoint,win);
+			float dx = event->x() - win.v[0];
+			float dy = event->y() - win.v[1];
+			prj->unProject(event->x()+dx, event->y()+dy, startPoint);
+		}
+		const StelProjectorP prjHor = StelApp::getInstance().getCore()->getProjection(StelCore::FrameAltAz, StelCore::RefractionOff);
+		prjHor->unProject(event->x(),event->y(),startPointHor);
+
 
 		// first click reset the line... only draw it after we've dragged a little.
 		if (!dragging)
 		{
 			lineVisible = false;
 			endPoint = startPoint;
+			endPointHor=startPointHor;
 		}
 		else
 			lineVisible = true;
@@ -265,7 +357,16 @@ void AngleMeasure::handleMouseClicks(class QMouseEvent* event)
 	else if (event->type()==QEvent::MouseButtonPress && event->button()==Qt::RightButton)
 	{
 		const StelProjectorP prj = StelApp::getInstance().getCore()->getProjection(StelCore::FrameEquinoxEqu);
-		prj->unProject(event->x(),event->y(),endPoint);
+		if (prj->unProject(event->x(),event->y(),endPoint))
+		{ // Nick Fedoseev patch: improve click match
+			Vec3d win;
+			prj->project(endPoint,win);
+			float dx = event->x() - win.v[0];
+			float dy = event->y() - win.v[1];
+			prj->unProject(event->x()+dx, event->y()+dy, endPoint);
+		}
+		const StelProjectorP prjHor = StelApp::getInstance().getCore()->getProjection(StelCore::FrameAltAz, StelCore::RefractionOff);
+		prjHor->unProject(event->x(),event->y(),endPointHor);
 		calculateEnds();
 		event->setAccepted(true);
 		return;
@@ -278,7 +379,16 @@ bool AngleMeasure::handleMouseMoves(int x, int y, Qt::MouseButtons)
 	if (dragging)
 	{
 		const StelProjectorP prj = StelApp::getInstance().getCore()->getProjection(StelCore::FrameEquinoxEqu);
-		prj->unProject(x,y,endPoint);
+		if (prj->unProject(x,y,endPoint))
+		{ // Nick Fedoseev patch: improve click match
+		   Vec3d win;
+		   prj->project(endPoint,win);
+		   float dx = x - win.v[0];
+		   float dy = y - win.v[1];
+		   prj->unProject(x+dx, y+dy, endPoint);
+		}
+		const StelProjectorP prjHor = StelApp::getInstance().getCore()->getProjection(StelCore::FrameAltAz, StelCore::RefractionOff);
+		prjHor->unProject(x,y,endPointHor);
 		calculateEnds();
 		lineVisible = true;
 		return true;
@@ -289,55 +399,123 @@ bool AngleMeasure::handleMouseMoves(int x, int y, Qt::MouseButtons)
 
 void AngleMeasure::calculateEnds(void)
 {
-	Vec3d v0 = endPoint - startPoint;
-	Vec3d v1 = Vec3d(0,0,0) - startPoint;
-	Vec3d p = v0 ^ v1;
-	p *= 0.08;  // end width
-	perp1StartPoint.set(startPoint[0]-p[0],startPoint[1]-p[1],startPoint[2]-p[2]);
-	perp1EndPoint.set(startPoint[0]+p[0],startPoint[1]+p[1],startPoint[2]+p[2]);
-
-	v1 = Vec3d(0,0,0) - endPoint;
-	p = v0 ^ v1;
-	p *= 0.08;  // end width
-	perp2StartPoint.set(endPoint[0]-p[0],endPoint[1]-p[1],endPoint[2]-p[2]);
-	perp2EndPoint.set(endPoint[0]+p[0],endPoint[1]+p[1],endPoint[2]+p[2]);
-
-	angle = startPoint.angle(endPoint);
+	if (flagShowEquatorial)
+		calculateEndsOneLine(startPoint,    endPoint,    perp1StartPoint,    perp1EndPoint,    perp2StartPoint,    perp2EndPoint,    angle);
+	if (flagShowHorizontal)
+		calculateEndsOneLine(startPointHor, endPointHor, perp1StartPointHor, perp1EndPointHor, perp2StartPointHor, perp2EndPointHor, angleHor);
 }
 
-QString AngleMeasure::calculateAngle() const
+void AngleMeasure::calculateEndsOneLine(const Vec3d start, const Vec3d end, Vec3d &perp1Start, Vec3d &perp1End, Vec3d &perp2Start, Vec3d &perp2End, double &angle)
+{
+	Vec3d v0 = end - start;
+	Vec3d v1 = Vec3d(0,0,0) - start;
+	Vec3d p = v0 ^ v1;
+	p *= 0.08;  // end width
+	perp1Start.set(start[0]-p[0],start[1]-p[1],start[2]-p[2]);
+	perp1End.set(start[0]+p[0],start[1]+p[1],start[2]+p[2]);
+
+	v1 = Vec3d(0,0,0) - end;
+	p = v0 ^ v1;
+	p *= 0.08;  // end width
+	perp2Start.set(end[0]-p[0],end[1]-p[1],end[2]-p[2]);
+	perp2End.set(end[0]+p[0],end[1]+p[1],end[2]+p[2]);
+
+	angle = start.angle(end);
+}
+
+// Misnomer! should be called formatAngleString()
+QString AngleMeasure::calculateAngle(bool horizontal) const
 {
 	unsigned int d, m;
 	double s;
 	bool sign;
 
-	StelUtils::radToDms(angle, sign, d, m, s);
-	if (flagUseDmsFormat)
-		return QString("%1d %2m %3s").arg(d).arg(m).arg(s, 0, 'f', 2);
+	if (withDecimalDegree)
+	{
+		if (horizontal)
+			StelUtils::radToDecDeg(angleHor, sign, s);
+		else
+			StelUtils::radToDecDeg(angle, sign, s);
+
+		if (flagUseDmsFormat)
+			return QString("%1d").arg(s, 0, 'f', 5);
+		else
+			return QString("%1%2").arg(s, 0, 'f', 5).arg(QChar(0x00B0));
+	}
 	else
-		return QString("%1%2 %3' %4\"").arg(d).arg(QChar(0x00B0)).arg(m).arg(s, 0, 'f', 2);
+	{
+		if (horizontal)
+			StelUtils::radToDms(angleHor, sign, d, m, s);
+		else
+			StelUtils::radToDms(angle, sign, d, m, s);
+		if (flagUseDmsFormat)
+			return QString("%1d %2m %3s").arg(d).arg(m).arg(s, 0, 'f', 2);
+		else
+			return QString("%1%2 %3' %4\"").arg(d).arg(QChar(0x00B0)).arg(m).arg(s, 0, 'f', 2);
+	}
 }
 
 void AngleMeasure::enableAngleMeasure(bool b)
 {
-	flagShowAngleMeasure = b;
-	lineVisible = b;
-	messageFader = b;
-	if (b)
+	if (b!=flagShowAngleMeasure)
 	{
-		//qDebug() << "AngleMeasure::enableAngleMeasure starting timer";
-		messageTimer->start();
+		flagShowAngleMeasure = b;
+		lineVisible = b;
+		messageFader = b;
+		if (b)
+		{
+			//qDebug() << "AngleMeasure::enableAngleMeasure starting timer";
+			messageTimer->start();
+		}
+		// Immediate saving of settings
+		conf->setValue("AngleMeasure/enable_at_startup", flagShowAngleMeasure);
+
+		emit flagAngleMeasureChanged(b);
 	}
 }
 
 void AngleMeasure::showPositionAngle(bool b)
 {
 	flagShowPA = b;
+	// Immediate saving of settings
+	conf->setValue("AngleMeasure/show_position_angle", flagShowPA);
 }
 
+void AngleMeasure::showPositionAngleHor(bool b)
+{
+	flagShowHorizontalPA = b;
+	// Immediate saving of settings
+	conf->setValue("AngleMeasure/show_position_angle_horizontal", flagShowHorizontalPA);
+}
+void AngleMeasure::showEquatorial(bool b)
+{
+	flagShowEquatorial = b;
+	// Immediate saving of settings
+	conf->setValue("AngleMeasure/show_equatorial", flagShowEquatorial);
+}
+void AngleMeasure::showHorizontal(bool b)
+{
+	flagShowHorizontal = b;
+	// Immediate saving of settings
+	conf->setValue("AngleMeasure/show_horizontal", flagShowHorizontal);
+}
+void AngleMeasure::showHorizontalStartSkylinked(bool b)
+{
+	flagShowHorizontalStartSkylinked = b;
+	// Immediate saving of settings
+	conf->setValue("AngleMeasure/link_horizontal_start_to_sky", flagShowHorizontalStartSkylinked);
+}
+void AngleMeasure::showHorizontalEndSkylinked(bool b)
+{
+	flagShowHorizontalEndSkylinked = b;
+	// Immediate saving of settings
+	conf->setValue("AngleMeasure/link_horizontal_end_to_sky", flagShowHorizontalEndSkylinked);
+}
 void AngleMeasure::useDmsFormat(bool b)
 {
 	flagUseDmsFormat=b;
+	// Immediate saving of settings
+	conf->setValue("AngleMeasure/angle_format_dms", flagUseDmsFormat);
 }
 
 void AngleMeasure::updateMessageText()
@@ -364,34 +542,28 @@ void AngleMeasure::restoreDefaultSettings()
 	// Remove the old values...
 	conf->remove("AngleMeasure");
 	// ...load the default values...
-	loadSettings();
-	// ...and then save them.
-	saveSettings();
+	loadSettings();	
 	// But this doesn't save the colors, so:
 	conf->beginGroup("AngleMeasure");
 	conf->setValue("text_color", "0,0.5,1");
 	conf->setValue("line_color", "0,0.5,1");
+	conf->setValue("text_color_horizontal", "0.9,0.6,0.4");
+	conf->setValue("line_color_horizontal", "0.9,0.6,0.4");
 	conf->endGroup();
 }
 
 void AngleMeasure::loadSettings()
 {
-	conf->beginGroup("AngleMeasure");
-
-	useDmsFormat(conf->value("angle_format_dms", false).toBool());
-	showPositionAngle(conf->value("show_position_angle", false).toBool());
-	textColor = StelUtils::strToVec3f(conf->value("text_color", "0,0.5,1").toString());
-	lineColor = StelUtils::strToVec3f(conf->value("line_color", "0,0.5,1").toString());
-
-	conf->endGroup();
-}
-
-void AngleMeasure::saveSettings()
-{
-	conf->beginGroup("AngleMeasure");
-
-	conf->setValue("angle_format_dms", isDmsFormat());
-	conf->setValue("show_position_angle", isPaDisplayed());
-
-	conf->endGroup();
+	enableAngleMeasure(conf->value("AngleMeasure/enable_at_startup", false).toBool());
+	useDmsFormat(conf->value("AngleMeasure/angle_format_dms", false).toBool());
+	showPositionAngle(conf->value("AngleMeasure/show_position_angle", false).toBool());
+	textColor = StelUtils::strToVec3f(conf->value("AngleMeasure/text_color", "0,0.5,1").toString());
+	lineColor = StelUtils::strToVec3f(conf->value("AngleMeasure/line_color", "0,0.5,1").toString());
+	horTextColor = StelUtils::strToVec3f(conf->value("AngleMeasure/text_color_horizontal", "0.9,0.6,0.4").toString());
+	horLineColor = StelUtils::strToVec3f(conf->value("AngleMeasure/line_color_horizontal", "0.9,0.6,0.4").toString());
+	showPositionAngleHor(conf->value("AngleMeasure/show_position_angle_horizontal", false).toBool());
+	showEquatorial(conf->value("AngleMeasure/show_equatorial", true).toBool());
+	showHorizontal(conf->value("AngleMeasure/show_horizontal", false).toBool());
+	showHorizontalStartSkylinked(conf->value("AngleMeasure/link_horizontal_start_to_sky", false).toBool());
+	showHorizontalEndSkylinked(conf->value("AngleMeasure/link_horizontal_end_to_sky", false).toBool());
 }

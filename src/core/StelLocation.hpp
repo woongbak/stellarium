@@ -19,16 +19,15 @@
 #ifndef _STELLOCATION_HPP_
 #define _STELLOCATION_HPP_
 
-#include "config.h"
-
 #include <QString>
+#include <QMetaType>
 
 //! @class StelLocation
 //! Store the informations for a location on a planet
 class StelLocation
 {
 public:
-	StelLocation() : longitude(0.f), latitude(0.f), altitude(0), bortleScaleIndex(2.f), role('X'), isUserLocation(true) {;}
+	StelLocation() : longitude(0.f), latitude(0.f), altitude(0), bortleScaleIndex(2.f), population(0.f), role('X'), isUserLocation(true) {;}
 
 	//! Return a short string which can be used in a list view.
 	QString getID() const;
@@ -60,25 +59,41 @@ public:
 	int population;
 	//! Location role code.
 	//! Possible values:
-	//! - \p C or \p B is a capital city
-	//! - \p R is a regional capital
-	//! - \p N is a normal city (any other type of settlement)
-	//! - \p O is an observatory
-	//! - \p L is a spacecraft lander
-	//! - \p I is a spacecraft impact
-	//! - \p A is a spacecraft crash
-	//! - \p X is an unknown or user-defined location (the default value).
-	//! - \p ! is an invalid location.
+	//! @li @p C or @p B is a capital city
+	//! @li @p R is a regional capital
+	//! @li @p N is a normal city (any other type of settlement)
+	//! @li @p O is an observatory
+	//! @li @p L is a spacecraft lander
+	//! @li @p I is a spacecraft impact
+	//! @li @p A is a spacecraft crash
+	//! @li @p X is an unknown or user-defined location (the default value).
+	//! @li @p ! is an invalid location.
 	QChar role;
+	//! IANA identificator of time zone.
+	//! Note that timezone names under various OSes may be different than those used in Stellarium's
+	//! location database (e.g. Ubuntu:Asia/Kolkata=Windows:Asia/Calcutta),
+	//! which requires some translation effort during the loading process.
+	//  See LP:1662132
+	// GZ renamed to more clearly indicate these are IANA names.
+	QString ianaTimeZone;
 
 	//! Parse a location from a line serialization
 	static StelLocation createFromLine(const QString& line);
+
+	//! Compute great-circle distance between two locations
+	static float distanceDegrees(const float long1, const float lat1, const float long2, const float lat2);
 
 	//! Used privately by the StelLocationMgr
 	bool isUserLocation;
 
 	static const int DEFAULT_BORTLE_SCALE_INDEX;
+private:
+	//Register with Qt
+	static int metaTypeId;
+	static int initMetaType();
 };
+
+Q_DECLARE_METATYPE(StelLocation)
 
 //! Serialize the passed StelLocation into a binary blob.
 QDataStream& operator<<(QDataStream& out, const StelLocation& loc);

@@ -42,16 +42,14 @@ QT_END_NAMESPACE
 
 class Oculars;
 
+//! @ingroup oculars
 class OcularDialog : public StelDialog
 {
 	Q_OBJECT
 
 public:
-	OcularDialog(Oculars* plugin, QList<CCD *>* ccds, QList<Ocular *>* oculars, QList<Telescope *>* telescopes, QList<Lens *>* lense);
+	OcularDialog(Oculars* plugin, QList<CCD *>* ccds, QList<Ocular *>* oculars, QList<Telescope *>* telescopes, QList<Lens *>* lenses);
 	virtual ~OcularDialog();
-	//! Notify that the application style changed
-	void styleChanged();
-	void updateStyle();
 
 public slots:
 	void closeWindow();
@@ -73,21 +71,14 @@ public slots:
 	void moveDownSelectedLens();
 	void retranslate();
 
-signals:
-	void requireSelectionChanged(bool state);
-	void scaleImageCircleChanged(bool state);
-
 protected:
 	//! Initialize the dialog widgets and connect the signals/slots
 	virtual void createDialogContent();
 	Ui_ocularDialogForm* ui;
 
 private slots:
-	void keyBindingTogglePluginChanged(const QString& newString);
-	void keyBindingPopupNavigatorConfigChanged(const QString& newString);
 	void initAboutText();
-	void requireSelectionStateChanged(int state);
-	void scaleImageCircleStateChanged(int state);
+	void setLabelsDescriptionText(bool state);
 
 private:
 	Oculars* plugin;
@@ -102,7 +93,7 @@ private:
 	QList<Telescope *>*		telescopes;
 	PropertyBasedTableModel*	telescopeTableModel;
 	QDataWidgetMapper*		lensMapper;
-	QList<Lens *>*			lense;
+	QList<Lens *>*			lenses;
 	PropertyBasedTableModel*	lensTableModel;
 	QRegExpValidator*		validatorName;
 };

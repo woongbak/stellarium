@@ -32,36 +32,42 @@
 #include <QLineEdit>
 
 DateTimeDialog::DateTimeDialog(QObject* parent) :
-  StelDialog(parent),
-  year(0),
-  month(0),
-  day(0),
-  hour(0),
-  minute(0),
-  second(0)
+	StelDialog("DateTime", parent),
+	year(0),
+	month(0),
+	day(0),
+	hour(0),
+	minute(0),
+	second(0),
+	jd(0)
 {
 	ui = new Ui_dateTimeDialogForm;
+	updateTimer=new QTimer(this); // parenting will auto-delete timer on destruction!
+	connect (updateTimer, SIGNAL(timeout()), this, SLOT(onTimerTimeout()));
+	updateTimer->start(250);
 }
 
 DateTimeDialog::~DateTimeDialog()
 {
 	delete ui;
-	ui=NULL;
+	ui=Q_NULLPTR;
 }
 
 void DateTimeDialog::createDialogContent()
 {
 	ui->setupUi(dialog);
-	double jd = StelApp::getInstance().getCore()->getJDay();
-	// UTC -> local tz
-	// Add in a DeltaT correction. Divide DeltaT by 86400 to convert from seconds to days.
-	double deltaT = 0.;
-	if (StelApp::getInstance().getCore()->getCurrentLocation().planetName=="Earth")
-		deltaT = StelApp::getInstance().getCore()->getDeltaT(jd)/86400.;
-	setDateTime(jd + (StelApp::getInstance().getLocaleMgr().getGMTShift(jd)/24.0)-deltaT);
+	StelCore *core = StelApp::getInstance().getCore();
+	setDateTime(core->getJD());
 
 	connect(&StelApp::getInstance(), SIGNAL(languageChanged()), this, SLOT(retranslate()));
 	connect(ui->closeStelWindow, SIGNAL(clicked()), this, SLOT(close()));
+	connect(ui->TitleBar, SIGNAL(movedTo(QPoint)), this, SLOT(handleMovedTo(QPoint)));
+
+	// Use ISO 8601 to date formatting
+	// See details: https://bugs.launchpad.net/stellarium/+bug/1655630
+	QString delimiter = QChar(0x2012);
+	ui->dateDelimiterLabel1->setText(delimiter);
+	ui->dateDelimiterLabel2->setText(delimiter);
 
 	connectSpinnerEvents();
 }
@@ -74,6 +80,8 @@ void DateTimeDialog::connectSpinnerEvents() const
 	connect(ui->spinner_hour, SIGNAL(valueChanged(int)), this, SLOT(hourChanged(int)));
 	connect(ui->spinner_minute, SIGNAL(valueChanged(int)), this, SLOT(minuteChanged(int)));
 	connect(ui->spinner_second, SIGNAL(valueChanged(int)), this, SLOT(secondChanged(int)));
+	connect(ui->spinner_jd, SIGNAL(valueChanged(double)), this, SLOT(jdChanged(double)));
+	connect(ui->spinner_mjd, SIGNAL(valueChanged(double)), this, SLOT(mjdChanged(double)));
 }
 
 void DateTimeDialog::disconnectSpinnerEvents()const
@@ -84,6 +92,8 @@ void DateTimeDialog::disconnectSpinnerEvents()const
 	disconnect(ui->spinner_hour, SIGNAL(valueChanged(int)), this, SLOT(hourChanged(int)));
 	disconnect(ui->spinner_minute, SIGNAL(valueChanged(int)), this, SLOT(minuteChanged(int)));
 	disconnect(ui->spinner_second, SIGNAL(valueChanged(int)), this, SLOT(secondChanged(int)));
+	disconnect(ui->spinner_jd, SIGNAL(valueChanged(double)), this, SLOT(jdChanged(double)));
+	disconnect(ui->spinner_mjd, SIGNAL(valueChanged(double)), this, SLOT(mjdChanged(double)));
 }
 
 
@@ -109,7 +119,14 @@ bool DateTimeDialog::valid(int y, int m, int d, int h, int min, int s)
 	minute = dmin;
 	second = ds;
 	pushToWidgets();
-	StelApp::getInstance().getCore()->setJDay(newJd());
+	StelApp::getInstance().getCore()->setJD(newJd());
+	return true;
+}
+
+bool DateTimeDialog::validJd(double jday)
+{
+	pushToWidgets();
+	StelApp::getInstance().getCore()->setJD(jday);
 	return true;
 }
 
@@ -127,7 +144,7 @@ void DateTimeDialog::styleChanged()
 
 void DateTimeDialog::close()
 {
-	ui->dateTimeBox->setFocus();
+	ui->dateTimeTab->setFocus();
 	StelDialog::close();
 }
 
@@ -137,51 +154,66 @@ void DateTimeDialog::close()
 
 void DateTimeDialog::yearChanged(int newyear)
 {
-  if ( year != newyear ) {
-	valid( newyear, month, day, hour, minute, second );
-  }
+	if ( year != newyear )
+	{
+		valid( newyear, month, day, hour, minute, second );
+		emit StelApp::getInstance().getCore()->dateChanged();
+	}
 }
+
 void DateTimeDialog::monthChanged(int newmonth)
 {
-  if ( month != newmonth ) {
-	valid( year, newmonth, day, hour, minute, second );
-  }
+	if ( month != newmonth )
+	{
+		valid( year, newmonth, day, hour, minute, second );
+		emit StelApp::getInstance().getCore()->dateChanged();
+	}
 }
+
 void DateTimeDialog::dayChanged(int newday)
 {
-  if ( day != newday ) {
-	valid( year, month, newday, hour, minute, second );
-  }
+	int delta = newday - day;
+	validJd(jd + delta);
+	emit StelApp::getInstance().getCore()->dateChanged();
 }
+
 void DateTimeDialog::hourChanged(int newhour)
 {
-  if ( hour != newhour ) {
-	valid( year, month, day, newhour, minute, second );
-  }
+	int delta = newhour - hour;
+	validJd(jd + delta/24.);
 }
 void DateTimeDialog::minuteChanged(int newminute)
 {
-  if ( minute != newminute ) {
-	valid( year, month, day, hour, newminute, second );
-  }
+	int delta = newminute - minute;
+	validJd(jd + delta/1440.);
+
 }
 void DateTimeDialog::secondChanged(int newsecond)
 {
-  if ( second != newsecond ) {
-	valid( year, month, day, hour, minute, newsecond );
-  }
+	int delta = newsecond - second;
+	validJd(jd + delta/86400.);
 }
+void DateTimeDialog::jdChanged(double njd)
+{
+	if ( jd != njd)
+	{
+		validJd(njd);
+	}
+}
+void DateTimeDialog::mjdChanged(double nmjd)
+{
+	double delta = nmjd - getMjd();
+	validJd(jd + delta);
+}
+
 
 double DateTimeDialog::newJd()
 {
-  double jd;  
-  StelUtils::getJDFromDate(&jd,year, month, day, hour, minute, second);
-  // Add in a DeltaT correction. Divide DeltaT by 86400 to convert from seconds to days.
-  double deltaT = 0.;
-  if (StelApp::getInstance().getCore()->getCurrentLocation().planetName=="Earth")
-	  deltaT = StelApp::getInstance().getCore()->getDeltaT(jd)/86400.;
-  jd -= (StelApp::getInstance().getLocaleMgr().getGMTShift(jd)/24.0-deltaT); // local tz -> UTC
-  return jd;
+	double cjd;
+	StelUtils::getJDFromDate(&cjd, year, month, day, hour, minute, second);
+	cjd -= (StelApp::getInstance().getCore()->getUTCOffset(cjd)/24.0); // local tz -> UTC
+
+	return cjd;
 }
 
 void DateTimeDialog::pushToWidgets()
@@ -191,33 +223,35 @@ void DateTimeDialog::pushToWidgets()
 	ui->spinner_month->setValue(month);
 	ui->spinner_day->setValue(day);
 	ui->spinner_hour->setValue(hour);
-	if (!ui->spinner_minute->hasFocus()
-			|| (ui->spinner_minute->value() == -1)
-			|| (ui->spinner_minute->value() == 60)) {
-	  ui->spinner_minute->setValue(minute);
-	}
-	if (!ui->spinner_second->hasFocus()
-			|| (ui->spinner_second->value() == -1)
-			|| (ui->spinner_second->value() == 60)) {
-	  ui->spinner_second->setValue(second);
-	}
+	ui->spinner_minute->setValue(minute);
+	ui->spinner_second->setValue(second);
+	ui->spinner_jd->setValue(jd);
+	ui->spinner_mjd->setValue(getMjd());
+	if (jd<2299161) // 1582-10-15
+		ui->dateTimeTab->setToolTip(q_("Date and Time in Julian calendar"));
+	else
+		ui->dateTimeTab->setToolTip(q_("Date and Time in Gregorian calendar"));
 	connectSpinnerEvents();
 }
 
 /************************************************************************
-Send newJd to spinner_*
+Prepare date elements from newJd and send to spinner_*
  ************************************************************************/
 void DateTimeDialog::setDateTime(double newJd)
 {
 	if (this->visible()) {
-		// Add in a DeltaT correction. Divide DeltaT by 86400 to convert from seconds to days.
-		double deltaT = 0.;
-		if (StelApp::getInstance().getCore()->getCurrentLocation().planetName=="Earth")
-			deltaT = StelApp::getInstance().getCore()->getDeltaT(newJd)/86400.;
-		newJd += (StelApp::getInstance().getLocaleMgr().getGMTShift(newJd)/24.0-deltaT); // UTC -> local tz
-		StelUtils::getDateFromJulianDay(newJd, &year, &month, &day);
-		StelUtils::getTimeFromJulianDay(newJd, &hour, &minute, &second);
+		// JD and MJD should be at the UTC scale on the window!
+		double newJdC = newJd + StelApp::getInstance().getCore()->getUTCOffset(newJd)/24.0; // UTC -> local tz
+		StelUtils::getDateFromJulianDay(newJdC, &year, &month, &day);
+		StelUtils::getTimeFromJulianDay(newJdC, &hour, &minute, &second);
+		jd = newJd;
+
 		pushToWidgets();
 	}
 }
 
+// handle timer-triggered update
+void DateTimeDialog::onTimerTimeout(void)
+{
+	this->setDateTime(StelApp::getInstance().getCore()->getJD());
+}

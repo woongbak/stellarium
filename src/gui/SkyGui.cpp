@@ -23,6 +23,7 @@
 #include "StelApp.hpp"
 #include "StelGui.hpp"
 #include "StelCore.hpp"
+#include "StelMainView.hpp"
 #include <QGraphicsView>
 #include <QDebug>
 #include <QTimeLine>
@@ -30,11 +31,8 @@
 #include <QSettings>
 #include <QTextDocument>
 
-#ifdef _MSC_BUILD
-#define round(dbl) dbl >= 0.0 ? (int)(dbl + 0.5) : ((dbl - (double)(int)dbl) <= -0.5 ? (int)dbl : (int)(dbl - 0.5))
-#endif
-
-InfoPanel::InfoPanel(QGraphicsItem* parent) : QGraphicsTextItem("", parent)
+InfoPanel::InfoPanel(QGraphicsItem* parent) : QGraphicsTextItem("", parent),
+	infoPixmap(Q_NULLPTR)
 {
 	QSettings* conf = StelApp::getInstance().getSettings();
 	Q_ASSERT(conf);
@@ -74,6 +72,8 @@ InfoPanel::InfoPanel(QGraphicsItem* parent) : QGraphicsTextItem("", parent)
 			infoTextFilters |= StelObject::AltAzi;
 		if (conf->value("flag_show_distance", false).toBool())
 			infoTextFilters |= StelObject::Distance;
+		if (conf->value("flag_show_velocity", false).toBool())
+			infoTextFilters |= StelObject::Velocity;
 		if (conf->value("flag_show_size", false).toBool())
 			infoTextFilters |= StelObject::Size;
 		if (conf->value("flag_show_extra", false).toBool())
@@ -82,8 +82,16 @@ InfoPanel::InfoPanel(QGraphicsItem* parent) : QGraphicsTextItem("", parent)
 			infoTextFilters |= StelObject::ObjectType;
 		if (conf->value("flag_show_galcoord", false).toBool())
 			infoTextFilters |= StelObject::GalacticCoord;
-		if (conf->value("flag_show_eclcoord", false).toBool())
-			infoTextFilters |= StelObject::EclTopocentricCoord;
+		if (conf->value("flag_show_supergalcoord", false).toBool())
+			infoTextFilters |= StelObject::SupergalacticCoord;
+		if (conf->value("flag_show_eclcoordofdate", false).toBool())
+			infoTextFilters |= StelObject::EclipticCoordOfDate;
+		if (conf->value("flag_show_eclcoordj2000", false).toBool())
+			infoTextFilters |= StelObject::EclipticCoordJ2000;
+		if (conf->value("flag_show_constellation", false).toBool())
+			infoTextFilters |= StelObject::IAUConstellation;
+		if (conf->value("flag_show_sidereal_time", false).toBool())
+			infoTextFilters |= StelObject::SiderealTime;
 		conf->endGroup();
 	}
 	else
@@ -91,6 +99,64 @@ InfoPanel::InfoPanel(QGraphicsItem* parent) : QGraphicsTextItem("", parent)
 		qWarning() << "config.ini option gui/selected_object_info is invalid, using \"all\"";
 		infoTextFilters = StelObject::InfoStringGroup(StelObject::AllInfo);
 	}
+	if (qApp->property("text_texture")==true) // CLI option -t given?
+		infoPixmap=new QGraphicsPixmapItem(this);
+}
+
+InfoPanel::~InfoPanel()
+{
+	if (infoPixmap)
+	{
+		delete infoPixmap;
+		infoPixmap=Q_NULLPTR;
+	}
+}
+
+// A hackish fix for broken OpenGL font situations like RasPi2 VC4 as of 2016-03-26.
+// strList is the text-only representation of InfoPanel.toPlainText(), pre-split into a stringlist.
+// It is assumed: The h2 element (1-2 lines) has been broken into 1-2 lines and a line "ENDHEAD", rest follows line-by-line.
+// The header lines are shown in bold large font, the rest in normal size.
+// There is no bold or other font mark-up, but that should be acceptable.
+QPixmap getInfoPixmap(const QStringList& strList, QFont font, QColor color)
+{
+	// Render the text str into a QPixmap.
+	// search longest string.
+	int maxLenIdx=0; int maxLen=0;
+	for (int i = 0; i < strList.size(); ++i)
+	{
+		if (strList.at(i).length() > maxLen)
+		{
+			maxLen=strList.at(i).length();
+			maxLenIdx=i;
+		}
+	}
+	QFont titleFont(font);
+	titleFont.setBold(true);
+	titleFont.setPixelSize(font.pixelSize()+7);
+
+	QRect strRect = QFontMetrics(titleFont).boundingRect(strList.at(maxLenIdx));
+	int w = strRect.width()+1+(int)(0.02f*strRect.width());
+	int h = strRect.height()*strList.count()+8;
+
+	QPixmap strPixmap(w, h);
+	strPixmap.fill(Qt::transparent);
+	QPainter painter(&strPixmap);
+	font.setStyleStrategy(QFont::NoAntialias); // else: font problems on RasPi20160326
+	//painter.setRenderHints(QPainter::TextAntialiasing);
+	painter.setPen(color);
+	painter.setFont(titleFont);
+	int txtOffset=0; // to separate heading from rest of text.
+	for (int i = 0; i < strList.size(); ++i)
+	{
+		if (strList.at(i).startsWith( "ENDHEAD"))
+		{
+			painter.setFont(font);
+			txtOffset=8;
+		}
+		else
+			painter.drawText(-strRect.x()+1, -strRect.y()+i*(painter.font().pixelSize()+2)+txtOffset, strList.at(i));
+	}
+	return strPixmap;
 }
 
 void InfoPanel::setTextFromObjects(const QList<StelObjectP>& selected)
@@ -99,12 +165,39 @@ void InfoPanel::setTextFromObjects(const QList<StelObjectP>& selected)
 	{
 		if (!document()->isEmpty())
 			document()->clear();
+		if (qApp->property("text_texture")==true) // CLI option -t given?
+			infoPixmap->setVisible(false);
 	}
 	else
 	{
 		// just print details of the first item for now
 		QString s = selected[0]->getInfoString(StelApp::getInstance().getCore(), infoTextFilters);
 		setHtml(s);
+		if (qApp->property("text_texture")==true) // CLI option -t given?
+		{
+			// Extract color from HTML.
+			QRegExp colorRegExp("<font color=(#[0-9a-f]{6,6})>");
+			int colorInt=colorRegExp.indexIn(s);
+			QString colorStr;
+
+			if (colorInt>-1)
+				colorStr=colorRegExp.cap(1);
+			else
+				colorStr="#ffffff";
+
+			QColor infoColor(colorStr);
+			// inject a marker word in the infostring to mark end of header.
+			// In case no header exists, put it after the color tag (first closing brace).
+			int endHead=s.indexOf("</h2>")+5;
+			if (endHead==4)
+				endHead=s.indexOf(">")+1;
+			s.insert(endHead, QString("ENDHEAD<br/>"));
+			setHtml(s);
+			infoPixmap->setPixmap(getInfoPixmap(getSelectedText().split("\n"), this->font(), infoColor));
+			// setting visible=false would hide also the child QGraphicsPixmapItem...
+			setHtml("");
+			infoPixmap->setVisible(true);
+		}
 	}
 }
 
@@ -113,15 +206,26 @@ const QString InfoPanel::getSelectedText(void)
 	return toPlainText();
 }
 
-SkyGui::SkyGui(QGraphicsItem * parent): QGraphicsWidget(parent), stelGui(NULL)
+SkyGui::SkyGui(QGraphicsItem * parent)
+	: QGraphicsWidget(parent)
+	, lastButtonbarWidth(0)
+	, btHorizAutoHide(Q_NULLPTR)
+	, btVertAutoHide(Q_NULLPTR)
+	, autoHidebts(Q_NULLPTR)
+	, autoHideHorizontalButtonBar(true)
+	, autoHideVerticalButtonBar(true)
+	, stelGui(Q_NULLPTR)
 {
 	setObjectName("StelSkyGui");
 
 	// Construct the Windows buttons bar
 	winBar = new LeftStelBar(this);
 	// Construct the bottom buttons bar
-	buttonBar = new BottomStelBar(this, QPixmap(":/graphicGui/btbg-left.png"), QPixmap(":/graphicGui/btbg-right.png"),
-																QPixmap(":/graphicGui/btbg-middle.png"), QPixmap(":/graphicGui/btbg-single.png"));
+	buttonBar = new BottomStelBar(this,
+				      QPixmap(":/graphicGui/btbg-left.png"),
+				      QPixmap(":/graphicGui/btbg-right.png"),
+				      QPixmap(":/graphicGui/btbg-middle.png"),
+				      QPixmap(":/graphicGui/btbg-single.png"));
 	infoPanel = new InfoPanel(this);
 
 	// Used to display some progress bar in the lower right corner, e.g. when loading a file
@@ -131,12 +235,6 @@ SkyGui::SkyGui(QGraphicsItem * parent): QGraphicsWidget(parent), stelGui(NULL)
 
 	// The path drawn around the button bars
 	buttonBarPath = new StelBarsPath(this);
-
-	lastButtonbarWidth = 0;
-	autoHidebts = NULL;
-
-	autoHideHorizontalButtonBar = true;
-	autoHideVerticalButtonBar = true;
 
 	animLeftBarTimeLine = new QTimeLine(200, this);
 	animLeftBarTimeLine->setCurveShape(QTimeLine::EaseInOutCurve);
@@ -191,6 +289,7 @@ void SkyGui::init(StelGui* astelGui)
 	buttonBarPath->setZValue(-0.1);
 	updateBarsPos();
 	connect(&StelApp::getInstance(), SIGNAL(colorSchemeChanged(const QString&)), this, SLOT(setStelStyle(const QString&)));
+	connect(buttonBar, SIGNAL(sizeChanged()), this, SLOT(updateBarsPos()));		
 }
 
 void SkyGui::resizeEvent(QGraphicsSceneResizeEvent* event)
@@ -201,7 +300,7 @@ void SkyGui::resizeEvent(QGraphicsSceneResizeEvent* event)
 
 void SkyGui::hoverMoveEvent(QGraphicsSceneHoverEvent* event)
 {
-	const int hh = geometry().height();
+	const int hh = getSkyGuiHeight();
 
 	double x = event->pos().x();
 	double y = event->pos().y();
@@ -234,6 +333,15 @@ void SkyGui::hoverMoveEvent(QGraphicsSceneHoverEvent* event)
 	}
 }
 
+// Used to recompute the bars position when we toggle the gui off and on.
+// This was not necessary with Qt < 5.4.  So it might be a bug.
+QVariant SkyGui::itemChange(GraphicsItemChange change, const QVariant & value)
+{
+	if (change == QGraphicsItem::ItemVisibleHasChanged && value.toBool())
+		updateBarsPos();
+	return QGraphicsItem::itemChange(change, value);
+}
+
 int SkyGui::getSkyGuiWidth() const
 {
 	return geometry().width();
@@ -257,7 +365,7 @@ void SkyGui::updateBarsPos()
 	const qreal newWinBarY = hh-winBar->boundingRectNoHelpLabel().height()-buttonBar->boundingRectNoHelpLabel().height()-20;
 	if (winBar->pos().x()!=newWinBarX || winBar->pos().y()!=newWinBarY)
 	{
-		winBar->setPos(round(newWinBarX), round(newWinBarY));
+		winBar->setPos(qRound(newWinBarX), qRound(newWinBarY));
 		updatePath = true;
 	}
 
@@ -266,7 +374,7 @@ void SkyGui::updateBarsPos()
 	const qreal newButtonBarY = hh-buttonBar->boundingRectNoHelpLabel().height()-buttonBarPath->getRoundSize()+0.5+(1.-animBottomBarTimeLine->currentValue())*rangeY;
 	if (buttonBar->pos().x()!=newButtonBarX || buttonBar->pos().y()!=newButtonBarY)
 	{
-		buttonBar->setPos(round(newButtonBarX), round(newButtonBarY));
+		buttonBar->setPos(qRound(newButtonBarX), qRound(newButtonBarY));
 		updatePath = true;
 	}
 
@@ -280,14 +388,17 @@ void SkyGui::updateBarsPos()
 		buttonBarPath->updatePath(buttonBar, winBar);
 
 	const qreal newProgressBarX = ww-progressBarMgr->boundingRect().width()-20;
-	const qreal newProgressBarY = hh-progressBarMgr->boundingRect().height()+7;
+	const qreal newProgressBarY = hh-progressBarMgr->boundingRect().height()+7;	
 	progressBarMgr->setPos(newProgressBarX, newProgressBarY);
-	progressBarMgr->setZValue(400);
+	progressBarMgr->setZValue(400);	
 
 	// Update position of the auto-hide buttons
 	autoHidebts->setPos(0, hh-autoHidebts->childrenBoundingRect().height()+1);
 	double opacity = qMax(animLeftBarTimeLine->currentValue(), animBottomBarTimeLine->currentValue());
 	autoHidebts->setOpacity(opacity < 0.01 ? 0.01 : opacity);	// Work around a qt bug
+
+	// Update the screen as soon as possible.
+	StelMainView::getInstance().thereWasAnEvent();
 }
 
 void SkyGui::setStelStyle(const QString& style)

@@ -7,7 +7,7 @@ ftp://ftp.imcce.fr/pub/ephem/satel/tass17
 I (Johannes Gajdosik) have just taken the Fortran code and data
 obtained from above and rearranged it into this piece of software.
 
-I can neigther allow nor forbid the usage of the TASS 1.7 theory.
+I can neither allow nor forbid the usage of the TASS 1.7 theory.
 The copyright notice below covers not the work of Alain VIENNE and Luc DURIEZ
 but just my work, that is the compilation of the TASS 1.7 theory
 into the software supplied in this file.
@@ -55,27 +55,31 @@ My modifications are:
 
 #include <math.h>
 
-struct Tass17Term {
-  double s[3];
+struct Tass17Term
+{
+	double s[3];
 };
 
-struct Tass17MultiTerm {
-  signed char i[8];
-  int nr_of_terms;
-  const struct Tass17Term *terms;
+struct Tass17MultiTerm
+{
+	signed char i[8];
+	int nr_of_terms;
+	const struct Tass17Term *terms;
 };
 
-struct Tass17Series {
-  int nr_of_multi_terms;
-  const struct Tass17MultiTerm *multi_terms;
+struct Tass17Series
+{
+	int nr_of_multi_terms;
+	const struct Tass17MultiTerm *multi_terms;
 };
 
-struct Tass17Body {
-  const char *name;
-  double mu;
-  double aam;
-  double s0[6];
-  struct Tass17Series series[4];
+struct Tass17Body
+{
+	const char *name;
+	double mu;
+	double aam;
+	double s0[6];
+	struct Tass17Series series[4];
 };
 
 static const struct Tass17Term MIMAS_0_0[2] = {
@@ -3037,80 +3041,88 @@ const struct Tass17Body tass17bodies[8] = {
   },
 };
 
-static void
-CalcLon(double t,double lon[7]) {
-  int i;
-  for (i=0;i<7;i++,lon++) {
-    const struct Tass17MultiTerm *const tmt_begin =
-      tass17bodies[i].series[1].multi_terms;
-    const struct Tass17Term *const tt_begin = tmt_begin->terms;
-    const struct Tass17Term *tt = tt_begin + tmt_begin->nr_of_terms;
-    *lon = 0;
-    while (--tt >= tt_begin) {
-      *lon += tt->s[0]*sin(tt->s[1]+tt->s[2]*t);
-    }
-  }
+static void CalcLon(double t,double lon[7])
+{
+	int i;
+	for (i=0;i<7;i++,lon++)
+	{
+		const struct Tass17MultiTerm *const tmt_begin =	tass17bodies[i].series[1].multi_terms;
+		const struct Tass17Term *const tt_begin = tmt_begin->terms;
+		const struct Tass17Term *tt = tt_begin + tmt_begin->nr_of_terms;
+		*lon = 0;
+		while (--tt >= tt_begin)
+		{
+			*lon += tt->s[0]*sin(tt->s[1]+tt->s[2]*t);
+		}
+	}
 }
 
-static void
-CalcTass17Elem(double t,const double lon[7],int body,double elem[6]) {
-  const struct Tass17MultiTerm *tmt_begin,*tmt;
-  int i;
-  for (i=0;i<6;i++) elem[i] = tass17bodies[body].s0[i];
-  
-  tmt_begin = tass17bodies[body].series[0].multi_terms;
-  tmt = tmt_begin + tass17bodies[body].series[0].nr_of_multi_terms;
-  while (--tmt >= tmt_begin) {
-    const struct Tass17Term *const tt_begin = tmt->terms;
-    const struct Tass17Term *tt = tt_begin + tmt->nr_of_terms;
-    double arg = 0;
-    for (i=0;i<7;i++) arg += tmt->i[i]*lon[i];
-    while (--tt >= tt_begin) elem[0] += tt->s[0]*cos(tt->s[1]+tt->s[2]*t+arg);
-  }
-  elem[0] = tass17bodies[body].aam * (1.0 + elem[0]);
-  
-  tmt_begin = tass17bodies[body].series[1].multi_terms;
-  tmt = tmt_begin + tass17bodies[body].series[1].nr_of_multi_terms;
-  if (body != 7) { /* first multiterm already calculated: lon[body];*/
-    tmt_begin++;
-    elem[1] += lon[body];
-  }
-  while (--tmt >= tmt_begin) {
-    const struct Tass17Term *const tt_begin = tmt->terms;
-    const struct Tass17Term *tt = tt_begin + tmt->nr_of_terms;
-    double arg = 0;
-    for (i=0;i<7;i++) arg += tmt->i[i]*lon[i];
-    while (--tt >= tt_begin) elem[1] += tt->s[0]*sin(tt->s[1]+tt->s[2]*t+arg);
-  }
-  elem[1] += tass17bodies[body].aam * t;
-  
-  tmt_begin = tass17bodies[body].series[2].multi_terms;
-  tmt = tmt_begin + tass17bodies[body].series[2].nr_of_multi_terms;
-  while (--tmt >= tmt_begin) {
-    const struct Tass17Term *const tt_begin = tmt->terms;
-    const struct Tass17Term *tt = tt_begin + tmt->nr_of_terms;
-    double arg = 0;
-    for (i=0;i<7;i++) arg += tmt->i[i]*lon[i];
-    while (--tt >= tt_begin) {
-      const double x = tt->s[1] + tt->s[2]*t + arg;
-      elem[2] += tt->s[0]*cos(x);
-      elem[3] += tt->s[0]*sin(x);
-    }
-  }
-  
-  tmt_begin = tass17bodies[body].series[3].multi_terms;
-  tmt = tmt_begin + tass17bodies[body].series[3].nr_of_multi_terms;
-  while (--tmt >= tmt_begin) {
-    const struct Tass17Term *const tt_begin = tmt->terms;
-    const struct Tass17Term *tt = tt_begin + tmt->nr_of_terms;
-    double arg = 0;
-    for (i=0;i<7;i++) arg += tmt->i[i]*lon[i];
-    while (--tt >= tt_begin) {
-      const double x = tt->s[1] + tt->s[2]*t + arg;
-      elem[4] += tt->s[0]*cos(x);
-      elem[5] += tt->s[0]*sin(x);
-    }
-  }
+static void CalcTass17Elem(double t,const double lon[7],int body,double elem[6])
+{
+	const struct Tass17MultiTerm *tmt_begin,*tmt;
+	int i;
+	for (i=0;i<6;i++) elem[i] = tass17bodies[body].s0[i];
+
+	tmt_begin = tass17bodies[body].series[0].multi_terms;
+	tmt = tmt_begin + tass17bodies[body].series[0].nr_of_multi_terms;
+	while (--tmt >= tmt_begin)
+	{
+		const struct Tass17Term *const tt_begin = tmt->terms;
+		const struct Tass17Term *tt = tt_begin + tmt->nr_of_terms;
+		double arg = 0;
+		for (i=0;i<7;i++) arg += tmt->i[i]*lon[i];
+		while (--tt >= tt_begin) elem[0] += tt->s[0]*cos(tt->s[1]+tt->s[2]*t+arg);
+	}
+	elem[0] = tass17bodies[body].aam * (1.0 + elem[0]);
+
+	tmt_begin = tass17bodies[body].series[1].multi_terms;
+	tmt = tmt_begin + tass17bodies[body].series[1].nr_of_multi_terms;
+	if (body != 7)
+	{ /* first multiterm already calculated: lon[body];*/
+		tmt_begin++;
+		elem[1] += lon[body];
+	}
+	while (--tmt >= tmt_begin)
+	{
+		const struct Tass17Term *const tt_begin = tmt->terms;
+		const struct Tass17Term *tt = tt_begin + tmt->nr_of_terms;
+		double arg = 0;
+		for (i=0;i<7;i++) arg += tmt->i[i]*lon[i];
+		while (--tt >= tt_begin) elem[1] += tt->s[0]*sin(tt->s[1]+tt->s[2]*t+arg);
+	}
+	elem[1] += tass17bodies[body].aam * t;
+
+	tmt_begin = tass17bodies[body].series[2].multi_terms;
+	tmt = tmt_begin + tass17bodies[body].series[2].nr_of_multi_terms;
+	while (--tmt >= tmt_begin)
+	{
+		const struct Tass17Term *const tt_begin = tmt->terms;
+		const struct Tass17Term *tt = tt_begin + tmt->nr_of_terms;
+		double arg = 0;
+		for (i=0;i<7;i++) arg += tmt->i[i]*lon[i];
+		while (--tt >= tt_begin)
+		{
+			const double x = tt->s[1] + tt->s[2]*t + arg;
+			elem[2] += tt->s[0]*cos(x);
+			elem[3] += tt->s[0]*sin(x);
+		}
+	}
+
+	tmt_begin = tass17bodies[body].series[3].multi_terms;
+	tmt = tmt_begin + tass17bodies[body].series[3].nr_of_multi_terms;
+	while (--tmt >= tmt_begin)
+	{
+		const struct Tass17Term *const tt_begin = tmt->terms;
+		const struct Tass17Term *tt = tt_begin + tmt->nr_of_terms;
+		double arg = 0;
+		for (i=0;i<7;i++) arg += tmt->i[i]*lon[i];
+		while (--tt >= tt_begin)
+		{
+			const double x = tt->s[1] + tt->s[2]*t + arg;
+			elem[4] += tt->s[0]*cos(x);
+			elem[5] += tt->s[0]*sin(x);
+		}
+	}
 }
 
 
@@ -3143,40 +3155,51 @@ static double tass17_elem_2[TASS17_DIM];
 static double tass17_jd0 = -1e100;
 static double tass17_elem[TASS17_DIM];
 
-void CalcAllTass17Elem(const double t,double elem[TASS17_DIM]) {
-  int body;
-  double lon[7];
-  CalcLon(t,lon);
-  for (body=0;body<8;body++) CalcTass17Elem(t,lon,body,elem+(body*6));
+void CalcAllTass17Elem(const double t,double elem[TASS17_DIM], void *user)
+{
+	int body;
+	double lon[8];
+	CalcLon(t,lon);
+	for (body=0;body<=7;body++) CalcTass17Elem(t,lon,body,elem+(body*6));
 }
 
-void GetTass17Coor(double jd,int body,double *xyz) {
-  GetTass17OsculatingCoor(jd,jd,body,xyz);
+void GetTass17Coor(double jd,int body,double *xyz, double *xyzdot)
+{
+	double xyz6[6];
+	GetTass17OsculatingCoor(jd,jd,body,xyz6);
+	xyz[0]   =xyz6[0]; xyz[1]   =xyz6[1]; xyz[2]   =xyz6[2];
+	xyzdot[0]=xyz6[3]; xyzdot[1]=xyz6[4]; xyzdot[2]=xyz6[5];
 }
 
-void GetTass17OsculatingCoor(const double jd0,const double jd,
-                             const int body,double *xyz) {
-  double x[3];
-  if (jd0 != tass17_jd0) {
-    const double t0 = jd0 - 2444240.0;
-    tass17_jd0 = jd0;
-    CalcInterpolatedElements(t0,tass17_elem,
-                             TASS17_DIM,
-                             &CalcAllTass17Elem,DELTA_T,
-                             &t_0,tass17_elem_0,
-                             &t_1,tass17_elem_1,
-                             &t_2,tass17_elem_2);
-/*
-    printf("GetTass17Coor(%d): %f %f  %f %f  %f %f\n",
-           body,
-           tass17_elem[body*6+0],tass17_elem[body*6+1],tass17_elem[body*6+2],
-           tass17_elem[body*6+3],tass17_elem[body*6+4],tass17_elem[body*6+5]);
-*/
-  }
-  EllipticToRectangularN(tass17bodies[body].mu,tass17_elem+(body*6),jd-jd0,x);
-  xyz[0] = TASS17toVSOP87[0]*x[0]+TASS17toVSOP87[1]*x[1]+TASS17toVSOP87[2]*x[2];
-  xyz[1] = TASS17toVSOP87[3]*x[0]+TASS17toVSOP87[4]*x[1]+TASS17toVSOP87[5]*x[2];
-  xyz[2] = TASS17toVSOP87[6]*x[0]+TASS17toVSOP87[7]*x[1]+TASS17toVSOP87[8]*x[2];
+void GetTass17OsculatingCoor(const double jd0,const double jd, const int body,double *xyz)
+{
+	double x[6];
+	if (jd0 != tass17_jd0)
+	{
+		const double t0 = jd0 - 2444240.0;
+		tass17_jd0 = jd0;
+		CalcInterpolatedElements(t0,tass17_elem,
+					 TASS17_DIM,
+					 &CalcAllTass17Elem,DELTA_T,
+					 &t_0,tass17_elem_0,
+					 &t_1,tass17_elem_1,
+					 &t_2,tass17_elem_2,
+					 0);
+		/*
+		printf("GetTass17Coor(%d): %f %f  %f %f  %f %f\n",
+			body,
+			tass17_elem[body*6+0],tass17_elem[body*6+1],tass17_elem[body*6+2],
+			tass17_elem[body*6+3],tass17_elem[body*6+4],tass17_elem[body*6+5]);
+		*/
+	}
+	EllipticToRectangularN(tass17bodies[body].mu,tass17_elem+(body*6),jd-jd0,x);
+	xyz[0] = TASS17toVSOP87[0]*x[0]+TASS17toVSOP87[1]*x[1]+TASS17toVSOP87[2]*x[2];
+	xyz[1] = TASS17toVSOP87[3]*x[0]+TASS17toVSOP87[4]*x[1]+TASS17toVSOP87[5]*x[2];
+	xyz[2] = TASS17toVSOP87[6]*x[0]+TASS17toVSOP87[7]*x[1]+TASS17toVSOP87[8]*x[2];
+	// GZ Updated to a 6-vector including speed...
+	xyz[3] = TASS17toVSOP87[0]*x[3]+TASS17toVSOP87[1]*x[4]+TASS17toVSOP87[2]*x[5];
+	xyz[4] = TASS17toVSOP87[3]*x[3]+TASS17toVSOP87[4]*x[4]+TASS17toVSOP87[5]*x[5];
+	xyz[5] = TASS17toVSOP87[6]*x[3]+TASS17toVSOP87[7]*x[4]+TASS17toVSOP87[8]*x[5];
 }
 
 

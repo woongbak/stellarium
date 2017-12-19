@@ -20,9 +20,8 @@
 #ifndef CLIPROCESSOR_HPP
 #define CLIPROCESSOR_HPP
 
-#include "config.h"
-
 #include <QStringList>
+#include <QVariant>
 
 class QSettings;
 

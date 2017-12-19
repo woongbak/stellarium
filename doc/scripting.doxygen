@@ -27,11 +27,11 @@
 @section intro_scripts Introduction
 
 Since version 0.10.1, Stellarium includes a scripting feature based on the 
-<a href="http://qt-project.org/doc/qt-4.8/qtscript.html">Qt Scripting Engine</a>.  
+<a href="http://doc.qt.io/qt-5/qtscript-index.html">Qt Scripting Engine</a>.  
 This makes it possible to write small programs within Stellarium to produce 
 presentations, set up custom configurations, and to automate repetitive 
 tasks.  Prior to version 0.10.0, Stellarium used a different scripting engine 
-called @ref StratoScript.
+called StratoScript.
 
 The core scripting language is
 <a href="http://en.wikipedia.org/wiki/ECMAScript">ECMAScript</a>, giving users
@@ -39,27 +39,6 @@ access to all basic ECMAScript language features such as flow control, variables
 string manipulation and so on. Interaction with Stellarium-specific features
 is done via a collection of objects which represent components of Stellarium
 itself.  See @ref scripting_api for more details.
-
-@section scratoscript StratoScript
-
-Prior to version 0.10.0, Stellarium had a simple scripting engine, known as 
-\e StratoScript.  Using \e StratoScript it was possible to record and play back 
-sequences of Stellarium commands, load and display custom images, and play sounds.  
-In this way it was possible to make planetarium presentations - a feature used 
-quite widely in the small planetarium community.
-
-However \e StratoScript lacked many features of a real programming language -
-there were no variables, no flow control and no way to introspect the state of
-Stellarium.
-
-The replacement scripting engine implemented in the 0.10.x series addresses these
-shortcomings, at the expense of a little complexity and a new language syntax.
-
-A compatibility mode which converts \e StratoScript into new scripting engine on
-the fly is in progress.
-
-Note: StratoScript compatibility is a build-time option. To enable this feature, 
-Stellarium must be built using the ENABLE_STRATOSCRIPT_COMPAT=1 option to cmake.
 
 @section scripting_api Scripting API
 
@@ -76,25 +55,57 @@ core.wait(...);
 - The public slots for each of the following classes are available in the
   scripting engine via an object with the same name as the corresponding class:
    - ConstellationMgr
+   - CustomObjectMgr
    - GridLinesMgr
    - LabelMgr
    - LandscapeMgr
-   - MeteorMgr
+   - SporadicMeteorMgr
    - NebulaMgr
    - ScreenImageMgr
    - SolarSystem
    - StarMgr
+   - StelActionMgr
    - StelAudioMgr
+   - StelVideoMgr
    - StelMovementMgr
+   - StelSkyCultureMgr
    - StelSkyDrawer
    - StelSkyLayerMgr
+   - MilkyWay
+   - ZodiacalLight
    .
   For example, to access LandscapeMgr::setFlagAtmosphere(), use the scripting
   command: 
 \code
 LandscapeMgr.setFlagAtmosphere(true);
 \endcode
-  Note: All of these except for StelSkyDrawer are StelModule classes.
+\note All of these except for StelSkyDrawer are StelModule classes.
+
+- The public slots for each of the following classes of the plugins are available 
+in the scripting engine too:
+   - CompassMarks
+   - Oculars
+   - Satellites
+   - Quasars
+   - Pulsars
+   - Exoplanets
+   - Observability
+   - EquationOfTime
+   - NavStars
+   - MeteorShowersMgr (The public slots in this class are available via an object named \b MeteorShowers)
+   - ArchaeoLines
+   - TelescopeControl
+   .
+
+@section include_scripts Includes
+
+Stellarium provides mechanism for splitting scripts on different files. Typical functions or 
+list of variables can be stored in separate \b .inc file and used within script through \b include() 
+command:
+\code
+include("common_objects.inc");
+\endcode
+\note Detailed example can be found <a href="http://bazaar.launchpad.net/~stellarium/stellarium/trunk/view/head:/scripts/constellations_tour.ssc">in Constellations Tour script</a>.
 
 @section script_console Script Console
 
@@ -102,7 +113,7 @@ It is possible to open, edit run and save scripts using the script console windo
 To toggle the script console, press F12.  The script console also provides
 an output window in which script debugging output is visible.
 
-Note:  The Script Console is a build-time option.  It has been enabled by
+\note The Script Console is a build-time option.  It has been enabled by
 default since version 0.10.5.  To enable or disable this feature, use the
 ENABLE_SCRIPT_CONSOLE=1 or =0 option to cmake.
 

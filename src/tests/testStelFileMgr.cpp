@@ -17,21 +17,21 @@
  * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
+#include "tests/testStelFileMgr.hpp"
+
 #include <QObject>
 #include <QFileInfo>
 #include <QFile>
 #include <QDir>
 #include <QString>
 #include <QStringList>
-
 #include <QDebug>
 #include <QTest>
 #include <QRegExp>
 
 #include "StelFileMgr.hpp"
-#include "tests/testStelFileMgr.hpp"
 
-QTEST_MAIN(TestStelFileMgr)
+QTEST_GUILESS_MAIN(TestStelFileMgr)
 
 void TestStelFileMgr::initTestCase()
 {
@@ -59,7 +59,7 @@ void TestStelFileMgr::initTestCase()
 			 << partialPath2+"/landscapes/ls1"
 			 << partialPath2+"/landscapes/ls3";
 
-	testFiles << "data/ssystem.ini"
+	testFiles << "data/ssystem_major.ini"
 			  << partialPath1+"/landscapes/ls1/landscape.ini"
 			  << partialPath1+"/landscapes/ls2/landscape.ini"
 			  << partialPath1+"/config.ini"

@@ -24,6 +24,7 @@
 #include "Satellite.hpp" // for the flags
 
 //! Custom proxy model allowing filtering by satellite group and flag.
+//! @ingroup satellites
 class SatellitesListFilterModel : public QSortFilterProxyModel
 {
 	Q_OBJECT
@@ -45,7 +46,7 @@ class SatellitesListFilterModel : public QSortFilterProxyModel
 	           WRITE setFilterGroup)
 	
 public:
-	SatellitesListFilterModel(QObject *parent = 0);
+	SatellitesListFilterModel(QObject *parent = Q_NULLPTR);
 	
 	SatFlag getFilterFlag() const { return filterFlag; }
 	void setFilterFlag(const SatFlag& flag);

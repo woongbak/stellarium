@@ -27,8 +27,11 @@
 
 class Ui_exoplanetsDialog;
 class QTimer;
+class QToolButton;
 class Exoplanets;
 
+//! @ingroup exoplanets
+//! Main window of the %Exoplanets plugin.
 class ExoplanetsDialog : public StelDialog
 {
 	Q_OBJECT
@@ -50,13 +53,23 @@ private slots:
 	void setUpdatesEnabled(int checkState);
 	void setDistributionEnabled(int checkState);
 	void setTimelineEnabled(int checkState);
+	void setHabitableEnabled(int checkState);
 	void setDisplayAtStartupEnabled(int checkState);
 	void setDisplayShowExoplanetsButton(int checkState);
+	void setDisplayShowExoplanetsDesignations(int checkState);
 	void updateStateReceiver(Exoplanets::UpdateState state);
         void updateCompleteReceiver();
 	void restoreDefaults(void);
 	void saveSettings(void);
 	void updateJSON(void);
+	void drawDiagram(void);
+	void populateDiagramsList();
+
+	void askExoplanetsMarkerColor();
+	void askHabitableExoplanetsMarkerColor();
+
+	void populateTemperatureScales();
+	void setTemperatureScale(int tScaleID);
 
 private:
         Ui_exoplanetsDialog* ui;
@@ -65,8 +78,10 @@ private:
 	void setInfoHtml(void);
 	void setWebsitesHtml(void);
 	void updateGuiFromSettings(void);
+	void colorButton(QToolButton *toolButton, Vec3f vColor);
 	QTimer* updateTimer;
 
+	typedef QPair<QString, int> axisPair;
 };
 
 #endif // _EXOPLANETSDIALOG_HPP_

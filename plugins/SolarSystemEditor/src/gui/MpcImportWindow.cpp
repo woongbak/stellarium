@@ -30,6 +30,8 @@
 #include "StelTranslator.hpp"
 #include "SolarSystem.hpp"
 #include "StelProgressController.hpp"
+#include "SearchDialog.hpp"
+#include "StelUtils.hpp"
 
 #include <QGuiApplication>
 #include <QClipboard>
@@ -49,11 +51,14 @@
 #include <QUrlQuery>
 #include <QDir>
 
-MpcImportWindow::MpcImportWindow() :
-    downloadReply(0),
-    queryReply(0),
-    downloadProgressBar(0),
-    queryProgressBar(0)
+MpcImportWindow::MpcImportWindow()
+	: StelDialog("SolarSystemEditorMPCimport")
+	, importType(ImportType())
+	, downloadReply(Q_NULLPTR)
+	, queryReply(Q_NULLPTR)
+	, downloadProgressBar(Q_NULLPTR)
+	, queryProgressBar(Q_NULLPTR)
+	, countdown(0)
 {
 	ui = new Ui_mpcImportWindow();
 	ssoManager = GETSTELMODULE(SolarSystemEditor);
@@ -93,6 +98,7 @@ void MpcImportWindow::createDialogContent()
 	//Signals
 	connect(&StelApp::getInstance(), SIGNAL(languageChanged()), this, SLOT(retranslate()));
 	connect(ui->closeStelWindow, SIGNAL(clicked()), this, SLOT(close()));
+	connect(ui->TitleBar, SIGNAL(movedTo(QPoint)), this, SLOT(handleMovedTo(QPoint)));
 
 	connect(ui->pushButtonAcquire, SIGNAL(clicked()),
 	        this, SLOT(acquireObjectData()));
@@ -123,6 +129,8 @@ void MpcImportWindow::createDialogContent()
 
 	connect(ui->pushButtonSendQuery, SIGNAL(clicked()),
 	        this, SLOT(sendQuery()));
+	connect(ui->lineEditQuery, SIGNAL(returnPressed()),
+		this, SLOT(sendQuery()));
 	connect(ui->pushButtonAbortQuery, SIGNAL(clicked()),
 	        this, SLOT(abortQuery()));
 	connect(ui->lineEditQuery, SIGNAL(textEdited(QString)),
@@ -146,7 +154,7 @@ void MpcImportWindow::createDialogContent()
 
 void MpcImportWindow::updateTexts()
 {
-	QString linkText("<a href=\"http://www.minorplanetcenter.net/iau/MPEph/MPEph.html\">Minor Planet &amp; Comet Ephemeris Service</a>");
+	QString linkText("<a href=\"https://www.minorplanetcenter.net/iau/MPEph/MPEph.html\">Minor Planet &amp; Comet Ephemeris Service</a>");
 	// TRANSLATORS: A link showing the text "Minor Planet & Comet Ephemeris Service" is inserted.
 	QString queryString(q_("Query the MPC's %1:"));
 	ui->labelQueryLink->setText(QString(queryString).arg(linkText));
@@ -179,7 +187,7 @@ void MpcImportWindow::resetDialog()
 
 	ui->lineEditFilePath->clear();
 	ui->lineEditQuery->clear();
-	ui->lineEditURL->setText("http://");
+	ui->lineEditURL->setText("https://");
 	ui->checkBoxAddBookmark->setChecked(false);
 	ui->frameBookmarkTitle->setVisible(false);
 	ui->comboBoxBookmarks->setCurrentIndex(0);
@@ -200,7 +208,7 @@ void MpcImportWindow::resetDialog()
 void MpcImportWindow::populateBookmarksList()
 {
 	ui->comboBoxBookmarks->clear();
-        ui->comboBoxBookmarks->addItem("Select bookmark...");
+	ui->comboBoxBookmarks->addItem(q_("Select bookmark..."));
 	QStringList bookmarkTitles(bookmarks.value(importType).keys());
 	bookmarkTitles.sort();
 	ui->comboBoxBookmarks->addItems(bookmarkTitles);
@@ -255,6 +263,8 @@ void MpcImportWindow::addObjects()
 		if (item->checkState() == Qt::Checked)
 		{
 			checkedObjectsNames.append(item->text());
+			if (row==0)
+				SearchDialog::extSearchText = item->text();
 		}
 	}
 	//qDebug() << "Checked:" << checkedObjectsNames;
@@ -321,13 +331,13 @@ void MpcImportWindow::selectFile()
 {
 	QStringList directories = QStandardPaths::standardLocations(QStandardPaths::DesktopLocation) +
 							  QStandardPaths::standardLocations(QStandardPaths::HomeLocation) << "/";
-	QString filePath = QFileDialog::getOpenFileName(NULL, "Select a text file", directories[0]);
+	QString filePath = QFileDialog::getOpenFileName(Q_NULLPTR, q_("Select a text file"), directories[0]);
 	ui->lineEditFilePath->setText(filePath);
 }
 
 void MpcImportWindow::bookmarkSelected(QString bookmarkTitle)
 {
-	if (bookmarkTitle.isEmpty() || bookmarkTitle == "Select bookmark...")
+	if (bookmarkTitle.isEmpty() || bookmarks.value(importType).value(bookmarkTitle).isEmpty())
 	{
 		ui->lineEditURL->clear();
 		return;
@@ -341,11 +351,11 @@ void MpcImportWindow::populateCandidateObjects(QList<SsoElements> objects)
 	candidatesForAddition.clear();
 
 	//Get a list of the current objects
-	QHash<QString,QString> defaultSsoIdentifiers = ssoManager->getDefaultSsoIdentifiers();
+	//QHash<QString,QString> defaultSsoIdentifiers = ssoManager->getDefaultSsoIdentifiers();
 	QHash<QString,QString> loadedSsoIdentifiers = ssoManager->listAllLoadedSsoIdentifiers();
 
 	//Separating the objects into visual groups in the list
-	int newDefaultSsoIndex = 0;
+	//int newDefaultSsoIndex = 0;
 	int newLoadedSsoIndex = 0;
 	int newNovelSsoIndex = 0;
 	int insertionIndex = 0;
@@ -379,21 +389,22 @@ void MpcImportWindow::populateCandidateObjects(QList<SsoElements> objects)
 		item->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
 		item->setCheckState(Qt::Unchecked);
 
-		if (defaultSsoIdentifiers.contains(name))
-		{
-			//Duplicate of a default solar system object
-			QFont itemFont(item->font());
-			itemFont.setBold(true);
-			item->setFont(itemFont);
+//		if (defaultSsoIdentifiers.contains(name))
+//		{
+//			//Duplicate of a default solar system object
+//			QFont itemFont(item->font());
+//			itemFont.setBold(true);
+//			item->setFont(itemFont);
 
-			candidatesForUpdate.append(object);
+//			candidatesForUpdate.append(object);
 
-			insertionIndex = newDefaultSsoIndex;
-			newDefaultSsoIndex++;
-			newLoadedSsoIndex++;
-			newNovelSsoIndex++;
-		}
-		else if (loadedSsoIdentifiers.contains(name))
+//			insertionIndex = newDefaultSsoIndex;
+//			newDefaultSsoIndex++;
+//			newLoadedSsoIndex++;
+//			newNovelSsoIndex++;
+//		}
+//		else
+		if (loadedSsoIdentifiers.contains(name))
 		{
 			//Duplicate of another existing object
 			QFont itemFont(item->font());
@@ -440,11 +451,11 @@ SsoElements MpcImportWindow::readElementsFromString (QString elements)
 
 	switch (importType)
 	{
-	case MpcComets:
-		return ssoManager->readMpcOneLineCometElements(elements);
-	case MpcMinorPlanets:
-	default:
-		return ssoManager->readMpcOneLineMinorPlanetElements(elements);
+		case MpcComets:
+			return ssoManager->readMpcOneLineCometElements(elements);
+		case MpcMinorPlanets:
+		default:
+			return ssoManager->readMpcOneLineMinorPlanetElements(elements);
 	}
 }
 
@@ -454,11 +465,11 @@ QList<SsoElements> MpcImportWindow::readElementsFromFile(ImportType type, QStrin
 
 	switch (type)
 	{
-	case MpcComets:
-		return ssoManager->readMpcOneLineCometElementsFromFile(filePath);
-	case MpcMinorPlanets:
-	default:
-		return ssoManager->readMpcOneLineMinorPlanetElementsFromFile(filePath);
+		case MpcComets:
+			return ssoManager->readMpcOneLineCometElementsFromFile(filePath);
+		case MpcMinorPlanets:
+		default:
+			return ssoManager->readMpcOneLineMinorPlanetElementsFromFile(filePath);
 	}
 }
 
@@ -518,7 +529,7 @@ void MpcImportWindow::unmarkAll()
 
 void MpcImportWindow::updateDownloadProgress(qint64 bytesReceived, qint64 bytesTotal)
 {
-	if (downloadProgressBar == NULL)
+	if (downloadProgressBar == Q_NULLPTR)
 		return;
 
 	int currentValue = 0;
@@ -542,7 +553,7 @@ void MpcImportWindow::updateDownloadProgress(qint64 bytesReceived, qint64 bytesT
 
 void MpcImportWindow::updateQueryProgress(qint64, qint64)
 {
-	if (queryProgressBar == NULL)
+	if (queryProgressBar == Q_NULLPTR)
 		return;
 
 	//Just show activity
@@ -560,7 +571,7 @@ void MpcImportWindow::startDownload(QString urlString)
 	}
 
 	QUrl url(urlString);
-	if (!url.isValid() || url.isRelative() || url.scheme() != "http")
+	if (!url.isValid() || url.isRelative() || !url.scheme().contains("http"))
 	{
 		qWarning() << "Invalid URL:" << urlString;
 		return;
@@ -585,7 +596,7 @@ void MpcImportWindow::startDownload(QString urlString)
 
 void MpcImportWindow::abortDownload()
 {
-	if (downloadReply == NULL || downloadReply->isFinished())
+	if (downloadReply == Q_NULLPTR || downloadReply->isFinished())
 		return;
 
 	qDebug() << "Aborting download...";
@@ -595,7 +606,7 @@ void MpcImportWindow::abortDownload()
 
 	downloadReply->abort();
 	downloadReply->deleteLater();
-	downloadReply = NULL;
+	downloadReply = Q_NULLPTR;
 
 	enableInterface(true);
 	ui->pushButtonAbortDownload->setVisible(false);
@@ -613,7 +624,7 @@ void MpcImportWindow::downloadComplete(QNetworkReply *reply)
 		<< "reply->isFinished():" << reply->isFinished();
 	*/
 
-	if(reply->error())
+	if(reply->error() || reply->bytesAvailable()==0)
 	{
 		qWarning() << "Download error: While downloading"
 		           << reply->url().toString()
@@ -621,7 +632,7 @@ void MpcImportWindow::downloadComplete(QNetworkReply *reply)
 				   << reply->errorString();
 		enableInterface(true);
 		reply->deleteLater();
-		downloadReply = NULL;
+		downloadReply = Q_NULLPTR;
 		return;
 	}
 
@@ -663,7 +674,7 @@ void MpcImportWindow::downloadComplete(QNetworkReply *reply)
 	}
 
 	reply->deleteLater();
-	downloadReply = NULL;
+	downloadReply = Q_NULLPTR;
 
 	//Temporary, until the slot/socket mechanism is ready
 	populateCandidateObjects(objects);
@@ -680,7 +691,7 @@ void MpcImportWindow::deleteDownloadProgressBar()
 	if (downloadProgressBar)
 	{
 		StelApp::getInstance().removeProgressBar(downloadProgressBar);
-		downloadProgressBar = NULL;
+		downloadProgressBar = Q_NULLPTR;
 	}
 }
 
@@ -706,8 +717,10 @@ void MpcImportWindow::sendQuery()
 	startCountdown();
 	ui->pushButtonAbortQuery->setVisible(true);
 
-	sendQueryToUrl(QUrl("http://stellarium.org/mpc-mpeph"));
+	//sendQueryToUrl(QUrl("http://stellarium.org/mpc-mpeph"));
 	//sendQueryToUrl(QUrl("http://scully.cfa.harvard.edu/cgi-bin/mpeph2.cgi"));
+	// MPC requirements now :(
+	sendQueryToUrl(QUrl("https://www.minorplanetcenter.net/cgi-bin/mpeph2.cgi"));
 }
 
 void MpcImportWindow::sendQueryToUrl(QUrl url)
@@ -715,9 +728,10 @@ void MpcImportWindow::sendQueryToUrl(QUrl url)
 	QUrlQuery q(url);
 	q.addQueryItem("ty","e");//Type: ephemerides
 	q.addQueryItem("TextArea", query);//Object name query
-	//q.addQueryItem("e", "-1");//Elements format: MPC 1-line
+	q.addQueryItem("e", "-1");//Elements format: MPC 1-line
+	//Switch to MPC 1-line format --AW
 	//XEphem's format is used instead because it doesn't truncate object names.
-	q.addQueryItem("e", "3");//Elements format: XEphem
+	//q.addQueryItem("e", "3");//Elements format: XEphem
 	//Yes, all of the rest are necessary
 	q.addQueryItem("d","");
 	q.addQueryItem("l","");
@@ -748,7 +762,7 @@ void MpcImportWindow::sendQueryToUrl(QUrl url)
 	                  url.query(QUrl::FullyEncoded).length());
 
 	connect(networkManager, SIGNAL(finished(QNetworkReply*)), this, SLOT(receiveQueryReply(QNetworkReply*)));
-	queryReply = networkManager->post(request, url.query(QUrl::FullyEncoded).toUtf8());
+	queryReply = networkManager->post(request, url.query(QUrl::FullyEncoded).toUtf8());	
 	connect(queryReply, SIGNAL(downloadProgress(qint64,qint64)), this, SLOT(updateQueryProgress(qint64,qint64)));
 }
 
@@ -796,11 +810,11 @@ void MpcImportWindow::receiveQueryReply(QNetworkReply *reply)
 	//Hide the abort button - a reply has been received
 	ui->pushButtonAbortQuery->setVisible(false);
 
-	if (reply->error())
+	if (reply->error() || reply->bytesAvailable()==0)
 	{
 		qWarning() << "Download error: While trying to access"
 		           << reply->url().toString()
-		           << "the following error occured:"
+			   << "the following error occured:"
 		           << reply->errorString();
 		ui->labelQueryMessage->setText(reply->errorString());//TODO: Decide if this is a good idea
 		ui->labelQueryMessage->setVisible(true);
@@ -820,7 +834,7 @@ void MpcImportWindow::receiveQueryReply(QNetworkReply *reply)
 	}
 	else
 	{
-                ui->labelQueryMessage->setText("Object not found.");
+		ui->labelQueryMessage->setText("Object not found.");
 		ui->labelQueryMessage->setVisible(true);
 		enableInterface(true);
 	}
@@ -837,8 +851,17 @@ void MpcImportWindow::readQueryReply(QNetworkReply * reply)
 	QTemporaryFile file;
 	if (file.open())
 	{
-		file.write(reply->readAll());
+		file.write(reply->readAll());		
 		file.close();
+
+		QRegExp cometProvisionalDesignation("[PCDX]/");
+		QRegExp cometDesignation("(\\d)+[PCDX]/");
+		QString queryData = ui->lineEditQuery->text().trimmed();
+
+		if (cometDesignation.indexIn(queryData) == 0 || cometProvisionalDesignation.indexIn(queryData) == 0)
+			objects = readElementsFromFile(MpcComets, file.fileName());
+		else
+			objects = readElementsFromFile(MpcMinorPlanets, file.fileName());
 
 		/*
 		//Try to read it as a comet first?
@@ -846,7 +869,8 @@ void MpcImportWindow::readQueryReply(QNetworkReply * reply)
 		if (objects.isEmpty())
 			objects = readElementsFromFile(MpcMinorPlanets, file.fileName());
 		*/
-		objects = ssoManager->readXEphemOneLineElementsFromFile(file.fileName());
+		//XEphem given wrong data for comets --AW
+		//objects = ssoManager->readXEphemOneLineElementsFromFile(file.fileName());
 	}
 	else
 	{
@@ -883,7 +907,7 @@ void MpcImportWindow::deleteQueryProgressBar()
 	if (queryProgressBar)
 	{
 		StelApp::getInstance().removeProgressBar(queryProgressBar);
-		queryProgressBar = NULL;
+		queryProgressBar = Q_NULLPTR;
 	}
 }
 
@@ -946,6 +970,7 @@ void MpcImportWindow::loadBookmarks()
 	bookmarks[MpcMinorPlanets].clear();
 
 	QString bookmarksFilePath(StelFileMgr::getUserDir() + "/modules/SolarSystemEditor/bookmarks.json");
+	bool outdated = false;
 	if (StelFileMgr::isReadable(bookmarksFilePath))
 	{
 		QFile bookmarksFile(bookmarksFilePath);
@@ -953,30 +978,44 @@ void MpcImportWindow::loadBookmarks()
 		{
 			QVariantMap jsonRoot = StelJsonParser::parse(bookmarksFile.readAll()).toMap();
 
+			QString fileVersion = jsonRoot.value("version").toString();
+			if (fileVersion.isEmpty())
+				fileVersion = "0.0.0";
 			loadBookmarksGroup(jsonRoot.value("mpcMinorPlanets").toMap(), bookmarks[MpcMinorPlanets]);
 			loadBookmarksGroup(jsonRoot.value("mpcComets").toMap(), bookmarks[MpcComets]);
 
 			bookmarksFile.close();
 
+			if (StelUtils::compareVersions(fileVersion, SOLARSYSTEMEDITOR_PLUGIN_VERSION)<0)
+				outdated = true; // Oops... the list is outdated!
+
 			//If nothing was read, continue
-			if (!bookmarks.value(MpcComets).isEmpty() && !bookmarks[MpcMinorPlanets].isEmpty())
+			if (!bookmarks.value(MpcComets).isEmpty() && !bookmarks[MpcMinorPlanets].isEmpty() && !outdated)
 				return;
 		}
 	}
 
-	qDebug() << "Bookmarks file can't be read. Hard-coded bookmarks will be used.";
+	if (outdated)
+		qDebug() << "Bookmarks file is outdated! The list will be upgraded by hard-coded bookmarks.";
+	else
+		qDebug() << "Bookmarks file can't be read. Hard-coded bookmarks will be used.";
 
 	//Initialize with hard-coded values
-	bookmarks[MpcMinorPlanets].insert("MPC's list of bright minor planets at opposition in 2011", "http://www.minorplanetcenter.net/iau/Ephemerides/Bright/2011/Soft00Bright.txt");
-	bookmarks[MpcMinorPlanets].insert("MPC's list of bright minor planets at opposition in 2013", "http://www.minorplanetcenter.net/iau/Ephemerides/Bright/2013/Soft00Bright.txt");
-	bookmarks[MpcMinorPlanets].insert("MPC's list of observable distant minor planets", "http://www.minorplanetcenter.net/iau/Ephemerides/Distant/Soft00Distant.txt");
-	bookmarks[MpcMinorPlanets].insert("MPCORB: near-Earth asteroids (NEAs)", "http://www.minorplanetcenter.net/iau/MPCORB/NEA.txt");
-	bookmarks[MpcMinorPlanets].insert("MPCORB: potentially hazardous asteroids (PHAs)", "http://www.minorplanetcenter.net/iau/MPCORB/PHA.txt");
-	bookmarks[MpcMinorPlanets].insert("MPCORB: TNOs, Centaurs and SDOs", "http://www.minorplanetcenter.net/iau/MPCORB/Distant.txt");
-	bookmarks[MpcMinorPlanets].insert("MPCORB: other unusual objects", "http://www.minorplanetcenter.net/iau/MPCORB/Unusual.txt");
-	bookmarks[MpcMinorPlanets].insert("MPCORB: orbits from the latest DOU MPEC", "http://www.minorplanetcenter.net/iau/MPCORB/DAILY.DAT");
-	bookmarks[MpcComets].insert("MPC's list of observable comets", "http://www.minorplanetcenter.net/iau/Ephemerides/Comets/Soft00Cmt.txt");
-	bookmarks[MpcComets].insert("MPCORB: comets", "http://www.minorplanetcenter.net/iau/MPCORB/CometEls.txt");
+	bookmarks[MpcMinorPlanets].insert("MPC's list of bright minor planets at opposition in 2017", "https://www.minorplanetcenter.net/iau/Ephemerides/Bright/2017/Soft00Bright.txt");
+	bookmarks[MpcMinorPlanets].insert("MPC's list of observable critical-list numbered minor planets", "https://www.minorplanetcenter.net/iau/Ephemerides/CritList/Soft00CritList.txt");
+	bookmarks[MpcMinorPlanets].insert("MPC's list of observable distant minor planets", "https://www.minorplanetcenter.net/iau/Ephemerides/Distant/Soft00Distant.txt");
+	bookmarks[MpcMinorPlanets].insert("MPC's list of observable unusual minor planets", "https://www.minorplanetcenter.net/iau/Ephemerides/Unusual/Soft00Unusual.txt");
+	bookmarks[MpcMinorPlanets].insert("MPCORB: near-Earth asteroids (NEAs)", "https://www.minorplanetcenter.net/iau/MPCORB/NEA.txt");
+	bookmarks[MpcMinorPlanets].insert("MPCORB: potentially hazardous asteroids (PHAs)", "https://www.minorplanetcenter.net/iau/MPCORB/PHA.txt");
+	bookmarks[MpcMinorPlanets].insert("MPCORB: TNOs, Centaurs and SDOs", "https://www.minorplanetcenter.net/iau/MPCORB/Distant.txt");
+	bookmarks[MpcMinorPlanets].insert("MPCORB: other unusual objects", "https://www.minorplanetcenter.net/iau/MPCORB/Unusual.txt");
+	bookmarks[MpcMinorPlanets].insert("MPCORB: orbits from the latest DOU MPEC", "https://www.minorplanetcenter.net/iau/MPCORB/DAILY.DAT");
+	bookmarks[MpcMinorPlanets].insert("MPCORB: elements of NEAs for current epochs (today)", "https://www.minorplanetcenter.net/iau/MPCORB/NEAm00.txt");
+	bookmarks[MpcMinorPlanets].insert("MPCAT: Unusual minor planets (including NEOs)", "https://www.minorplanetcenter.net/iau/ECS/MPCAT/unusual.txt");
+	bookmarks[MpcMinorPlanets].insert("MPCAT: Distant minor planets (Centaurs and transneptunians)", "https://www.minorplanetcenter.net/iau/ECS/MPCAT/distant.txt");
+	bookmarks[MpcMinorPlanets].insert("MPCAT: Numbered objects", "https://www.minorplanetcenter.net/iau/ECS/MPCAT/mpn.txt");
+	bookmarks[MpcComets].insert("MPC's list of observable comets", "https://www.minorplanetcenter.net/iau/Ephemerides/Comets/Soft00Cmt.txt");
+	bookmarks[MpcComets].insert("MPCORB: comets", "https://www.minorplanetcenter.net/iau/MPCORB/CometEls.txt");
 
 	//Try to save them to a file
 	saveBookmarks();
@@ -1019,6 +1058,8 @@ void MpcImportWindow::saveBookmarks()
 		QFile bookmarksFile(bookmarksFilePath);
 		if (bookmarksFile.open(QFile::WriteOnly | QFile::Truncate | QFile::Text))
 		{
+			jsonRoot.insert("version", SOLARSYSTEMEDITOR_PLUGIN_VERSION);
+
 			QVariantMap minorPlanetsObject;
 			saveBookmarksGroup(bookmarks[MpcMinorPlanets], minorPlanetsObject);
 			//qDebug() << minorPlanetsObject.keys();

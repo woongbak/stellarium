@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2009, 2012 Matthew Gates
+ * Copyright (C) 2015 Nick Fedoseev (Iridium flares)
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -29,7 +30,6 @@
 #include <QDateTime>
 #include <QFile>
 #include <QDir>
-#include <QOpenGLFunctions_1_2>
 #include <QUrl>
 #include <QVariantMap>
 
@@ -37,14 +37,58 @@ class StelButton;
 class Planet;
 class QNetworkAccessManager;
 class QNetworkReply;
-class QPixmap;
 class QSettings;
 class QTimer;
 
 class SatellitesDialog;
 class SatellitesListModel;
 
+/*! @defgroup satellites Satellites Plug-in
+@{
+The %Satellites plugin displays the positions of artifical satellites in Earth
+orbit based on a catalog of orbital data.
+
+The Satellites class is the main class of the plug-in. It manages a collection
+of Satellite objects and takes care of loading, saving and updating the
+satellite catalog. It allows automatic updates from online sources and manages
+a list of update file URLs.
+
+To calculate satellite positions, the plugin uses an implementation of
+the SGP4/SDP4 algorithms (J.L. Canales' gsat library).
+
+<b>Satellite Properties</b>
+
+<i>Name and identifiers</i>
+
+Each satellite has a name. It's displayed as a label of the satellite hint and in the list of satellites. Names are not unique though, so they are used only
+for presentation purposes.
+
+In the <b>Satellite Catalog</b> satellites are uniquely identified by their NORAD number, which is encoded in TLEs.
+
+<i>Grouping</i>
+
+A satellite can belong to one or more groups such as "amateur", "geostationary" or "navigation". They have no other function but to help the user organize the satellite collection.
+
+Group names are arbitrary strings defined in the <b>Satellite Catalog</b> for each satellite and are more similar to the concept of "tags" than a hierarchical grouping. A satellite may not belong to any group at all.
+
+By convention, group names are in lowercase. The GUI translates some of the groups used in the default catalog.
+
+<b>Satellite Catalog</b>
+
+The satellite catalog is stored on the disk in [JSON](http://www.json.org/)
+format, in a file named "satellites.json". A default copy is embedded in the
+plug-in at compile time. A working copy is kept in the user data directory.
+
+<b>Configuration</b>
+
+The plug-ins' configuration data is stored in Stellarium's main configuration
+file.
+
+@}
+*/
+
 //! Data structure containing unvalidated TLE set as read from a TLE list file.
+//! @ingroup satellites
 struct TleData
 {
 	//! NORAD catalog number, as extracted from the TLE set.
@@ -53,15 +97,19 @@ struct TleData
 	QString name;
 	QString first;
 	QString second;
+	int status;
 	//! Flag indicating whether this satellite should be added.
 	//! See Satellites::autoAddEnabled.
 	bool addThis;
 };
 
+//! @ingroup satellites
 typedef QList<TleData> TleDataList;
+//! @ingroup satellites
 typedef QHash<QString, TleData> TleDataHash ;
 
 //! TLE update source, used only internally for now.
+//! @ingroup satellites
 struct TleSource
 {
 	//! URL from where the source list should be downloaded.
@@ -74,61 +122,36 @@ struct TleSource
 	bool addNew;
 };
 
+//! @ingroup satellites
 typedef QList<TleSource> TleSourceList;
 
-/*! @mainpage notitle
-@section overview Plugin Overview
+struct IridiumFlaresPrediction
+{
+	QString datetime;
+	QString satellite;
+	float azimuth;		// radians
+	float altitude;		// radians
+	float magnitude;
+};
 
-The %Satellites plugin displays the positions of artifical satellites in Earth
-orbit based on a catalog of orbital data.
-
-The Satellites class is the main class of the plug-in. It manages a collection
-of Satellite objects and takes care of loading, saving and updating the
-satellite catalog. It allows automatic updates from online sources and manages
-a list of update file URLs.
-
-To calculate satellite positions, the plugin uses an implementation of
-the SGP4/SDP4 algorithms (J.L. Canales' gsat library).
-
-@section satprop Satellite Properties
-
-@subsection ident Name and identifiers
-Each satellite has a name. It's displayed as a label of the satellite hint and in the list of satellites. Names are not unique though, so they are used only
-for presentation purposes.
-
-In the @ref satcat satellites are uniquely identified by their NORAD number, which is encoded in TLEs.
-
-@subsection groups Grouping
-A satellite can belong to one or more groups such as "amateur", "geostationary" or "navigation". They have no other function but to help the user organize the satellite collection.
-
-Group names are arbitrary strings defined in the @ref satcat for each satellite and are more similar to the concept of "tags" than a hierarchical grouping. A satellite may not belong to any group at all.
-
-By convention, group names are in lowercase. The GUI translates some of the groups used in the default catalog.
-
-@section satcat Satellite Catalog
-The satellite catalog is stored on the disk in [JSON](http://www.json.org/)
-format, in a file named "satellites.json". A default copy is embedded in the
-plug-in at compile time. A working copy is kept in the user data directory.
-
-@section config Configuration
-The plug-ins' configuration data is stored in Stellarium's main configuration
-file.
-*/
-
+typedef QList<IridiumFlaresPrediction> IridiumFlaresPredictionList;
 
 //! @class Satellites
 //! Main class of the %Satellites plugin.
 //! @author Matthew Gates
 //! @author Bogdan Marinov
-class Satellites : public StelObjectModule, protected QOpenGLFunctions_1_2
+//! @ingroup satellites
+class Satellites : public StelObjectModule
 {
 	Q_OBJECT
 	Q_PROPERTY(bool hintsVisible
 	           READ getFlagHints
-		   WRITE setFlagHints)
+		   WRITE setFlagHints
+		   NOTIFY hintsVisibleChanged)
 	Q_PROPERTY(bool labelsVisible
 	           READ getFlagLabels
-		   WRITE setFlagLabels)
+		   WRITE setFlagLabels
+		   NOTIFY labelsVisibleChanged)
 	Q_PROPERTY(bool autoAddEnabled
 	           READ isAutoAddEnabled
 	           WRITE enableAutoAdd
@@ -184,13 +207,15 @@ public:
 	//! @return an list containing the satellites located inside the limitFov circle around position v.
 	virtual QList<StelObjectP> searchAround(const Vec3d& v, double limitFov, const StelCore* core) const;
 
-	//! Return the matching satellite object's pointer if exists or NULL.
+	//! Return the matching satellite object's pointer if exists or Q_NULLPTR.
 	//! @param nameI18n The case in-sensistive satellite name
 	virtual StelObjectP searchByNameI18n(const QString& nameI18n) const;
 
-	//! Return the matching satellite if exists or NULL.
+	//! Return the matching satellite if exists or Q_NULLPTR.
 	//! @param name The case in-sensistive standard program name
 	virtual StelObjectP searchByName(const QString& name) const;
+
+	virtual StelObjectP searchByID(const QString &id) const;
 	
 	//! Return the satellite with the given catalog number.
 	//! Used as a helper function by searchByName() and
@@ -199,23 +224,17 @@ public:
 	//! @returns a null pointer if no such satellite is found.
 	StelObjectP searchByNoradNumber(const QString& noradNumber) const;
 
-	//! Find and return the list of at most maxNbItem objects auto-completing the passed object I18n name.
+	//! Find and return the list of at most maxNbItem objects auto-completing the passed object name.
 	//! @param objPrefix the case insensitive first letters of the searched object
 	//! @param maxNbItem the maximum number of returned object names
 	//! @param useStartOfWords the autofill mode for returned objects names
 	//! @return a list of matching object name by order of relevance, or an empty list if nothing match
-	virtual QStringList listMatchingObjectsI18n(const QString& objPrefix, int maxNbItem=5, bool useStartOfWords=false) const;
-
-	//! Find and return the list of at most maxNbItem objects auto-completing the passed object English name.
-	//! @param objPrefix the case insensitive first letters of the searched object
-	//! @param maxNbItem the maximum number of returned object names
-	//! @param useStartOfWords the autofill mode for returned objects names
-	//! @return a list of matching object name by order of relevance, or an empty list if nothing match
-	virtual QStringList listMatchingObjects(const QString& objPrefix, int maxNbItem=5, bool useStartOfWords=false) const;
+	virtual QStringList listMatchingObjects(const QString& objPrefix, int maxNbItem=5, bool useStartOfWords=false, bool inEnglish=false) const;
 
 	virtual QStringList listAllObjects(bool inEnglish) const;
 
 	virtual QString getName() const { return "Satellites"; }
+	virtual QString getStelObjectType() const { return Satellite::SATELLITE_TYPE; }
 
 	//! Implment this to tell the main Stellarium GUi that there is a GUI element to configure this
 	//! plugin. 
@@ -245,15 +264,15 @@ public:
 
 	//! get satellite objects filtered by group.  If an empty string is used for the
 	//! group name, return all satallites
-	QHash<QString,QString> getSatellites(const QString& group=QString(), Status vis=Both);
+	QHash<QString,QString> getSatellites(const QString& group=QString(), Status vis=Both) const;
 	//! Get a model representing the list of satellites.
 	SatellitesListModel* getSatellitesListModel();
 
 	//! Get a satellite object by its identifier (i.e. NORAD number).
-	SatelliteP getById(const QString& id);
+	SatelliteP getById(const QString& id) const;
 	
 	//! Returns a list of all satellite IDs.
-	QStringList listAllIds();
+	QStringList listAllIds() const;
 	
 	//! Add to the current collection the satellites described by the data list.
 	//! The changes are not saved to file.
@@ -266,13 +285,13 @@ public:
 
 	//! get whether or not the plugin will try to update TLE data from the internet
 	//! @return true if updates are set to be done, false otherwise
-	bool getUpdatesEnabled(void) {return updatesEnabled;}
+	bool getUpdatesEnabled(void) const {return updatesEnabled;}
 
 	//! get the date and time the TLE elements were updated
-	QDateTime getLastUpdate(void) {return lastUpdate;}
+	QDateTime getLastUpdate(void) const {return lastUpdate;}
 
 	//! get the update frequency in hours
-	int getUpdateFrequencyHours(void) {return updateFrequencyHours;}
+	int getUpdateFrequencyHours(void) const {return updateFrequencyHours;}
 
 	//! get the number of seconds till the next update
 	int getSecondsToUpdate(void);
@@ -281,12 +300,12 @@ public:
 	//void setUpdateFrequencyHours(int hours);
 
 	//! Get the current updateState
-	UpdateState getUpdateState(void) {return updateState;}
+	UpdateState getUpdateState(void) const {return updateState;}
 
 	//! Get a list of URLs which are sources of TLE data.
 	//! @returns a list of URL strings, some with prefixes - see #updateUrls
 	//! for details.
-	QStringList getTleSources(void) {return updateUrls;}
+	QStringList getTleSources(void) const {return updateUrls;}
 
 	//! Set the list of URLs which are sources of TLE data.
 	//! In addition to replacing the current list of sources, it also
@@ -334,7 +353,7 @@ public:
 	//! QNetworkReply-s... --BM
 	static void parseTleFile(QFile& openFile,
 	                         TleDataHash& tleList,
-	                         bool addFlagValue = false);
+				 bool addFlagValue = false);
 
 	//! Reads qs.mag file and its parsing for getting id and standard magnitude
 	//! for satellites.
@@ -342,18 +361,26 @@ public:
 	//! @param name of file
 	void parseQSMagFile(QString qsMagFile);
 	
-	bool getFlagHints() {return hintFader;}
+	bool getFlagHints() const {return hintFader;}
 	//! get the label font size.
 	//! @return the pixel size of the font
-	int getLabelFontSize() {return labelFont.pixelSize();}
-	bool getFlagLabels();
-	bool getFlagRealisticMode();
+	int getLabelFontSize() const {return labelFont.pixelSize();}
+	bool getFlagLabels() const;
+	bool getFlagRealisticMode() const;
 	//! Get the current status of the orbit line rendering flag.
-	bool getOrbitLinesFlag();
+	bool getOrbitLinesFlag() const;
 	bool isAutoAddEnabled() const { return autoAddEnabled; }
 	bool isAutoRemoveEnabled() const { return autoRemoveEnabled; }	
 
+	//! Get depth of prediction for Iridium flares
+	int getIridiumFlaresPredictionDepth(void) const { return iridiumFlaresPredictionDepth; }
+
+	IridiumFlaresPredictionList getIridiumFlaresPrediction();
+
 signals:
+	void hintsVisibleChanged(bool b);
+	void labelsVisibleChanged(bool b);
+
 	//! Emitted when some of the plugin settings have been changed.
 	//! Used to communicate with the configuration window.
 	void settingsChanged();
@@ -435,11 +462,13 @@ public slots:
 	//! Display a message on the screen for a few seconds.
 	//! This is used for plugin-specific warnings and such.
 	void displayMessage(const QString& message, const QString hexColor="#999999");
-	//! Hide all messages.
-	void hideMessages();
 
 	//! Save the current satellite catalog to disk.
 	void saveCatalog(QString path=QString());
+
+	//! Set depth of prediction for Iridium flares
+	//! @param depth in days
+	void setIridiumFlaresPredictionDepth(int depth) { iridiumFlaresPredictionDepth=depth; }
 
 private slots:
 
@@ -470,7 +499,7 @@ private:
 	void restoreDefaultQSMagFile();
 
 	//! Checks valid range dates of life of satellites
-	bool isValidRangeDates() const;
+	bool isValidRangeDates(const StelCore* core) const;
 
 	//! Save a structure representing a satellite catalog to a JSON file.
 	//! If no path is specified, catalogPath is used.
@@ -524,9 +553,6 @@ private:
 	
 	//! @name Bottom toolbar button
 	//@{
-	QPixmap* pxmapGlow;
-	QPixmap* pxmapOnIcon;
-	QPixmap* pxmapOffIcon;
 	StelButton* toolbarButton;	
 	//@}
 	// FIXME: Possible bug with the Solar System recreated by the SSEditor.
@@ -570,12 +596,13 @@ private:
 	
 	//! @name Screen message infrastructure
 	//@{
-	QTimer* messageTimer;
 	QList<int> messageIDs;
 	//@}
 
+	int iridiumFlaresPredictionDepth;
+
 	// GUI
-	SatellitesDialog* configDialog;	
+	SatellitesDialog* configDialog;
 
 private slots:
 	//! check to see if an update is required.  This is called periodically by a timer
@@ -592,7 +619,6 @@ private slots:
 	//! can be modified to read directly form QNetworkReply-s. --BM
 	void saveDownloadedUpdate(QNetworkReply* reply);
 	void updateObserverLocation(StelLocation loc);
-
 };
 
 
@@ -604,11 +630,12 @@ private slots:
 class SatellitesStelPluginInterface : public QObject, public StelPluginInterface
 {
 	Q_OBJECT
-	Q_PLUGIN_METADATA(IID "stellarium.StelGuiPluginInterface/1.0")
+	Q_PLUGIN_METADATA(IID StelPluginInterface_iid)
 	Q_INTERFACES(StelPluginInterface)
 public:
 	virtual StelModule* getStelModule() const;
 	virtual StelPluginInfo getPluginInfo() const;
+	virtual QObjectList getExtensionList() const { return QObjectList(); }
 };
 
 #endif /*_SATELLITES_HPP_*/

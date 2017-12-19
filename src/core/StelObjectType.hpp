@@ -20,8 +20,6 @@
 #ifndef _STELOBJECTTYPE_HPP_
 #define _STELOBJECTTYPE_HPP_
 
-#include "config.h"
-
 #include <QSharedPointer>
 
 //! Special version of QSharedPointer which by default doesn't delete the referenced pointer when
@@ -44,5 +42,7 @@ class StelObject;
 //! @typedef StelObjectP
 //! Intrusive pointer used to manage StelObject with smart pointers
 typedef QSharedPointerNoDelete<StelObject> StelObjectP;
+
+Q_DECLARE_METATYPE(StelObjectP)
 
 #endif // _STELOBJECTTYPE_HPP_

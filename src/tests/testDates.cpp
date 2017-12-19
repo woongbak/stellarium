@@ -17,6 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
+#include "tests/testDates.hpp"
+
 #include <QString>
 #include <QDateTime>
 #include <QDate>
@@ -25,12 +27,12 @@
 #include <QtGlobal>
 #include <QLocale>
 #include <QDebug>
+
 #include "StelUtils.hpp"
-#include "tests/testDates.hpp"
 
 #define IGREG 2299161
 
-QTEST_MAIN(TestDates)
+QTEST_GUILESS_MAIN(TestDates)
 
 void TestDates::dateRoundTrip()
 {
@@ -122,10 +124,10 @@ void TestDates::formatting()
 //			 qPrintable("formatter2 not working: " + StelUtils::localeDateString(2008, 3, 9, 6, hardLong)));
 
 	// test detection of offset from UTC.
-	double mar122008 = QDate(2008,3,12).toJulianDay();
-	qFuzzyCompare(StelUtils::getGMTShiftFromQT(mar122008), -4.f);
-	double mar012008 = QDate(2008,3,1).toJulianDay();
-	qFuzzyCompare(StelUtils::getGMTShiftFromQT(mar012008), -5.f);
+	// double mar122008 = QDate(2008,3,12).toJulianDay();
+	// qFuzzyCompare(StelUtils::getGMTShiftFromQT(mar122008), -4.f);
+	// double mar012008 = QDate(2008,3,1).toJulianDay();
+	// qFuzzyCompare(StelUtils::getGMTShiftFromQT(mar012008), -5.f);
 
 }
 

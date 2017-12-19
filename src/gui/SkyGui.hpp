@@ -20,12 +20,12 @@
 #ifndef _SKYGUI_HPP_
 #define _SKYGUI_HPP_
 
-#include "config.h"
 #include "StelStyle.hpp"
 #include "StelObject.hpp"
 
 #include <QDebug>
 #include <QGraphicsWidget>
+#include <QGraphicsPixmapItem>
 
 class QGraphicsSceneMouseEvent;
 class QGraphicsTextItem;
@@ -41,6 +41,7 @@ class InfoPanel : public QGraphicsTextItem
 		//! Reads "gui/selected_object_info", etc from the configuration file.
 		//! @todo Bad idea to read from the configuration file in a constructor? --BM
 		InfoPanel(QGraphicsItem* parent);
+		~InfoPanel();
 		void setInfoTextFilters(const StelObject::InfoStringGroup& aflags) {infoTextFilters=aflags;}
 		const StelObject::InfoStringGroup& getInfoTextFilters(void) const {return infoTextFilters;}
 		void setTextFromObjects(const QList<StelObjectP>&);
@@ -48,6 +49,7 @@ class InfoPanel : public QGraphicsTextItem
 
 	private:
 		StelObject::InfoStringGroup infoTextFilters;
+		QGraphicsPixmapItem *infoPixmap; // Used when text rendering is buggy. Used when CLI option -t given.
 };
 
 //! The class managing the layout for button bars, selected object info and loading bars.
@@ -58,7 +60,7 @@ class SkyGui: public QGraphicsWidget
 public:
 	friend class StelGui;
 	
-	SkyGui(QGraphicsItem * parent=NULL);
+	SkyGui(QGraphicsItem * parent=Q_NULLPTR);
 	//! Add a new progress bar in the lower right corner of the screen.
 	//! When the progress bar is deleted with removeProgressBar() the layout is automatically rearranged.
 	//! @return a pointer to the progress bar
@@ -66,14 +68,15 @@ public:
 	
 	void init(class StelGui* stelGui);
 	
-	virtual void paint(QPainter*, const QStyleOptionGraphicsItem*, QWidget* = 0);
+	virtual void paint(QPainter*, const QStyleOptionGraphicsItem*, QWidget* = Q_NULLPTR) Q_DECL_OVERRIDE;
 
 	int getSkyGuiWidth() const;
 	int getSkyGuiHeight() const;
 	
 protected:
-	virtual void resizeEvent(QGraphicsSceneResizeEvent* event);
-	virtual void hoverMoveEvent(QGraphicsSceneHoverEvent* event);
+	virtual void resizeEvent(QGraphicsSceneResizeEvent* event) Q_DECL_OVERRIDE;
+	virtual void hoverMoveEvent(QGraphicsSceneHoverEvent* event) Q_DECL_OVERRIDE;
+	virtual QVariant itemChange(GraphicsItemChange change, const QVariant & value) Q_DECL_OVERRIDE;
 
 private slots:
 	//! Load color scheme from the given ini file and section name
@@ -81,7 +84,7 @@ private slots:
 	
 	//! Update the position of the button bars in the main window
 	void updateBarsPos();
-	
+
 private:
 	class StelBarsPath* buttonBarPath;
 	QTimeLine* animLeftBarTimeLine;

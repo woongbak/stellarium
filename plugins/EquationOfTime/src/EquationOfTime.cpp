@@ -33,8 +33,6 @@
 #include "EquationOfTime.hpp"
 #include "EquationOfTimeWindow.hpp"
 
-#include "sidereal_time.h"
-
 #include <QFontMetrics>
 #include <QSettings>
 #include <QPixmap>
@@ -57,14 +55,24 @@ StelPluginInfo EquationOfTimeStelPluginInterface::getPluginInfo() const
 	info.contact = "http://stellarium.org";
 	info.description = N_("This plugin shows the solution of the equation of time.");
 	info.version = EQUATIONOFTIME_PLUGIN_VERSION;
+	info.license = EQUATIONOFTIME_PLUGIN_LICENSE;
 	return info;
 }
 
 EquationOfTime::EquationOfTime()
-	: toolbarButton(NULL)
+	: flagShowSolutionEquationOfTime(false)
+	, flagUseInvertedValue(false)
+	, flagUseMsFormat(false)
+	, flagEnableAtStartup(false)
+	, flagShowEOTButton(false)
+	, fontSize(20)
+	, toolbarButton(Q_NULLPTR)
 {
 	setObjectName("EquationOfTime");
 	mainWindow = new EquationOfTimeWindow();
+	StelApp &app = StelApp::getInstance();
+	conf = app.getSettings();
+	gui = dynamic_cast<StelGui*>(app.getGui());
 }
 
 EquationOfTime::~EquationOfTime()
@@ -75,9 +83,6 @@ EquationOfTime::~EquationOfTime()
 void EquationOfTime::init()
 {
 	StelApp &app = StelApp::getInstance();
-	conf = app.getSettings();
-	gui = dynamic_cast<StelGui*>(app.getGui());
-
 	if (!conf->childGroups().contains("EquationOfTime"))
 	{
 		qDebug() << "EquationOfTime: no EquationOfTime section exists in main config file - creating with defaults";
@@ -87,7 +92,7 @@ void EquationOfTime::init()
 	// populate settings from main config file.
 	readSettingsFromConfig();
 
-	addAction("actionShow_EquationOfTime", N_("Equation of Time"), N_("Show solution for Equation of Time"), "enabled", "");
+	addAction("actionShow_EquationOfTime", N_("Equation of Time"), N_("Show solution for Equation of Time"), "showEOT", "Ctrl+Alt+T");
 
 	enableEquationOfTime(getFlagEnableAtStartup());
 	setFlagShowEOTButton(flagShowEOTButton);
@@ -107,6 +112,8 @@ void EquationOfTime::draw(StelCore *core)
 {
 	if (!isEnabled())
 		return;
+	if (core->getCurrentPlanet()->getEnglishName()!="Earth")
+		return;
 
 	StelPainter sPainter(core->getProjection2d());
 	sPainter.setColor(textColor[0], textColor[1], textColor[2], 1.f);
@@ -114,43 +121,34 @@ void EquationOfTime::draw(StelCore *core)
 	sPainter.setFont(font);
 
 	QString timeText;
-	double time = getSolutionEquationOfTime(core->getJDay());
+	double eqTime = core->getSolutionEquationOfTime(core->getJDE());
 
 	if (getFlagInvertedValue())
-		time *= -1;
+		eqTime *= -1;
 
 	if (getFlagMsFormat())
 	{
-		double seconds = std::abs(round((time - (int)time)*60));
-		QString messageSecondsValue;
-		if (seconds<10.)
-			messageSecondsValue = QString("0%1").arg(QString::number(seconds, 'f', 0));
-		else
-			messageSecondsValue = QString("%1").arg(QString::number(seconds, 'f', 0));
+		int seconds = qRound((eqTime - (int)eqTime)*60);
+		QString messageSecondsValue = QString("%1").arg(qAbs(seconds), 2, 10, QLatin1Char('0'));
 
-		timeText = QString("%1: %2%3%4%5").arg(messageEquation, QString::number((int)time), messageEquationMinutes, messageSecondsValue, messageEquationSeconds);
+		timeText = QString("%1: %2%3%4%5%6").arg(messageEquation, (eqTime<0? QString(QLatin1Char('-')):QString()), QString::number((int)qAbs(eqTime)), messageEquationMinutes, messageSecondsValue, messageEquationSeconds);
 	}
 	else
-		timeText = QString("%1: %2%3").arg(messageEquation, QString::number(time, 'f', 2), messageEquationMinutes);
+		timeText = QString("%1: %2%3").arg(messageEquation, QString::number(eqTime, 'f', 2), messageEquationMinutes);
 
 
 	QFontMetrics fm(font);
 	QSize fs = fm.size(Qt::TextSingleLine, timeText);	
-	if (core->getCurrentPlanet().data()->getEnglishName()=="Earth")
-		sPainter.drawText(gui->getSkyGui()->getSkyGuiWidth()/2 - fs.width()/2, gui->getSkyGui()->getSkyGuiHeight() - fs.height()*1.5, timeText);
+
+	sPainter.drawText(gui->getSkyGui()->getSkyGuiWidth()/2 - fs.width()/2, gui->getSkyGui()->getSkyGuiHeight() - fs.height()*1.5, timeText);
 
 	//qDebug() << timeText;
-}
-
-void EquationOfTime::enableEquationOfTime(bool b)
-{
-	flagShowSolutionEquationOfTime = b;
 }
 
 double EquationOfTime::getCallOrder(StelModuleActionName actionName) const
 {
 	if (actionName==StelModule::ActionDraw)
-		return StelApp::getInstance().getModuleMgr().getModule("ConstellationMgr")->getCallOrder(actionName)+10.;
+		return StelApp::getInstance().getModuleMgr().getModule("LandscapeMgr")->getCallOrder(actionName)+10.;
 	return 0;
 }
 
@@ -201,7 +199,7 @@ void EquationOfTime::readSettingsFromConfig(void)
 	conf->endGroup();
 }
 
-void EquationOfTime::saveSettingsToConfig(void)
+void EquationOfTime::saveSettingsToConfig(void) const
 {
 	conf->beginGroup("EquationOfTime");
 
@@ -213,35 +211,6 @@ void EquationOfTime::saveSettingsToConfig(void)
 	conf->setValue("font_size", getFontSize());
 
 	conf->endGroup();
-}
-
-double EquationOfTime::getSolutionEquationOfTime(const double JDay) const
-{
-	StelCore* core = StelApp::getInstance().getCore();
-
-	double tau = (JDay - 2451545.0)/365250.0;
-	double sunMeanLongitude = 280.4664567 + tau*(360007.6892779 + tau*(0.03032028 + tau*(1/49931 - tau*(1/15300 - tau/2000000))));
-
-	int count = std::abs(sunMeanLongitude/360.);
-	if (count==0) count = 1;
-
-	if (sunMeanLongitude>360.)
-		sunMeanLongitude -= count*360.;
-
-	if (sunMeanLongitude<0.)
-		sunMeanLongitude += (1+count)*360.;
-
-	Vec3d pos = GETSTELMODULE(StelObjectMgr)->searchByName("Sun")->getEquinoxEquatorialPos(core);
-	double ra, dec;
-	StelUtils::rectToSphe(&ra, &dec, pos);
-	if (ra < 0.0)
-		ra += 2.0*M_PI;
-
-	double alpha = ra*180./M_PI;
-	if (alpha>360.)
-		alpha -= count*360.;
-
-	return 4*(sunMeanLongitude - 0.0057183 - alpha + get_nutation_longitude(JDay)*cos(get_mean_ecliptical_obliquity(JDay)));
 }
 
 void EquationOfTime::updateMessageText()
@@ -256,9 +225,9 @@ void EquationOfTime::updateMessageText()
 void EquationOfTime::setFlagShowEOTButton(bool b)
 {
 	if (b==true) {
-		if (toolbarButton==NULL) {
+		if (toolbarButton==Q_NULLPTR) {
 			// Create the button
-			toolbarButton = new StelButton(NULL,
+			toolbarButton = new StelButton(Q_NULLPTR,
 						       QPixmap(":/EquationOfTime/bt_EquationOfTime_On.png"),
 						       QPixmap(":/EquationOfTime/bt_EquationOfTime_Off.png"),
 						       QPixmap(":/graphicGui/glow32x32.png"),
@@ -268,6 +237,32 @@ void EquationOfTime::setFlagShowEOTButton(bool b)
 	} else {
 		gui->getButtonBar()->hideButton("actionShow_EquationOfTime");
 	}
-	flagShowEOTButton = b;
+	flagShowEOTButton = b;	
+}
+
+void EquationOfTime::enableEquationOfTime(bool b)
+{
+	flagShowSolutionEquationOfTime = b;
+	emit equationOfTimeStateChanged(b);
+}
+
+void EquationOfTime::setFlagInvertedValue(bool b)
+{
+	flagUseInvertedValue=b;
+}
+
+void EquationOfTime::setFlagMsFormat(bool b)
+{
+	flagUseMsFormat=b;
+}
+//! Enable plugin usage at startup
+void EquationOfTime::setFlagEnableAtStartup(bool b)
+{
+	flagEnableAtStartup=b;
+}
+//! Set font size for message
+void EquationOfTime::setFontSize(int size)
+{
+	fontSize=size;
 }
 

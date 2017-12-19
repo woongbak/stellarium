@@ -73,6 +73,7 @@ StelPluginInfo SupernovaeStelPluginInterface::getPluginInfo() const
 	info.contact = "alex.v.wolf@gmail.com";
 	info.description = N_("This plugin allows you to see some bright historical supernovae.");
 	info.version = SUPERNOVAE_PLUGIN_VERSION;
+	info.license = SUPERNOVAE_PLUGIN_LICENSE;
 	return info;
 }
 
@@ -80,12 +81,18 @@ StelPluginInfo SupernovaeStelPluginInterface::getPluginInfo() const
  Constructor
 */
 Supernovae::Supernovae()
-	: progressBar(NULL)
+	: SNCount(0)
+	, updateState(CompleteNoUpdates)
+	, downloadMgr(Q_NULLPTR)
+	, progressBar(Q_NULLPTR)
+	, updateTimer(Q_NULLPTR)
+	, updatesEnabled(false)
+	, updateFrequencyDays(0)
 {
 	setObjectName("Supernovae");
 	configDialog = new SupernovaeDialog();
 	conf = StelApp::getInstance().getSettings();
-	font.setPixelSize(conf->value("gui/base_font_size", 13).toInt());
+	font.setPixelSize(StelApp::getInstance().getBaseFontSize());
 }
 
 /*
@@ -124,7 +131,7 @@ void Supernovae::init()
 		// If no settings in the main config file, create with defaults
 		if (!conf->childGroups().contains("Supernovae"))
 		{
-			qDebug() << "Supernovae: no Supernovae section exists in main config file - creating with defaults";
+			qDebug() << "[Supernovae] no Supernovae section exists in main config file - creating with defaults";
 			restoreDefaultConfigIni();
 		}
 
@@ -146,13 +153,6 @@ void Supernovae::init()
 		return;
 	}
 
-	// A timer for hiding alert messages
-	messageTimer = new QTimer(this);
-	messageTimer->setSingleShot(true);   // recurring check for update
-	messageTimer->setInterval(9000);      // 6 seconds should be enough time
-	messageTimer->stop();
-	connect(messageTimer, SIGNAL(timeout()), this, SLOT(messageTimeout()));
-
 	// If the json file does not already exist, create it from the resource in the Qt resource
 	if(QFileInfo(sneJsonPath).exists())
 	{
@@ -163,11 +163,11 @@ void Supernovae::init()
 	}
 	else
 	{
-		qDebug() << "Supernovae: supernovae.json does not exist - copying default file to" << QDir::toNativeSeparators(sneJsonPath);
+		qDebug() << "[Supernovae] supernovae.json does not exist - copying default file to" << QDir::toNativeSeparators(sneJsonPath);
 		restoreDefaultJsonFile();
 	}
 
-	qDebug() << "Supernovae: loading catalog file:" << QDir::toNativeSeparators(sneJsonPath);
+	qDebug() << "[Supernovae] loading catalog file:" << QDir::toNativeSeparators(sneJsonPath);
 
 	readJsonFile();
 
@@ -220,9 +220,7 @@ void Supernovae::drawPointer(StelCore* core, StelPainter& painter)
 		const Vec3f& c(obj->getInfoColor());
 		painter.setColor(c[0],c[1],c[2]);
 		texPointer->bind();
-		painter.enableTexture2d(true);
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // Normal transparency mode
+		painter.setBlending(true);
 		painter.drawSprite2dMode(screenpos[0], screenpos[1], 13.f, StelApp::getInstance().getTotalRunTime()*40.);
 	}
 }
@@ -260,7 +258,7 @@ StelObjectP Supernovae::searchByName(const QString& englishName) const
 			return qSharedPointerCast<StelObject>(sn);
 	}
 
-	return NULL;
+	return Q_NULLPTR;
 }
 
 StelObjectP Supernovae::searchByNameI18n(const QString& nameI18n) const
@@ -271,77 +269,7 @@ StelObjectP Supernovae::searchByNameI18n(const QString& nameI18n) const
 			return qSharedPointerCast<StelObject>(sn);
 	}
 
-	return NULL;
-}
-
-QStringList Supernovae::listMatchingObjectsI18n(const QString& objPrefix, int maxNbItem, bool useStartOfWords) const
-{
-	QStringList result;
-	if (maxNbItem==0)
-		return result;
-
-	QString snn;
-	bool find;
-	foreach(const SupernovaP& sn, snstar)
-	{
-		snn = sn->getNameI18n();
-		find = false;
-		if (useStartOfWords)
-		{
-			if (objPrefix.toUpper()==snn.toUpper().left(objPrefix.length()))
-				find = true;
-		}
-		else
-		{
-			if (snn.contains(objPrefix, Qt::CaseInsensitive))
-				find = true;
-		}
-		if (find)
-		{
-				result << snn;
-		}
-	}
-
-	result.sort();
-	if (result.size()>maxNbItem)
-		result.erase(result.begin()+maxNbItem, result.end());
-
-	return result;
-}
-
-QStringList Supernovae::listMatchingObjects(const QString& objPrefix, int maxNbItem, bool useStartOfWords) const
-{
-	QStringList result;
-	if (maxNbItem==0)
-		return result;
-
-	QString snn;
-	bool find;
-	foreach(const SupernovaP& sn, snstar)
-	{
-		snn = sn->getEnglishName();
-		find = false;
-		if (useStartOfWords)
-		{
-			if (objPrefix.toUpper()==snn.toUpper().left(objPrefix.length()))
-				find = true;
-		}
-		else
-		{
-			if (snn.contains(objPrefix, Qt::CaseInsensitive))
-				find = true;
-		}
-		if (find)
-		{
-				result << snn;
-		}
-	}
-
-	result.sort();
-	if (result.size()>maxNbItem)
-		result.erase(result.begin()+maxNbItem, result.end());
-
-	return result;
+	return Q_NULLPTR;
 }
 
 QStringList Supernovae::listAllObjects(bool inEnglish) const
@@ -375,11 +303,11 @@ void Supernovae::restoreDefaultJsonFile(void)
 	QFile src(":/Supernovae/supernovae.json");
 	if (!src.copy(sneJsonPath))
 	{
-		qWarning() << "Supernovae: cannot copy JSON resource to" + QDir::toNativeSeparators(sneJsonPath);
+		qWarning() << "[Supernovae] cannot copy JSON resource to" + QDir::toNativeSeparators(sneJsonPath);
 	}
 	else
 	{
-		qDebug() << "Supernovae: copied default supernovae.json to" << QDir::toNativeSeparators(sneJsonPath);
+		qDebug() << "[Supernovae] copied default supernovae.json to" << QDir::toNativeSeparators(sneJsonPath);
 		// The resource is read only, and the new file inherits this...  make sure the new file
 		// is writable by the Stellarium process so that updates can be done.
 		QFile dest(sneJsonPath);
@@ -401,7 +329,7 @@ bool Supernovae::backupJsonFile(bool deleteOriginal)
 	QFile old(sneJsonPath);
 	if (!old.exists())
 	{
-		qWarning() << "Supernovae: no file to backup";
+		qWarning() << "[Supernovae] no file to backup";
 		return false;
 	}
 
@@ -415,14 +343,14 @@ bool Supernovae::backupJsonFile(bool deleteOriginal)
 		{
 			if (!old.remove())
 			{
-				qWarning() << "Supernovae: WARNING - could not remove old supernovas.json file";
+				qWarning() << "[Supernovae] WARNING - could not remove old supernovas.json file";
 				return false;
 			}
 		}
 	}
 	else
 	{
-		qWarning() << "Supernovae: WARNING - failed to copy supernovae.json to supernovae.json.old";
+		qWarning() << "[Supernovae] WARNING - failed to copy supernovae.json to supernovae.json.old";
 		return false;
 	}
 
@@ -448,11 +376,12 @@ QVariantMap Supernovae::loadSNeMap(QString path)
 	QVariantMap map;
 	QFile jsonFile(path);
 	if (!jsonFile.open(QIODevice::ReadOnly))
-	    qWarning() << "Supernovae: cannot open" << QDir::toNativeSeparators(path);
+		qWarning() << "[Supernovae] cannot open" << QDir::toNativeSeparators(path);
 	else
-	    map = StelJsonParser::parse(jsonFile.readAll()).toMap();
-
-	jsonFile.close();
+	{
+		map = StelJsonParser::parse(jsonFile.readAll()).toMap();
+		jsonFile.close();
+	}
 	return map;
 }
 
@@ -480,13 +409,13 @@ void Supernovae::setSNeMap(const QVariantMap& map)
 	}
 }
 
-int Supernovae::getJsonFileVersion(void)
+int Supernovae::getJsonFileVersion(void) const
 {	
 	int jsonVersion = -1;
 	QFile sneJsonFile(sneJsonPath);
 	if (!sneJsonFile.open(QIODevice::ReadOnly))
 	{
-		qWarning() << "Supernovae: cannot open" << QDir::toNativeSeparators(sneJsonPath);
+		qWarning() << "[Supernovae] cannot open" << QDir::toNativeSeparators(sneJsonPath);
 		return jsonVersion;
 	}
 
@@ -498,16 +427,16 @@ int Supernovae::getJsonFileVersion(void)
 	}
 
 	sneJsonFile.close();
-	qDebug() << "Supernovae: version of the catalog:" << jsonVersion;
+	qDebug() << "[Supernovae] version of the catalog:" << jsonVersion;
 	return jsonVersion;
 }
 
-bool Supernovae::checkJsonFileFormat()
+bool Supernovae::checkJsonFileFormat() const
 {
 	QFile sneJsonFile(sneJsonPath);
 	if (!sneJsonFile.open(QIODevice::ReadOnly))
 	{
-		qWarning() << "Supernovae: cannot open " << QDir::toNativeSeparators(sneJsonPath);
+		qWarning() << "[Supernovae] cannot open " << QDir::toNativeSeparators(sneJsonPath);
 		return false;
 	}
 
@@ -519,20 +448,20 @@ bool Supernovae::checkJsonFileFormat()
 	}
 	catch (std::runtime_error& e)
 	{
-		qDebug() << "Supernovae: file format is wrong! Error:" << e.what();
+		qDebug() << "[Supernovae] file format is wrong! Error:" << e.what();
 		return false;
 	}
 
 	return true;
 }
 
-float Supernovae::getLowerLimitBrightness()
+float Supernovae::getLowerLimitBrightness() const
 {
 	float lowerLimit = 10.f;
 	QFile sneJsonFile(sneJsonPath);
 	if (!sneJsonFile.open(QIODevice::ReadOnly))
 	{
-		qWarning() << "Supernovae: cannot open" << QDir::toNativeSeparators(sneJsonPath);
+		qWarning() << "[Supernovae] cannot open" << QDir::toNativeSeparators(sneJsonPath);
 		return lowerLimit;
 	}
 
@@ -547,7 +476,7 @@ float Supernovae::getLowerLimitBrightness()
 	return lowerLimit;
 }
 
-SupernovaP Supernovae::getByID(const QString& id)
+SupernovaP Supernovae::getByID(const QString& id) const
 {
 	foreach(const SupernovaP& sn, snstar)
 	{
@@ -616,7 +545,7 @@ int Supernovae::getSecondsToUpdate(void)
 
 void Supernovae::checkForUpdate(void)
 {
-	if (updatesEnabled && lastUpdate.addSecs(updateFrequencyDays * 3600 * 24) <= QDateTime::currentDateTime())
+	if (updatesEnabled && lastUpdate.addSecs(updateFrequencyDays * 3600 * 24) <= QDateTime::currentDateTime() && downloadMgr->networkAccessible()==QNetworkAccessManager::Accessible)
 		updateJSON();
 }
 
@@ -624,12 +553,12 @@ void Supernovae::updateJSON(void)
 {
 	if (updateState==Supernovae::Updating)
 	{
-		qWarning() << "Supernovae: already updating...  will not start again current update is complete.";
+		qWarning() << "[Supernovae] already updating...  will not start again current update is complete.";
 		return;
 	}
 	else
 	{
-		qDebug() << "Supernovae: starting update...";
+		qDebug() << "[Supernovae] starting update...";
 	}
 
 	lastUpdate = QDateTime::currentDateTime();
@@ -638,7 +567,7 @@ void Supernovae::updateJSON(void)
 	updateState = Supernovae::Updating;
 	emit(updateStateChanged(updateState));
 
-	if (progressBar==NULL)
+	if (progressBar==Q_NULLPTR)
 		progressBar = StelApp::getInstance().addProgressBar();
 
 	progressBar->setValue(0);
@@ -658,33 +587,33 @@ void Supernovae::updateJSON(void)
 void Supernovae::updateDownloadComplete(QNetworkReply* reply)
 {
 	// check the download worked, and save the data to file if this is the case.
-	if (reply->error() != QNetworkReply::NoError)
-	{
-		qWarning() << "Supernovae: FAILED to download" << reply->url() << " Error: " << reply->errorString();
-	}
-	else
+	if (reply->error() == QNetworkReply::NoError && reply->bytesAvailable()>0)
 	{
 		// download completed successfully.
 		QString jsonFilePath = StelFileMgr::findFile("modules/Supernovae", StelFileMgr::Flags(StelFileMgr::Writable|StelFileMgr::Directory)) + "/supernovae.json";
 		if (jsonFilePath.isEmpty())
 		{
-			qWarning() << "Supernovae: cannot write JSON data to file:" << QDir::toNativeSeparators(jsonFilePath);
+			qWarning() << "[Supernovae] cannot write JSON data to file:" << QDir::toNativeSeparators(jsonFilePath);
 			return;
 		}
 		QFile jsonFile(jsonFilePath);
 		if (jsonFile.exists())
 			jsonFile.remove();
 
-		jsonFile.open(QIODevice::WriteOnly | QIODevice::Text);
-		jsonFile.write(reply->readAll());
-		jsonFile.close();
+		if(jsonFile.open(QIODevice::WriteOnly | QIODevice::Text))
+		{
+			jsonFile.write(reply->readAll());
+			jsonFile.close();
+		}
 	}
+	else
+		qWarning() << "[Supernovae] FAILED to download" << reply->url() << " Error: " << reply->errorString();
 
 	if (progressBar)
 	{
 		progressBar->setValue(100);
 		StelApp::getInstance().removeProgressBar(progressBar);
-		progressBar = NULL;
+		progressBar = Q_NULLPTR;
 	}
 
 	readJsonFile();
@@ -692,19 +621,10 @@ void Supernovae::updateDownloadComplete(QNetworkReply* reply)
 
 void Supernovae::displayMessage(const QString& message, const QString hexColor)
 {
-	messageIDs << GETSTELMODULE(LabelMgr)->labelScreen(message, 30, 30 + (20*messageIDs.count()), true, 16, hexColor);
-	messageTimer->start();
+	messageIDs << GETSTELMODULE(LabelMgr)->labelScreen(message, 30, 30 + (20*messageIDs.count()), true, 16, hexColor, false, 9000);
 }
 
-void Supernovae::messageTimeout(void)
-{
-	foreach(int i, messageIDs)
-	{
-		GETSTELMODULE(LabelMgr)->deleteLabel(i);
-	}
-}
-
-QString Supernovae::getSupernovaeList()
+QString Supernovae::getSupernovaeList() const
 {
 	QString smonth[] = {q_("January"), q_("February"), q_("March"), q_("April"), q_("May"), q_("June"), q_("July"), q_("August"), q_("September"), q_("October"), q_("November"), q_("December")};
 	QStringList out;
@@ -718,4 +638,26 @@ QString Supernovae::getSupernovaeList()
 	}
 
 	return out.join(", ");
+}
+
+void Supernovae::reloadCatalog(void)
+{
+	bool hasSelection = false;
+	StelObjectMgr* objMgr = GETSTELMODULE(StelObjectMgr);
+	// Whether any supernova are selected? Save the current selection...
+	const QList<StelObjectP> selectedObject = objMgr->getSelectedObject("Supernova");
+	if (!selectedObject.isEmpty())
+	{
+		// ... unselect current supernova.
+		hasSelection = true;
+		objMgr->unSelect();
+	}
+
+	readJsonFile();
+
+	if (hasSelection)
+	{
+		// Restore selection...
+		objMgr->setSelectedObject(selectedObject);
+	}
 }

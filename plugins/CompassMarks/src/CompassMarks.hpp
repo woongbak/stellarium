@@ -24,12 +24,22 @@
 #include "StelFader.hpp"
 #include <QFont>
 
-class QPixmap;
 class StelButton;
+
+/*! @defgroup compassMarks Compass Marks Plug-in
+@{
+Stellarium helps the user get their bearings using the cardinal point
+feature - the North, South, East and West markers on the horizon.
+CompassMarks takes this idea and extends it to add markings every few
+degrees along the horizon, and includes compass bearing values in degrees.
+@}
+*/
 
 //! Main class of the Compass Marks plug-in.
 //! Provides a ring of marks indicating azimuth on the horizon,
 //! like a compass dial.
+//! @author Matthew Gates
+//! @ingroup compassMarks
 class CompassMarks : public StelModule
 {
 	Q_OBJECT
@@ -45,40 +55,37 @@ public:
 	virtual void draw(StelCore* core);
 	virtual double getCallOrder(StelModuleActionName actionName) const;
 
-	bool getCompassMarks() const {return markFader;}
-
-public slots:
-	void setCompassMarks(bool b);
-
 	//! Load the plug-in's settings from the configuration file.
 	//! Settings are kept in the "CompassMarks" section in Stellarium's
 	//! configuration file. If no such section exists, it will load default
 	//! values.
-	//! @see saveSettings(), restoreDefaultSettings()
+	//! @see restoreDefaultSettings()
 	void loadConfiguration();
-	//! Save the plug-in's settings to the configuration file.
-	//! @warning markColor is not saved.
-	//! @todo find a way to save color values without "rounding drift"
-	//! (this is especially important for restoring default color values).
-	//! @see loadSettings(), restoreDefaultSettings()
-	void saveConfiguration();
+
 	void restoreDefaultConfiguration();
+
+public slots:
+	//! Get flag for displaying a ring of marks indicating azimuth on the horizon.
+	bool getCompassMarks() const {return markFader;}
+
+	//! Define whether a ring of azimuth marks on the horizon should be visible.
+	//! @param b if true, the ring of azimuth marks is visible, else not
+	void setCompassMarks(bool b);	
 
 signals:
 	void compassMarksChanged(bool);
+
 private slots:
 	void cardinalPointsChanged(bool b);
 
 private:
+	QSettings* conf;
 	//! Whether the marks should be displayed at startup.
 	bool displayedAtStartup;
 	//! Font used for displaying bearing numbers.
 	QFont font;
 	Vec3f markColor;
 	LinearFader markFader;
-	QPixmap* pxmapGlow;
-	QPixmap* pxmapOnIcon;
-	QPixmap* pxmapOffIcon;
 	StelButton* toolbarButton;
 	bool cardinalPointsState;
 };
@@ -91,12 +98,12 @@ private:
 class CompassMarksStelPluginInterface : public QObject, public StelPluginInterface
 {
 	Q_OBJECT
-	Q_PLUGIN_METADATA(IID "stellarium.StelGuiPluginInterface/1.0")
+	Q_PLUGIN_METADATA(IID StelPluginInterface_iid)
 	Q_INTERFACES(StelPluginInterface)
 public:
 	virtual StelModule* getStelModule() const;
 	virtual StelPluginInfo getPluginInfo() const;
-
+	virtual QObjectList getExtensionList() const { return QObjectList(); }
 };
 
 #endif /*COMPASSMARKS_HPP_*/

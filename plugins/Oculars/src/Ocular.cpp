@@ -21,17 +21,23 @@
 #include "Lens.hpp"
 
 Ocular::Ocular()
+	: m_binoculars(false),
+	  m_permanetCrosshair(false),
+	  m_appearentFOV(0.0),
+	  m_effectiveFocalLength(0.0),
+	  m_fieldStop(0.0)
 {
 }
 
 Ocular::Ocular(const QObject& other)
+	: m_binoculars(other.property("binoculars").toBool()),
+	  m_permanetCrosshair(other.property("permanentCrosshair").toBool()),
+	  m_appearentFOV(other.property("appearentFOV").toDouble()),
+	  m_effectiveFocalLength(other.property("effectiveFocalLength").toDouble()),
+	  m_fieldStop(other.property("fieldStop").toDouble()),
+	  m_name(other.property("name").toString()),
+	  m_reticlePath(other.property("reticlePath").toString())
 {
-	this->m_appearentFOV = other.property("appearentFOV").toDouble();
-	this->m_effectiveFocalLength = other.property("effectiveFocalLength").toDouble();
-	this->m_fieldStop = other.property("fieldStop").toDouble();
-	this->m_name = other.property("name").toString();
-	this->m_binoculars = other.property("binoculars").toBool();
-	this->m_reticleFOV = other.property("reticleFOV").toDouble();
 }
 
 Ocular::~Ocular()
@@ -48,7 +54,8 @@ QMap<int, QString> Ocular::propertyMap(void)
 		mapping[2] = "effectiveFocalLength";
 		mapping[3] = "fieldStop";
 		mapping[4] = "binoculars";
-		mapping[5] = "reticlePath";
+		mapping[5] = "permanentCrosshair";
+		mapping[6] = "reticlePath";
 	}
 	return mapping;
 }
@@ -62,7 +69,7 @@ QMap<int, QString> Ocular::propertyMap(void)
 /* ********************************************************************* */
 double Ocular::actualFOV(const Telescope * telescope, const Lens * lens) const
 {
-	const double lens_multipler = (lens != NULL ? lens->multipler() : 1.0f);
+	const double lens_multipler = (lens != Q_NULLPTR ? lens->getMultipler() : 1.0f);
 	double actualFOV = 0.0;
 	if (m_binoculars) {
 		actualFOV = appearentFOV();
@@ -81,7 +88,7 @@ double Ocular::magnification(const Telescope * telescope, const Lens * lens) con
 	if (m_binoculars) {
 		magnifiction = effectiveFocalLength();
 	} else {
-		const double lens_multipler = (lens != NULL ? lens->multipler() : 1.0f);
+		const double lens_multipler = (lens != Q_NULLPTR ? lens->getMultipler() : 1.0f);
 		magnifiction = telescope->focalLength() * lens_multipler / effectiveFocalLength();
 	}
 	return magnifiction;
@@ -143,6 +150,16 @@ void Ocular::setBinoculars(const bool flag)
 	m_binoculars = flag;
 }
 
+bool Ocular::hasPermanentCrosshair(void) const
+{
+	return m_permanetCrosshair;
+}
+
+void Ocular::setPermanentCrosshair(const bool flag)
+{
+	m_permanetCrosshair = flag;
+}
+
 QString Ocular::reticlePath(void) const
 {
 	return m_reticlePath;
@@ -165,10 +182,11 @@ Ocular * Ocular::ocularFromSettings(const QSettings *theSettings, const int ocul
 	QString prefix = "ocular/" + QVariant(ocularIndex).toString() + "/";
 
 	ocular->setName(theSettings->value(prefix + "name", "").toString());
-	ocular->setAppearentFOV(theSettings->value(prefix + "afov", "0.0").toDouble());
-	ocular->setEffectiveFocalLength(theSettings->value(prefix + "efl", "0.0").toDouble());
-	ocular->setFieldStop(theSettings->value(prefix + "fieldStop", "0.0").toDouble());
+	ocular->setAppearentFOV(theSettings->value(prefix + "afov", 0.0).toDouble());
+	ocular->setEffectiveFocalLength(theSettings->value(prefix + "efl", 0.0).toDouble());
+	ocular->setFieldStop(theSettings->value(prefix + "fieldStop", 0.0).toDouble());
 	ocular->setBinoculars(theSettings->value(prefix + "binoculars", "false").toBool());
+	ocular->setPermanentCrosshair(theSettings->value(prefix + "permanentCrosshair", "false").toBool());
 	ocular->setReticlePath(theSettings->value(prefix + "reticlePath", "").toString());
 
 	if (!(ocular->appearentFOV() > 0.0 && ocular->effectiveFocalLength() > 0.0)) {
@@ -177,7 +195,7 @@ Ocular * Ocular::ocularFromSettings(const QSettings *theSettings, const int ocul
 		<< "\tefl: " << ocular->effectiveFocalLength() << "\n"
 		<< "\tThis ocular will be ignored.";
 		delete ocular;
-		ocular = NULL;
+		ocular = Q_NULLPTR;
 	}
 	
 	return ocular;
@@ -191,6 +209,7 @@ void Ocular::writeToSettings(QSettings * settings, const int index)
 	settings->setValue(prefix + "efl", this->effectiveFocalLength());
 	settings->setValue(prefix + "fieldStop", this->fieldStop());
 	settings->setValue(prefix + "binoculars", this->isBinoculars());
+	settings->setValue(prefix + "permanentCrosshair", this->hasPermanentCrosshair());
 	settings->setValue(prefix + "reticlePath", this->reticlePath());
 }
 
@@ -202,6 +221,7 @@ Ocular * Ocular::ocularModel(void)
 	model->setEffectiveFocalLength(32);
 	model->setFieldStop(0);
 	model->setBinoculars(false);
+	model->setPermanentCrosshair(false);
 	model->setReticlePath("");
 	return model;
 }

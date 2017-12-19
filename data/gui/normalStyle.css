@@ -1,9 +1,13 @@
 /****************************************************************************************************************************/
 
 QLabel {
-	color: rgb(3, 3, 3);
+        color: rgb(3, 3, 3);
 	font-size: 13px;
 	background: none;
+}
+
+QLabel:disabled {
+	color: rgb(50, 50, 50);
 }
 
 QLabel#stelWindowTitle {
@@ -30,11 +34,11 @@ QFrame {
 }
 
 QFrame#viewContent {
-	background: rgb(0, 0, 0);
+        background: rgb(0, 0, 0);
 }
 
 QFrame#bottomResizeFrame {
-background:rgb(48, 49, 52);
+        background:rgb(48, 49, 52);
 }
 
 /*QWidget QFrame {
@@ -54,12 +58,12 @@ QFrame#TitleBar {
 
 /*********************************************dateTimedialog*********************************************************/
 
-#dateTimeDialogForm #dateTimeBox QFrame {
+#dateTimeDialogForm #dateTimeTabWidget QFrame {
 	background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 rgb(235, 239, 249), stop: 1 rgb(210, 214, 224));
 	border: none;
 }
 
-#dateTimeDialogForm #dateTimeBox QLabel {
+#dateTimeDialogForm #dateTimeTabWidget QLabel {
 	padding: 0;
 	margin: 0;
 	font-size: 24px;
@@ -67,7 +71,7 @@ QFrame#TitleBar {
 	background: none;
 }
 
-#dateTimeDialogForm QSpinBox {
+#dateTimeDialogForm QSpinBox, #dateTimeDialogForm QDoubleSpinBox {
 	border-image: none;
 	border: 0px;
 	background: rgba(0, 0, 0, 0%);
@@ -79,7 +83,7 @@ QFrame#TitleBar {
 	padding-right: 3px;
 }
 
-#dateTimeDialogForm QSpinBox::up-button {
+#dateTimeDialogForm QSpinBox::up-button, #dateTimeDialogForm QDoubleSpinBox::up-button {
 	subcontrol-origin: border;
 	subcontrol-position: top center;
 	margin: 0;
@@ -89,14 +93,14 @@ QFrame#TitleBar {
 	image: none;
 }
 
-#dateTimeDialogForm QSpinBox::up-arrow {
+#dateTimeDialogForm QSpinBox::up-arrow, #dateTimeDialogForm QDoubleSpinBox::up-arrow {
 	image: url(:/graphicGui/spinup.png);
 	subcontrol-origin: border;
 	subcontrol-position: bottom center;
 	padding-bottom: 20px;
 }
 
-#dateTimeDialogForm QSpinBox::down-button {
+#dateTimeDialogForm QSpinBox::down-button, #dateTimeDialogForm QDoubleSpinBox::down-button {
 	subcontrol-origin: border;
 	subcontrol-position: bottom center;
 	margin: 0;
@@ -106,7 +110,7 @@ QFrame#TitleBar {
 	image: none;
 }
 
-#dateTimeDialogForm QSpinBox::down-arrow {
+#dateTimeDialogForm QSpinBox::down-arrow, #dateTimeDialogForm QDoubleSpinBox::down-arrow {
 	image: url(:/graphicGui/spindown.png);
 	subcontrol-origin: border;
 	subcontrol-position: top center;
@@ -125,7 +129,14 @@ QToolTip {
 	color: rgb(4, 5, 9);
 	font-size: 13px;
 	padding: 2px;
-	background: rgb(143, 143, 143);
+        background: rgb(143, 143, 143);
+}
+
+*[nightMode="true"] QToolTip {
+	color: rgb(4, 0, 0);
+	font-size: 13px;
+	padding: 2px;
+	background: rgb(101, 0, 0);
 }
 
 QLineEdit {
@@ -138,7 +149,7 @@ QLineEdit {
 	font-size: 12px;
 }
 
-QLineEdit[enabled="false"] {
+QLineEdit:disabled {
 	background: rgb(90, 90, 90);
 }
 
@@ -219,7 +230,7 @@ QPushButton {
 	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 rgb(183, 184, 185), stop: 1 rgb(111, 113, 114));
 }
 
-QPushButton::Disabled {
+QPushButton::disabled {
         color: #f0f0f0;
 }
 
@@ -414,7 +425,7 @@ QGroupBox {
 	border: 1px solid rgba(0, 0, 0, 10%);
 	border-style: inset;
 	font-weight: bold;
-	border-radius: 10px;
+        border-radius: 10px;
 }
 
 QGroupBox::title {
@@ -707,6 +718,11 @@ QComboBox {
 	padding-left: 3px;
 }
 
+QComboBox:disabled, QSpinBox:disabled {
+        color: #f0f0f0;
+}
+
+
 QProgressBar {
 	border: 1px solid rgba(102, 102, 128, 50%);
 	border-radius: 2px;
@@ -722,257 +738,80 @@ QProgressBar::chunk {
 	margin: 0.5px;
 }
 
-/************************************** The following are used for VirGO ***************************************/
-
-QMainWindow {
-	background: rgb(31, 33, 36);
-}
-
-QMainWindow::separator {
-	border: 0px;
-}
-
-QMainWindow::separator:hover {
-	background: rgb(106, 107, 110);
-}
-
-QDockWidget {
-	background-color: rgb(31, 33, 36);
-	color: rgb(194, 194, 195);	/* Dock widget title text color */
-	font: bold;
-	border: 0px;
-}
-
-QDockWidget::title {
-	margin-left: 24px;
-	font-size: 14px;
-	background: transparent;
-}
-
-QTextBrowser#selectedLineInfo {
-	background-color: rgb(76, 77, 80);
+/**** The following are used for Satellites ****/
+QListWidget#satellitesList, QListWidget#sourceList {
+		font-size: 8pt;
 }
 
 QTreeView {
-	background-color: rgb(76, 77, 80);
-	color: rgb(238, 238, 238);
-	font-size: 12px;
+        background-color: rgb(76, 77, 80);
+        color: rgb(238, 238, 238);
+        font-size: 12px;
 }
-
-QListView#listViewVoResources {
-	background-color: rgb(76, 77, 80);
-	color: rgb(143, 143, 143);
-	font-size: 12px;
-}
-
-QTreeView#mainVoObjectTable {
-	background-color: rgb(76, 77, 80);
-	selection-background-color: rgb(253, 216, 134);
-	alternate-background-color: rgb(94, 96, 101);
-}
-
-QTreeView::item:selected#mainVoObjectTable {
-background-color: rgb(59, 144, 235);
-color: rgb(255,255,255);
-}
-
-
-QTreeView#shoppingBasketTreeView {
-	background-color: rgb(76, 77, 80);
-	selection-background-color: rgb(253, 216, 134);
-	alternate-background-color: rgb(94, 96, 101);
-}
-
-QTreeView::item:selected#shoppingBasketTreeView {
-background-color: rgb(59, 144, 235);
-color: rgb(255,255,255);
-}
-
 
 QTreeView::item:selected#treeView {
-background-color: rgb(59, 144, 235);
-color: rgb(255,255,255);
+        background-color: rgb(59, 144, 235);
+        color: rgb(255,255,255);
 }
 
 QTreeView::item:!enabled#treeView {
-color : rgb(58,59,62);
+        color : rgb(58,59,62);
 }
 
-QTreeView::branch:has-children:!has-siblings:closed,
-QTreeView::branch:closed:has-children:has-siblings {
-         border-image: none;
-         image: url(:/graphicGui/spinright.png);
-}
-
-QTreeView::branch:open:has-children:!has-siblings,
-QTreeView::branch:open:has-children:has-siblings  {
-         border-image: none;
-         image: url(:/graphicGui/spindown.png);
- }
-
-QHeaderView::section {
-	background-color: rgb(31, 31, 31);
-	border: 1px solid rgb(76,77,80);
-	font: bold;
-}
-
-QDateEdit {
-	padding-right: 20px; /* make room for the arrows */
-	border: 1px solid rgb(0, 0, 0);
-	color: rgb(31, 31, 31);
-	font-size: 12px;
-	padding: 0px;
-	border-radius: 0px;
-}
-
-QDateEdit::up-button {
-	subcontrol-origin: border;
-	subcontrol-position: top right; /* position at the top right corner */
-	width: 20px; /* 16 + 2*1px border-width = 15px padding + 3px parent border */
-	border: solid 1px rgb(0, 0, 0);
-	image: url(:/graphicGui/spinup.png);
-	border-width: 1px;
-
-}
-
-QDateEdit::down-button {
-	subcontrol-origin: border;
-	subcontrol-position: bottom right; /* position at the bottom right corner */
-	width: 20px; /* 16 + 2*1px border-width = 15px padding + 3px parent border */
-	border: solid 1px rgb(0, 0, 0);
-	image: url(:/graphicGui/spindown.png);
-	border-width: 1px;
-
-}
-
-QMenu {
-	background-color: rgb(86, 87, 90); /* sets background of the menu */
-	border: 1px solid rgb(0, 0, 0);
-	color: rgb(222, 222, 222);
-}
-
-QMenu::item {
-	/* sets background of menu item. set this to something non-transparent
-	if you want menu color and menu item color to be different */
-	background-color: rgb(66, 67, 70);
-}
-
-QMenu::item:selected { /* when user selects item using mouse or keyboard */
-	background-color: rgb(101, 99, 33);
-}
-
-QMainWindow > QDialog {
-	background: rgb(48, 49, 52);
+QTextBrowser#selectedLineInfo {
+        background-color: rgb(76, 77, 80);
 }
 
 QHeaderView::section {
-	color: rgb(255, 255, 255);
-	font-size: 12px;
-	padding-left: 4px;
-	border: 1px solid rgb(108, 108, 108);
+        background-color: rgb(31, 31, 31);
+        font: bold;
+        color: rgb(255, 255, 255);
+        font-size: 12px;
+        padding-left: 4px;
+        border: 1px solid rgb(108, 108, 108);
 }
 
-QFileDialog {
-	background: rgb(48, 49, 52);
+QHeaderView::up-arrow {
+        image: url(:/graphicGui/spinup.png);
 }
 
-QWidget#sourcesList
-{
-	background: rgb(31, 31, 31);
-}
-
-QWidget#fileLoading
-{
-	background-color:transparent;
-}
-
-QWidget#fileDownLoading
-{
-	background-color:transparent;
-}
-
-QWidget#resourceDescriptionEdition
-{
-		background-color:transparent;
-}
-
-QWidget#resourceInformationView
-{
-	background-color:transparent;
-}
-
-QWidget#sourceInformationInput
-{
-	background-color:transparent;
-}
-
-QWidget#resourceInformationEdition
-{
-	background-color: transparent;
-}
-
-QWidget#simbadSearch
-{
-	background-color: transparent;
-}
-
-QWidget#viewMode {
-	background-color: rgb(76, 77, 80);
-	padding-left: 0px;
-}
-
-QWidget#dataSourcesListGroupBox
-{
-		background-color: rgb(31,33,36);
-}
-
-QTextEdit#editResourceDescription {
-border: 1px solid rgb(0, 0, 0);
-	border-radius: 0px;
-	padding: 0px;
-	background: rgb(30, 30, 31);
-	selection-background-color: rgb(253, 216, 134);
-	color: rgb(170, 173, 164);
-	font-size: 12px;
-
-}
-
-QGroupBox#dataSourcesListGroupBox {
-		margin-right: 11px;
-		margin-left: 11px;
-		margin-top: 11px;
-		margin-bottom: 11px;
-	background-color: rgba(149, 150, 152, 30%);
-}
-
-QWidget#listManagerWidget {
-		background-color: rgb(31, 31, 31);
-}
-
-
-QGraphicsWidget#observationListView  QLabel {
-		font-size: 40px;
+QHeaderView::down-arrow {
+        image: url(:/graphicGui/spindown.png);
 }
 
 #configurationDialogForm QPushButton#screenshotBrowseButton, QPushButton#pushButtonPickExecutablesDirectory {
         image: url(:/graphicGui/folder.png);
 }
 
-#configurationDialogForm QPushButton#getStarsButton {
-        image: url(:/graphicGui/btTimeRealtime-off.png);
+QMenu {
+        background-color: rgb(86, 87, 90); /* sets background of the menu */
+        border: 1px solid rgb(0, 0, 0);
+        color: rgb(222, 222, 222);
 }
 
-QLineEdit#lineEditSearch {
-	margin: 0px 0px 4px 0px;
-	padding: 4px;
-	padding-left: 32px;
-	background-image: url(:/graphicGui/searchBoxBackground.png);
-	background-repeat: none;
-	background-position: center left;
-	border: none;
+QMenu::item {
+        /* sets background of menu item. set this to something non-transparent
+        if you want menu color and menu item color to be different */
+        background-color: rgb(66, 67, 70);
 }
 
-/**** The following are used for Satellites ****/
-QListWidget#satellitesList, QListWidget#sourceList {
-		font-size: 8pt;
+QMenu::item:selected { /* when user selects item using mouse or keyboard */
+        background-color: rgb(101, 99, 33);
+}
+
+QTabWidget::pane {
+        margin-top: 0px;
+        border-top: none;
+}
+
+QPushButton#pushButtonMoveSensorUp, QPushButton#pushButtonMoveOcularUp, QPushButton#pushButtonMoveTelescopeUp, QPushButton#pushButtonMoveLensUp {
+        image: url(:/graphicGui/spinup.png);
+}
+
+QPushButton#pushButtonMoveSensorDown, QPushButton#pushButtonMoveOcularDown, QPushButton#pushButtonMoveTelescopeDown, QPushButton#pushButtonMoveLensDown {
+        image: url(:/graphicGui/spindown.png);
+}
+
+QLabel#lensNote {
+        margin-left: 5px;
 }

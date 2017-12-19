@@ -36,12 +36,13 @@
 #include <QFileDialog>
 
 SolarSystemManagerWindow::SolarSystemManagerWindow()
+	: StelDialog("SolarSystemEditor")
+	, manualImportWindow(Q_NULLPTR)
 {
 	ui = new Ui_solarSystemManagerWindow();
 	mpcImportWindow = new MpcImportWindow();
-	manualImportWindow = NULL;
 
-	ssoManager = GETSTELMODULE(SolarSystemEditor);
+	ssEditor = GETSTELMODULE(SolarSystemEditor);
 }
 
 SolarSystemManagerWindow::~SolarSystemManagerWindow()
@@ -58,26 +59,39 @@ void SolarSystemManagerWindow::createDialogContent()
 {
 	ui->setupUi(dialog);
 
+#ifdef Q_OS_WIN
+	//Kinetic scrolling for tablet pc and pc
+	QList<QWidget *> addscroll;
+	addscroll << ui->listWidgetObjects;
+	installKineticScrolling(addscroll);
+#endif
+
 	//Signals
 	connect(&StelApp::getInstance(), SIGNAL(languageChanged()),
 	        this, SLOT(retranslate()));
 	connect(ui->closeStelWindow, SIGNAL(clicked()), this, SLOT(close()));
+	connect(ui->TitleBar, SIGNAL(movedTo(QPoint)), this, SLOT(handleMovedTo(QPoint)));
 	connect(ui->pushButtonCopyFile, SIGNAL(clicked()), this, SLOT(copyConfiguration()));
 	connect(ui->pushButtonReplaceFile, SIGNAL(clicked()), this, SLOT(replaceConfiguration()));
-	connect(ui->pushButtonRemove, SIGNAL(clicked()), this, SLOT(removeObject()));
+	connect(ui->pushButtonAddFile, SIGNAL(clicked()), this, SLOT(addConfiguration()));
+	connect(ui->pushButtonRemove, SIGNAL(clicked()), this, SLOT(removeObjects()));
 	connect(ui->pushButtonImportMPC, SIGNAL(clicked()), this, SLOT(newImportMPC()));
 	//connect(ui->pushButtonManual, SIGNAL(clicked()), this, SLOT(newImportManual()));
 
-	connect(ssoManager, SIGNAL(solarSystemChanged()), this, SLOT(populateSolarSystemList()));
-	connect(ui->pushButtonReset, SIGNAL(clicked()), ssoManager, SLOT(resetSolarSystemToDefault()));
+	connect(ssEditor, SIGNAL(solarSystemChanged()), this, SLOT(populateSolarSystemList()));
+	connect(ui->pushButtonReset, SIGNAL(clicked()), ssEditor, SLOT(resetSolarSystemToDefault()));
 
+	// bug #1350669 (https://bugs.launchpad.net/stellarium/+bug/1350669)
+	connect(ui->listWidgetObjects, SIGNAL(currentRowChanged(int)), ui->listWidgetObjects, SLOT(repaint()));
+
+	setAboutHtml();
 	updateTexts();
 
 	Q_ASSERT(mpcImportWindow);
 	//Rebuild the list if any planets have been imported
 	connect(mpcImportWindow, SIGNAL(objectsImported()), this, SLOT(populateSolarSystemList()));
 
-	ui->lineEditUserFilePath->setText(ssoManager->getCustomSolarSystemFilePath());
+	ui->lineEditUserFilePath->setText(ssEditor->getCustomSolarSystemFilePath());
 	populateSolarSystemList();
 }
 
@@ -86,15 +100,11 @@ void SolarSystemManagerWindow::updateTexts()
 	//Solar System tab
 	// TRANSLATORS: Appears as the text of hyperlinks linking to websites. :)
 	QString linkText(q_("website"));
-	QString linkCode = QString("<a href=\"http://www.minorplanetcenter.net/\">%1</a>").arg(linkText);
+	QString linkCode = QString("<a href=\"https://www.minorplanetcenter.net/\">%1</a>").arg(linkText);
 	       
 	// TRANSLATORS: IAU = International Astronomical Union
 	QString mpcText(q_("You can import comet and asteroid data formatted in the export formats of the IAU's Minor Planet Center (%1). You can import files with lists of objects, download such lists from the Internet or search the online Minor Planet and Comet Ephemeris Service (MPES)."));
 	ui->labelMPC->setText(QString(mpcText).arg(linkCode));
-	
-	//About tab
-	ui->labelTitle->setText(q_("Solar System Editor plug-in"));
-	ui->labelVersion->setText(QString(q_("Version %1")).arg(SOLARSYSTEMEDITOR_VERSION));
 }
 
 void SolarSystemManagerWindow::retranslate()
@@ -103,6 +113,7 @@ void SolarSystemManagerWindow::retranslate()
 	{
 		ui->retranslateUi(dialog);
 		populateSolarSystemList();
+		setAboutHtml();
 		updateTexts();
 	}
 }
@@ -116,7 +127,7 @@ void SolarSystemManagerWindow::newImportMPC()
 
 void SolarSystemManagerWindow::newImportManual()
 {
-	if (manualImportWindow == NULL)
+	if (manualImportWindow == Q_NULLPTR)
 	{
 		manualImportWindow = new ManualImportWindow();
 		connect(manualImportWindow, SIGNAL(visibleChanged(bool)), this, SLOT(resetImportManual(bool)));
@@ -138,7 +149,7 @@ void SolarSystemManagerWindow::resetImportManual(bool show)
 		populateSolarSystemList();
 
 		delete manualImportWindow;
-		manualImportWindow = NULL;
+		manualImportWindow = Q_NULLPTR;
 
 		//This window is in the background, bring it to the foreground
 		dialog->setVisible(true);
@@ -148,9 +159,10 @@ void SolarSystemManagerWindow::resetImportManual(bool show)
 void SolarSystemManagerWindow::populateSolarSystemList()
 {
 	unlocalizedNames.clear();
-	foreach (const PlanetP & object, GETSTELMODULE(SolarSystem)->getAllPlanets())
+	foreach (const PlanetP& object, GETSTELMODULE(SolarSystem)->getAllMinorBodies())
 	{
-		unlocalizedNames.insert(object->getNameI18n(), object->getEnglishName());
+		// GZ new for 0.16: only insert objects which are minor bodies.
+		unlocalizedNames.insert(object->getCommonNameI18n(), object->getCommonEnglishName());
 	}
 
 	ui->listWidgetObjects->clear();
@@ -158,26 +170,81 @@ void SolarSystemManagerWindow::populateSolarSystemList()
 	//No explicit sorting is necessary: sortingEnabled is set in the .ui
 }
 
-void SolarSystemManagerWindow::removeObject()
+void SolarSystemManagerWindow::removeObjects()
 {
-	if(ui->listWidgetObjects->currentItem())
+	if (ui->listWidgetObjects->selectedItems().length()>0)
 	{
-		QString ssoI18nName = ui->listWidgetObjects->currentItem()->text();
-		QString ssoEnglishName = unlocalizedNames.value(ssoI18nName);
-		//qDebug() << ssoId;
-		//TODO: Ask for confirmation first?
-		ssoManager->removeSsoWithName(ssoEnglishName);
+		// we must disconnect the signal or else the list will be rebuilt after the first deletion.
+		disconnect(ssEditor, SIGNAL(solarSystemChanged()), this, SLOT(populateSolarSystemList()));
+		// This is slow for many objects.
+		// TODO: For more than 50, it may be better to remove from ini file and reload all ini files.
+		foreach (QListWidgetItem *item, ui->listWidgetObjects->selectedItems())
+		{
+			QString ssoI18nName = item->text();
+			QString ssoEnglishName = unlocalizedNames.value(ssoI18nName);
+			//qDebug() << ssoId;
+			//TODO: Ask for confirmation first?
+			ssEditor->removeSsoWithName(ssoEnglishName);
+		}
+		connect(ssEditor, SIGNAL(solarSystemChanged()), this, SLOT(populateSolarSystemList()));
+		populateSolarSystemList();
 	}
 }
 
 void SolarSystemManagerWindow::copyConfiguration()
 {
-	QString filePath = QFileDialog::getSaveFileName(0, "Save the Solar System configuration file as...", StelFileMgr::getScreenshotDir());
-	ssoManager->copySolarSystemConfigurationFileTo(filePath);
+	QString filePath = QFileDialog::getSaveFileName(0, q_("Save the minor Solar System bodies as..."), QDir::homePath() + "/ssystem_minor.ini");
+	ssEditor->copySolarSystemConfigurationFileTo(filePath);
 }
 
 void SolarSystemManagerWindow::replaceConfiguration()
 {
-	QString filePath = QFileDialog::getOpenFileName(0, "Select a file to replace the Solar System configuration file", StelFileMgr::getScreenshotDir(), QString("Configration files (*.ini)"));
-	ssoManager->replaceSolarSystemConfigurationFileWith(filePath);
+	QString filter = q_("Configuration files");
+	filter.append(" (*.ini)");
+	QString filePath = QFileDialog::getOpenFileName(0, q_("Select a file to replace the Solar System minor bodies"), QDir::homePath(), filter);
+	ssEditor->replaceSolarSystemConfigurationFileWith(filePath);
+}
+
+void SolarSystemManagerWindow::addConfiguration()
+{
+	QString filter = q_("Configuration files");
+	filter.append(" (*.ini)");
+	QString filePath = QFileDialog::getOpenFileName(0, q_("Select a file to add the Solar System minor bodies"), QDir::toNativeSeparators(StelFileMgr::getInstallationDir()+"/data/ssystem_1000comets.ini"), filter);
+	ssEditor->addFromSolarSystemConfigurationFile(filePath);
+}
+
+void SolarSystemManagerWindow::setAboutHtml(void)
+{
+	QString html = "<html><head></head><body>";
+	html += "<h2>" + q_("Solar System Editor") + "</h2><table width=\"90%\">";
+	html += "<tr width=\"30%\"><td><strong>" + q_("Version") + ":</strong></td><td>" + SOLARSYSTEMEDITOR_PLUGIN_VERSION + "</td></tr>";
+	html += "<tr><td><strong>" + q_("License") + ":</strong></td><td>" + SOLARSYSTEMEDITOR_PLUGIN_LICENSE + "</td></tr>";
+	html += "<tr><td><strong>" + q_("Author") + ":</strong></td><td>Bogdan Marinov &lt;bogdan.marinov84@gmail.com&gt;</td></tr>";
+	html += "<tr><td rowspan=2><strong>" + q_("Contributors") + ":</strong></td><td>Georg Zotti</td></tr>";
+	html += "<tr><td>Alexander Wolf &lt;alex.v.wolf@gmail.com&gt;</td></tr>";
+	html += "</table>";
+
+	html += "<p>" + q_("An interface for adding asteroids and comets to Stellarium. It can download object lists from the Minor Planet Center's website and perform searches in its online database.") + "</p>";
+
+	html += "<h3>" + q_("Links") + "</h3>";
+	html += "<p>" + QString(q_("Support is provided via the Launchpad website.  Be sure to put \"%1\" in the subject when posting.")).arg("Solar System Editor plugin") + "</p>";
+	html += "<p><ul>";
+	// TRANSLATORS: The numbers contain the opening and closing tag of an HTML link
+	html += "<li>" + QString(q_("If you have a question, you can %1get an answer here%2").arg("<a href=\"https://answers.launchpad.net/stellarium\">")).arg("</a>") + "</li>";
+	// TRANSLATORS: The numbers contain the opening and closing tag of an HTML link
+	html += "<li>" + QString(q_("Bug reports can be made %1here%2.")).arg("<a href=\"https://bugs.launchpad.net/stellarium\">").arg("</a>") + "</li>";
+	// TRANSLATORS: The numbers contain the opening and closing tag of an HTML link
+	html += "<li>" + q_("If you would like to make a feature request, you can create a bug report, and set the severity to \"wishlist\".") + "</li>";
+	// TRANSLATORS: The numbers contain the opening and closing tag of an HTML link
+	html += "<li>" + q_("If you want to read full information about this plugin, its history and format of catalog, you can %1get info here%2.").arg("<a href=\"http://stellarium.org/wiki/index.php/Solar_System_Editor_plugin\">").arg("</a>") + "</li>";
+	html += "</ul></p></body></html>";
+
+	StelGui* gui = dynamic_cast<StelGui*>(StelApp::getInstance().getGui());
+	if(gui!=Q_NULLPTR)
+	{
+		QString htmlStyleSheet(gui->getStelStyle().htmlStyleSheet);
+		ui->aboutTextBrowser->document()->setDefaultStyleSheet(htmlStyleSheet);
+	}
+
+	ui->aboutTextBrowser->setHtml(html);
 }

@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2009, 2012 Matthew Gates
+ * Copyright (C) 2015 Nick Fedoseev (Iridium flares)
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -41,6 +42,8 @@
 #include "StelProgressController.hpp"
 #include "StelUtils.hpp"
 
+#include "external/qtcompress/qzipreader.h"
+
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QKeyEvent>
@@ -51,6 +54,7 @@
 #include <QVariantMap>
 #include <QVariant>
 #include <QDir>
+#include <QTemporaryFile>
 
 StelModule* SatellitesStelPluginInterface::getStelModule() const
 {
@@ -65,27 +69,33 @@ StelPluginInfo SatellitesStelPluginInterface::getPluginInfo() const
 	StelPluginInfo info;
 	info.id = "Satellites";
 	info.displayedName = N_("Satellites");
-	info.authors = "Matthew Gates, Jose Luis Canales, Bogdan Marinov";
+	info.authors = "Matthew Gates, Jose Luis Canales";
 	info.contact = "http://stellarium.org/";
 	info.description = N_("Prediction of artificial satellite positions in Earth orbit based on NORAD TLE data");
 	info.version = SATELLITES_PLUGIN_VERSION;
+	info.license = SATELLITES_PLUGIN_LICENSE;
 	return info;
 }
 
 Satellites::Satellites()
-	: satelliteListModel(NULL),
-	  pxmapGlow(NULL),
-	  pxmapOnIcon(NULL),
-	  pxmapOffIcon(NULL),
-	  toolbarButton(NULL),
-	  earth(NULL),
-	  defaultHintColor(0.0, 0.4, 0.6),
-	  defaultOrbitColor(0.0, 0.3, 0.6),
-	  progressBar(NULL)
+	: satelliteListModel(Q_NULLPTR)
+	, toolbarButton(Q_NULLPTR)
+	, earth(Q_NULLPTR)
+	, defaultHintColor(0.0f, 0.4f, 0.6f)
+	, defaultOrbitColor(0.0f, 0.3f, 0.6f)
+	, updateState(CompleteNoUpdates)
+	, downloadMgr(Q_NULLPTR)
+	, progressBar(Q_NULLPTR)
+	, numberDownloadsComplete(0)
+	, updateTimer(Q_NULLPTR)
+	, updatesEnabled(false)
+	, autoAddEnabled(false)
+	, autoRemoveEnabled(false)
+	, updateFrequencyHours(0)
+	, iridiumFlaresPredictionDepth(7)
 {
 	setObjectName("Satellites");
 	configDialog = new SatellitesDialog();
-	QOpenGLFunctions_1_2::initializeOpenGLFunctions();
 }
 
 void Satellites::deinit()
@@ -97,13 +107,6 @@ void Satellites::deinit()
 Satellites::~Satellites()
 {
 	delete configDialog;
-	
-	if (pxmapGlow)
-		delete pxmapGlow;
-	if (pxmapOnIcon)
-		delete pxmapOnIcon;
-	if (pxmapOffIcon)
-		delete pxmapOffIcon;
 }
 
 
@@ -139,32 +142,29 @@ void Satellites::init()
 		texPointer = StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/pointeur5.png");
 		Satellite::hintTexture = StelApp::getInstance().getTextureManager().createTexture(":/satellites/hint.png");
 
-		// key bindings and other actions
-		StelGui* gui = dynamic_cast<StelGui*>(StelApp::getInstance().getGui());
+		// key bindings and other actions		
 		QString satGroup = N_("Satellites");
 		addAction("actionShow_Satellite_Hints", satGroup, N_("Satellite hints"), "hintsVisible", "Ctrl+Z");
-		addAction("actionShow_Satellite_Labels", satGroup, N_("Satellite labels"), "labelsVisible", "Shift+Z");
+		addAction("actionShow_Satellite_Labels", satGroup, N_("Satellite labels"), "labelsVisible", "Alt+Shift+Z");
 		addAction("actionShow_Satellite_ConfigDialog_Global", satGroup, N_("Satellites configuration window"), configDialog, "visible", "Alt+Z");
 
 		// Gui toolbar button
-		pxmapGlow = new QPixmap(":/graphicGui/glow32x32.png");
-		pxmapOnIcon = new QPixmap(":/satellites/bt_satellites_on.png");
-		pxmapOffIcon = new QPixmap(":/satellites/bt_satellites_off.png");
-		toolbarButton = new StelButton(NULL, *pxmapOnIcon, *pxmapOffIcon, *pxmapGlow, "actionShow_Satellite_Hints");
-		gui->getButtonBar()->addButton(toolbarButton, "065-pluginsGroup");
+		StelGui* gui = dynamic_cast<StelGui*>(StelApp::getInstance().getGui());
+		if (gui!=Q_NULLPTR)
+		{
+			toolbarButton = new StelButton(Q_NULLPTR,
+						       QPixmap(":/satellites/bt_satellites_on.png"),
+						       QPixmap(":/satellites/bt_satellites_off.png"),
+						       QPixmap(":/graphicGui/glow32x32.png"),
+						       "actionShow_Satellite_Hints");
+			gui->getButtonBar()->addButton(toolbarButton, "065-pluginsGroup");
+		}
 	}
 	catch (std::runtime_error &e)
 	{
-		qWarning() << "Satellites::init error: " << e.what();
+		qWarning() << "[Satellites] init error: " << e.what();
 		return;
 	}
-
-	// A timer for hiding alert messages
-	messageTimer = new QTimer(this);
-	messageTimer->setSingleShot(true);   // recurring check for update
-	messageTimer->setInterval(9000);      // 6 seconds should be enough time
-	messageTimer->stop();
-	connect(messageTimer, SIGNAL(timeout()), this, SLOT(hideMessages()));
 
 	// If the json file does not already exist, create it from the resource in the QT resource
 	if(QFileInfo(catalogPath).exists())
@@ -177,7 +177,7 @@ void Satellites::init()
 	}
 	else
 	{
-		qDebug() << "Satellites::init satellites.json does not exist - copying default file to " << QDir::toNativeSeparators(catalogPath);
+		qDebug() << "[Satellites] satellites.json does not exist - copying default file to " << QDir::toNativeSeparators(catalogPath);
 		restoreDefaultCatalog();
 	}
 	
@@ -186,7 +186,7 @@ void Satellites::init()
 		restoreDefaultQSMagFile();
 	}
 
-	qDebug() << "Satellites: loading catalog file:" << QDir::toNativeSeparators(catalogPath);
+	qDebug() << "[Satellites] loading catalog file:" << QDir::toNativeSeparators(catalogPath);
 
 	// create satellites according to content os satellites.json file
 	loadCatalog();
@@ -206,10 +206,7 @@ void Satellites::init()
 	GETSTELMODULE(StelObjectMgr)->registerStelObjectMgr(this);
 
 	// Handle changes to the observer location:
-	connect(StelApp::getInstance().getCore(),
-	        SIGNAL(locationChanged(StelLocation)),
-	        this,
-	        SLOT(updateObserverLocation(StelLocation)));
+	connect(StelApp::getInstance().getCore(), SIGNAL(locationChanged(StelLocation)), this, SLOT(updateObserverLocation(StelLocation)));
 }
 
 bool Satellites::backupCatalog(bool deleteOriginal)
@@ -217,7 +214,7 @@ bool Satellites::backupCatalog(bool deleteOriginal)
 	QFile old(catalogPath);
 	if (!old.exists())
 	{
-		qWarning() << "Satellites::backupJsonFile no file to backup";
+		qWarning() << "[Satellites] no file to backup";
 		return false;
 	}
 
@@ -231,14 +228,14 @@ bool Satellites::backupCatalog(bool deleteOriginal)
 		{
 			if (!old.remove())
 			{
-				qWarning() << "Satellites: WARNING: unable to remove old catalog file!";
+				qWarning() << "[Satellites] WARNING: unable to remove old catalog file!";
 				return false;
 			}
 		}
 	}
 	else
 	{
-		qWarning() << "Satellites: WARNING: failed to back up catalog file as" 
+		qWarning() << "[Satellites] WARNING: failed to back up catalog file as"
 			   << QDir::toNativeSeparators(backupPath);
 		return false;
 	}
@@ -253,10 +250,16 @@ double Satellites::getCallOrder(StelModuleActionName actionName) const
 	return 0;
 }
 
-QList<StelObjectP> Satellites::searchAround(const Vec3d& av, double limitFov, const StelCore*) const
+QList<StelObjectP> Satellites::searchAround(const Vec3d& av, double limitFov, const StelCore* core) const
 {
 	QList<StelObjectP> result;
-	if (!hintFader || StelApp::getInstance().getCore()->getCurrentLocation().planetName != earth->getEnglishName() || !isValidRangeDates())
+	if (!hintFader)
+		return result;
+
+	if (qAbs(core->getTimeRate())>=Satellite::timeRateLimit) // Do not show satellites when time rate is over limit
+		return result;
+
+	if (core->getCurrentPlanet()!=earth || !isValidRangeDates(core))
 		return result;
 
 	Vec3d v(av);
@@ -281,8 +284,16 @@ QList<StelObjectP> Satellites::searchAround(const Vec3d& av, double limitFov, co
 
 StelObjectP Satellites::searchByNameI18n(const QString& nameI18n) const
 {
-	if (!hintFader || StelApp::getInstance().getCore()->getCurrentLocation().planetName != earth->getEnglishName() || !isValidRangeDates())
-		return NULL;
+	if (!hintFader)
+		return Q_NULLPTR;
+
+	StelCore* core = StelApp::getInstance().getCore();
+
+	if (qAbs(core->getTimeRate())>=Satellite::timeRateLimit) // Do not show satellites when time rate is over limit
+		return Q_NULLPTR;
+
+	if (core->getCurrentPlanet()!=earth || !isValidRangeDates(core))
+		return Q_NULLPTR;
 	
 	QString objw = nameI18n.toUpper();
 	
@@ -294,18 +305,26 @@ StelObjectP Satellites::searchByNameI18n(const QString& nameI18n) const
 	{
 		if (sat->initialized && sat->displayed)
 		{
-			if (sat->getNameI18n().toUpper() == nameI18n)
+			if (sat->getNameI18n().toUpper() == objw)
 				return qSharedPointerCast<StelObject>(sat);
 		}
 	}
 
-	return NULL;
+	return Q_NULLPTR;
 }
 
 StelObjectP Satellites::searchByName(const QString& englishName) const
 {
-	if (!hintFader || StelApp::getInstance().getCore()->getCurrentLocation().planetName != earth->getEnglishName() || !isValidRangeDates())
-		return NULL;
+	if (!hintFader)
+		return Q_NULLPTR;
+
+	StelCore* core = StelApp::getInstance().getCore();
+
+	if (qAbs(core->getTimeRate())>=Satellite::timeRateLimit) // Do not show satellites when time rate is over limit
+		return Q_NULLPTR;
+
+	if (core->getCurrentPlanet()!=earth || !isValidRangeDates(core))
+		return Q_NULLPTR;
 
 	QString objw = englishName.toUpper();
 	
@@ -317,18 +336,39 @@ StelObjectP Satellites::searchByName(const QString& englishName) const
 	{
 		if (sat->initialized && sat->displayed)
 		{
-			if (sat->getEnglishName().toUpper() == englishName)
+			if (sat->getEnglishName().toUpper() == objw)
 				return qSharedPointerCast<StelObject>(sat);
 		}
 	}
 
-	return NULL;
+	return Q_NULLPTR;
+}
+
+StelObjectP Satellites::searchByID(const QString &id) const
+{
+	foreach(const SatelliteP& sat, satellites)
+	{
+		if (sat->initialized && sat->getID() == id)
+		{
+			return qSharedPointerCast<StelObject>(sat);
+		}
+	}
+
+	return Q_NULLPTR;
 }
 
 StelObjectP Satellites::searchByNoradNumber(const QString &noradNumber) const
 {
-	if (!hintFader || StelApp::getInstance().getCore()->getCurrentLocation().planetName != earth->getEnglishName() || !isValidRangeDates())
-		return NULL;
+	if (!hintFader)
+		return Q_NULLPTR;
+
+	StelCore* core = StelApp::getInstance().getCore();
+
+	if (qAbs(core->getTimeRate())>=Satellite::timeRateLimit) // Do not show satellites when time rate is over limit
+		return Q_NULLPTR;
+
+	if (core->getCurrentPlanet()!=earth || !isValidRangeDates(core))
+		return Q_NULLPTR;
 	
 	// If the search string is a catalog number...
 	QRegExp regExp("^(NORAD)\\s*(\\d+)\\s*$");
@@ -349,66 +389,19 @@ StelObjectP Satellites::searchByNoradNumber(const QString &noradNumber) const
 	return StelObjectP();
 }
 
-QStringList Satellites::listMatchingObjectsI18n(const QString& objPrefix, int maxNbItem, bool useStartOfWords) const
+QStringList Satellites::listMatchingObjects(const QString& objPrefix, int maxNbItem, bool useStartOfWords, bool inEnglish) const
 {
 	QStringList result;
-	if (!hintFader || StelApp::getInstance().getCore()->getCurrentLocation().planetName != earth->getEnglishName() || !isValidRangeDates())
+	if (!hintFader || maxNbItem <= 0)
 		return result;
-	if (maxNbItem==0) return result;
 
-	QString objw = objPrefix.toUpper();
+	StelCore* core = StelApp::getInstance().getCore();
 
-	QString numberPrefix;
-	QRegExp regExp("^(NORAD)\\s*(\\d+)\\s*$");
-	if (regExp.exactMatch(objw))
-	{
-		QString numberString = regExp.capturedTexts().at(2);
-		numberPrefix = numberString;
-	}
-	bool find;
-	foreach(const SatelliteP& sat, satellites)
-	{
-		if (sat->initialized && sat->displayed)
-		{
-			find = false;
-			if (useStartOfWords)
-			{
-				if (sat->getNameI18n().toUpper().left(objw.length()) == objw)
-				{
-					find = true;
-				}
-			}
-			else
-			{
-				if (sat->getNameI18n().toUpper().contains(objw, Qt::CaseInsensitive))
-				{
-					find = true;
-				}
-			}
-
-			if (find)
-			{
-				result << sat->getNameI18n().toUpper();
-			}
-			else if (!numberPrefix.isEmpty() && sat->getCatalogNumberString().left(numberPrefix.length()) == numberPrefix)
-			{
-				result << QString("NORAD %1").arg(sat->getCatalogNumberString());
-			}
-		}
-	}
-
-	result.sort();
-	if (result.size()>maxNbItem) result.erase(result.begin()+maxNbItem, result.end());
-
-	return result;
-}
-
-QStringList Satellites::listMatchingObjects(const QString& objPrefix, int maxNbItem, bool useStartOfWords) const
-{
-	QStringList result;
-	if (!hintFader || StelApp::getInstance().getCore()->getCurrentLocation().planetName != earth->getEnglishName() || !isValidRangeDates())
+	if (qAbs(core->getTimeRate())>=Satellite::timeRateLimit) // Do not show satellites when time rate is over limit
 		return result;
-	if (maxNbItem==0) return result;
+
+	if (core->getCurrentPlanet()!=earth || !isValidRangeDates(core))
+		return result;
 
 	QString objw = objPrefix.toUpper();
 
@@ -422,46 +415,49 @@ QStringList Satellites::listMatchingObjects(const QString& objPrefix, int maxNbI
 		if (ok)
 			numberPrefix = numberString;
 	}
-	bool find;
-	foreach(const SatelliteP& sat, satellites)
+
+	foreach(const SatelliteP& sobj, satellites)
 	{
-		if (sat->initialized && sat->displayed)
+		if (!sobj->initialized || !sobj->displayed)
 		{
-			find = false;
-			if (useStartOfWords)
-			{
-				if (sat->getEnglishName().toUpper().left(objw.length()) == objw)
-				{
-					find = true;
-				}
-			}
-			else
-			{
-				if (sat->getEnglishName().toUpper().contains(objw, Qt::CaseInsensitive))
-				{
-					find = true;
-				}
-			}
-			if (find)
-			{
-				result << sat->getEnglishName().toUpper();
-			}
-			else if (find==false && !numberPrefix.isEmpty() && sat->getCatalogNumberString().left(numberPrefix.length()) == numberPrefix)
-			{
-				result << QString("NORAD %1").arg(sat->getCatalogNumberString());			
-			}
+			continue;
+		}
+
+		QString name = inEnglish ? sobj->getEnglishName() : sobj->getNameI18n();
+		if (matchObjectName(name, objPrefix, useStartOfWords))
+		{
+			result.append(name);
+		}
+		else if (!numberPrefix.isEmpty() && sobj->getCatalogNumberString().startsWith(numberPrefix))
+		{
+			result.append(QString("NORAD %1").arg(sobj->getCatalogNumberString()));
+		}
+
+		if (result.size() >= maxNbItem)
+		{
+			break;
 		}
 	}
 
 	result.sort();
-	if (result.size()>maxNbItem) result.erase(result.begin()+maxNbItem, result.end());
-
 	return result;
 }
 
 QStringList Satellites::listAllObjects(bool inEnglish) const
 {
 	QStringList result;
+
+	if (!hintFader)
+		return result;
+
+	StelCore* core = StelApp::getInstance().getCore();
+
+	if (qAbs(core->getTimeRate())>=Satellite::timeRateLimit) // Do not show satellites when time rate is over limit
+		return result;
+
+	if (core->getCurrentPlanet()!=earth || !isValidRangeDates(core))
+		return result;
+
 	if (inEnglish)
 	{
 		foreach(const SatelliteP& sat, satellites)
@@ -503,34 +499,63 @@ void Satellites::restoreDefaultSettings()
 	// delete all existing Satellite settings...
 	conf->remove("");
 
-	conf->setValue("show_satellite_hints", false);
-	conf->setValue("show_satellite_labels", true);
+	conf->setValue("show_satellite_hints", true);
+	conf->setValue("show_satellite_labels", false);
 	conf->setValue("updates_enabled", true);
 	conf->setValue("auto_add_enabled", true);
 	conf->setValue("auto_remove_enabled", true);
 	conf->setValue("hint_color", "0.0,0.4,0.6");
+	conf->setValue("invisible_satellite_color", "0.2,0.2,0.2");
 	conf->setValue("hint_font_size", 10);
 	conf->setValue("update_frequency_hours", 72);
-	conf->setValue("orbit_line_flag", true);
+	conf->setValue("orbit_line_flag", false);
 	conf->setValue("orbit_line_segments", 90);
 	conf->setValue("orbit_fade_segments", 5);
 	conf->setValue("orbit_segment_duration", 20);
-	conf->setValue("realistic_mode_enabled", false);
+	conf->setValue("realistic_mode_enabled", true);
 	
 	conf->endGroup(); // saveTleSources() opens it for itself
 	
 	// TLE update sources
 	QStringList urls;
-	urls << "1,http://celestrak.com/NORAD/elements/visual.txt" // Auto-add ON!
-	     << "http://celestrak.com/NORAD/elements/tle-new.txt"
-	     << "http://celestrak.com/NORAD/elements/science.txt"
-	     << "http://celestrak.com/NORAD/elements/noaa.txt"
-	     << "http://celestrak.com/NORAD/elements/goes.txt"
-	     << "http://celestrak.com/NORAD/elements/amateur.txt"
-	     << "http://celestrak.com/NORAD/elements/gps-ops.txt"
-	     << "http://celestrak.com/NORAD/elements/galileo.txt"
-	     << "http://celestrak.com/NORAD/elements/iridium.txt"
-	     << "http://celestrak.com/NORAD/elements/geo.txt";
+	urls << "1,http://www.celestrak.com/NORAD/elements/visual.txt" // Auto-add ON!
+	     << "http://www.celestrak.com/NORAD/elements/tle-new.txt"
+	     << "1,http://www.celestrak.com/NORAD/elements/science.txt"
+	     << "http://www.celestrak.com/NORAD/elements/noaa.txt"
+	     << "http://www.celestrak.com/NORAD/elements/goes.txt"
+	     << "1,http://www.celestrak.com/NORAD/elements/amateur.txt"
+	     << "1,http://www.celestrak.com/NORAD/elements/gps-ops.txt"
+	     << "1,http://www.celestrak.com/NORAD/elements/galileo.txt"
+	     << "1,http://www.celestrak.com/NORAD/elements/iridium.txt"
+	     << "http://www.celestrak.com/NORAD/elements/geo.txt"
+	     << "1,http://www.celestrak.com/NORAD/elements/stations.txt"
+	     << "http://www.celestrak.com/NORAD/elements/weather.txt"
+	     << "http://www.celestrak.com/NORAD/elements/resource.txt"
+	     << "http://www.celestrak.com/NORAD/elements/sarsat.txt"
+	     << "http://www.celestrak.com/NORAD/elements/dmc.txt"
+	     << "http://www.celestrak.com/NORAD/elements/tdrss.txt"
+	     << "http://www.celestrak.com/NORAD/elements/argos.txt"
+	     << "http://www.celestrak.com/NORAD/elements/intelsat.txt"
+	     << "http://www.celestrak.com/NORAD/elements/gorizont.txt"
+	     << "http://www.celestrak.com/NORAD/elements/raduga.txt"
+	     << "http://www.celestrak.com/NORAD/elements/molniya.txt"
+	     << "http://www.celestrak.com/NORAD/elements/orbcomm.txt"
+	     << "http://www.celestrak.com/NORAD/elements/globalstar.txt"
+	     << "http://www.celestrak.com/NORAD/elements/x-comm.txt"
+	     << "http://www.celestrak.com/NORAD/elements/other-comm.txt"
+	     << "1,http://www.celestrak.com/NORAD/elements/glo-ops.txt"
+	     << "http://www.celestrak.com/NORAD/elements/beidou.txt"
+	     << "http://www.celestrak.com/NORAD/elements/sbas.txt"
+	     << "http://www.celestrak.com/NORAD/elements/nnss.txt"
+	     << "http://www.celestrak.com/NORAD/elements/engineering.txt"
+	     << "http://www.celestrak.com/NORAD/elements/education.txt"
+	     << "http://www.celestrak.com/NORAD/elements/geodetic.txt"
+	     << "http://www.celestrak.com/NORAD/elements/radar.txt"
+	     << "http://www.celestrak.com/NORAD/elements/cubesat.txt"
+	     << "http://www.celestrak.com/NORAD/elements/other.txt"
+	     << "https://www.amsat.org/amsat/ftp/keps/current/nasabare.txt"
+	     << "1,https://www.prismnet.com/~mmccants/tles/classfd.zip";
+
 	saveTleSources(urls);
 }
 
@@ -542,11 +567,11 @@ void Satellites::restoreDefaultCatalog()
 	QFile src(":/satellites/satellites.json");
 	if (!src.copy(catalogPath))
 	{
-		qWarning() << "Satellites::restoreDefaultJsonFile cannot copy json resource to " + QDir::toNativeSeparators(catalogPath);
+		qWarning() << "[Satellites] cannot copy json resource to " + QDir::toNativeSeparators(catalogPath);
 	}
 	else
 	{
-		qDebug() << "Satellites::init copied default satellites.json to " << QDir::toNativeSeparators(catalogPath);
+		qDebug() << "[Satellites] copied default satellites.json to " << QDir::toNativeSeparators(catalogPath);
 		// The resource is read only, and the new file inherits this...  make sure the new file
 		// is writable by the Stellarium process so that updates can be done.
 		QFile dest(catalogPath);
@@ -556,7 +581,7 @@ void Satellites::restoreDefaultCatalog()
 		// the json file has been manually removed, that an update is schreduled in a timely
 		// manner
 		StelApp::getInstance().getSettings()->remove("Satellites/last_update");
-		lastUpdate = QDateTime::fromString("2001-05-25T12:00:00", Qt::ISODate);
+		lastUpdate = QDateTime::fromString("2015-05-01T12:00:00", Qt::ISODate);
 
 	}
 }
@@ -566,11 +591,11 @@ void Satellites::restoreDefaultQSMagFile()
 	QFile src(":/satellites/qs.mag");
 	if (!src.copy(qsMagFilePath))
 	{
-		qWarning() << "Satellites::restoreDefaultQSMagFile cannot copy qs.mag resource to " + QDir::toNativeSeparators(qsMagFilePath);
+		qWarning() << "[Satellites] cannot copy qs.mag resource to " + QDir::toNativeSeparators(qsMagFilePath);
 	}
 	else
 	{
-		qDebug() << "Satellites::init copied default qs.mag to " << QDir::toNativeSeparators(qsMagFilePath);
+		qDebug() << "[Satellites] copied default qs.mag to " << QDir::toNativeSeparators(qsMagFilePath);
 		// The resource is read only, and the new file inherits this...  make sure the new file
 		// is writable by the Stellarium process so that updates can be done.
 		QFile dest(qsMagFilePath);
@@ -635,23 +660,28 @@ void Satellites::loadSettings()
 	updateFrequencyHours = conf->value("update_frequency_hours", 72).toInt();
 	// last update default is the first Towell Day.  <3 DA
 	lastUpdate = QDateTime::fromString(conf->value("last_update", "2001-05-25T12:00:00").toString(), Qt::ISODate);
-	setFlagHints(conf->value("show_satellite_hints", false).toBool());
-	Satellite::showLabels = conf->value("show_satellite_labels", true).toBool();
+	setFlagHints(conf->value("show_satellite_hints", true).toBool());
+	Satellite::showLabels = conf->value("show_satellite_labels", false).toBool();
 	updatesEnabled = conf->value("updates_enabled", true).toBool();
 	autoAddEnabled = conf->value("auto_add_enabled", true).toBool();
 	autoRemoveEnabled = conf->value("auto_remove_enabled", true).toBool();
+	iridiumFlaresPredictionDepth = conf->value("flares_prediction_depth", 7).toInt();
 
 	// Get a font for labels
 	labelFont.setPixelSize(conf->value("hint_font_size", 10).toInt());
 
 	// orbit drawing params
-	Satellite::orbitLinesFlag = conf->value("orbit_line_flag", true).toBool();
+	Satellite::orbitLinesFlag = conf->value("orbit_line_flag", false).toBool();
 	Satellite::orbitLineSegments = conf->value("orbit_line_segments", 90).toInt();
 	Satellite::orbitLineFadeSegments = conf->value("orbit_fade_segments", 5).toInt();
 	Satellite::orbitLineSegmentDuration = conf->value("orbit_segment_duration", 20).toInt();
 
+	Satellite::invisibleSatelliteColor = StelUtils::strToVec3f(conf->value("invisible_satellite_color", "0.2,0.2,0.2").toString());
+
+	Satellite::timeRateLimit = conf->value("time_rate_limit", 1.0).toDouble();
+
 	// realistic mode
-	setFlagRelisticMode(conf->value("realistic_mode_enabled", false).toBool());
+	setFlagRelisticMode(conf->value("realistic_mode_enabled", true).toBool());
 
 	conf->endGroup();
 }
@@ -668,6 +698,7 @@ void Satellites::saveSettings()
 	conf->setValue("updates_enabled", updatesEnabled );
 	conf->setValue("auto_add_enabled", autoAddEnabled);
 	conf->setValue("auto_remove_enabled", autoRemoveEnabled);
+	conf->setValue("flares_prediction_depth", iridiumFlaresPredictionDepth);
 
 	// Get a font for labels
 	conf->setValue("hint_font_size", labelFont.pixelSize());
@@ -698,7 +729,7 @@ const QString Satellites::readCatalogVersion()
 	QFile satelliteJsonFile(catalogPath);
 	if (!satelliteJsonFile.open(QIODevice::ReadOnly))
 	{
-		qWarning() << "Satellites::init cannot open " << QDir::toNativeSeparators(catalogPath);
+		qWarning() << "[Satellites] cannot open " << QDir::toNativeSeparators(catalogPath);
 		return jsonVersion;
 	}
 
@@ -715,7 +746,7 @@ const QString Satellites::readCatalogVersion()
 	}
 
 	satelliteJsonFile.close();
-	//qDebug() << "Satellites: catalog version from file:" << jsonVersion;
+	//qDebug() << "[Satellites] catalog version from file:" << jsonVersion;
 	return jsonVersion;
 }
 
@@ -725,20 +756,19 @@ bool Satellites::saveDataMap(const QVariantMap& map, QString path)
 		path = catalogPath;
 
 	QFile jsonFile(path);
-	StelJsonParser parser;
 
 	if (jsonFile.exists())
 		jsonFile.remove();
 
 	if (!jsonFile.open(QIODevice::WriteOnly))
 	{
-		qWarning() << "Satellites::saveTleMap() cannot open for writing:" << QDir::toNativeSeparators(path);
+		qWarning() << "[Satellites] cannot open for writing:" << QDir::toNativeSeparators(path);
 		return false;
 	}
 	else
 	{
-		qDebug() << "Satellites::saveTleMap() writing to:" << QDir::toNativeSeparators(path);
-		parser.write(map, &jsonFile);
+		qDebug() << "[Satellites] writing to:" << QDir::toNativeSeparators(path);
+		StelJsonParser::write(map, &jsonFile);
 		jsonFile.close();
 		return true;
 	}
@@ -752,11 +782,12 @@ QVariantMap Satellites::loadDataMap(QString path)
 	QVariantMap map;
 	QFile jsonFile(path);
 	if (!jsonFile.open(QIODevice::ReadOnly))
-		qWarning() << "Satellites::loadTleMap cannot open " << QDir::toNativeSeparators(path);
+		qWarning() << "[Satellites] cannot open " << QDir::toNativeSeparators(path);
 	else
+	{
 		map = StelJsonParser::parse(&jsonFile).toMap();
-
-	jsonFile.close();
+		jsonFile.close();
+	}
 	return map;
 }
 
@@ -810,8 +841,8 @@ QVariantMap Satellites::createDataMap(void)
 	QVariantMap map;
 	QVariantList defHintCol;
 	defHintCol << Satellite::roundToDp(defaultHintColor[0],3)
-						 << Satellite::roundToDp(defaultHintColor[1],3)
-						 << Satellite::roundToDp(defaultHintColor[2],3);
+		   << Satellite::roundToDp(defaultHintColor[1],3)
+		   << Satellite::roundToDp(defaultHintColor[2],3);
 
 	map["creator"] = QString("Satellites plugin version %1 (updated)").arg(SATELLITES_PLUGIN_VERSION);
 	map["hintColor"] = defHintCol;
@@ -830,6 +861,9 @@ QVariantMap Satellites::createDataMap(void)
 		if (satMap["stdMag"].toFloat() == 99.f)
 			satMap.remove("stdMag");
 
+		if (satMap["status"].toInt() == Satellite::StatusUnknown)
+			satMap.remove("status");
+
 		sats[sat->id] = satMap;		
 	}
 	map["satellites"] = sats;
@@ -840,8 +874,7 @@ void Satellites::markLastUpdate()
 {
 	lastUpdate = QDateTime::currentDateTime();
 	QSettings* conf = StelApp::getInstance().getSettings();
-	conf->setValue("Satellites/last_update",
-	               lastUpdate.toString(Qt::ISODate));
+	conf->setValue("Satellites/last_update", lastUpdate.toString(Qt::ISODate));
 }
 
 QSet<QString> Satellites::getGroups() const
@@ -863,7 +896,7 @@ void Satellites::addGroup(const QString& groupId)
 	groups.insert(groupId);
 }
 
-QHash<QString,QString> Satellites::getSatellites(const QString& group, Status vis)
+QHash<QString,QString> Satellites::getSatellites(const QString& group, Status vis) const
 {
 	QHash<QString,QString> result;
 
@@ -874,10 +907,10 @@ QHash<QString,QString> Satellites::getSatellites(const QString& group, Status vi
 			if ((group.isEmpty() || sat->groups.contains(group)) && ! result.contains(sat->id))
 			{
 				if (vis==Both ||
-						(vis==Visible && sat->displayed) ||
-						(vis==NotVisible && !sat->displayed) ||
-						(vis==OrbitError && !sat->orbitValid) ||
-						(vis==NewlyAdded && sat->isNew()))
+				   (vis==Visible && sat->displayed) ||
+				   (vis==NotVisible && !sat->displayed) ||
+				   (vis==OrbitError && !sat->orbitValid) ||
+				   (vis==NewlyAdded && sat->isNew()))
 					result.insert(sat->id, sat->name);
 			}
 		}
@@ -892,7 +925,7 @@ SatellitesListModel* Satellites::getSatellitesListModel()
 	return satelliteListModel;
 }
 
-SatelliteP Satellites::getById(const QString& id)
+SatelliteP Satellites::getById(const QString& id) const
 {
 	foreach(const SatelliteP& sat, satellites)
 	{
@@ -902,7 +935,7 @@ SatelliteP Satellites::getById(const QString& id)
 	return SatelliteP();
 }
 
-QStringList Satellites::listAllIds()
+QStringList Satellites::listAllIds() const
 {
 	QStringList result;
 	foreach(const SatelliteP& sat, satellites)
@@ -939,11 +972,13 @@ bool Satellites::add(const TleData& tleData)
 	satProperties.insert("orbitVisible", false);
 	if (qsMagList.contains(tleData.id))
 		satProperties.insert("stdMag", qsMagList[tleData.id]);
+	if (tleData.status != Satellite::StatusUnknown)
+		satProperties.insert("status", tleData.status);
 	
 	SatelliteP sat(new Satellite(tleData.id, satProperties));
 	if (sat->initialized)
 	{
-		qDebug() << "Satellite added:" << tleData.id << tleData.name;
+		qDebug() << "[Satellites] satellite added:" << tleData.id << tleData.name;
 		satellites.append(sat);
 		sat->setNew();
 		return true;
@@ -970,10 +1005,10 @@ void Satellites::add(const TleDataList& newSatellites)
 	if (satelliteListModel)
 		satelliteListModel->endSatellitesChange();
 	
-	qDebug() << "Satellites: "
-					 << newSatellites.count() << "satellites proposed for addition, "
-					 << numAdded << " added, "
-					 << satellites.count() << " total after the operation.";
+	qDebug() << "[Satellites] "
+		 << newSatellites.count() << "satellites proposed for addition, "
+		 << numAdded << " added, "
+		 << satellites.count() << " total after the operation.";
 }
 
 void Satellites::remove(const QStringList& idList)
@@ -1003,10 +1038,10 @@ void Satellites::remove(const QStringList& idList)
 	if (satelliteListModel)
 		satelliteListModel->endSatellitesChange();
 
-	qDebug() << "Satellites: "
-					 << idList.count() << "satellites proposed for removal, "
-					 << numRemoved << " removed, "
-					 << satellites.count() << " remain.";
+	qDebug() << "[Satellites] "
+		 << idList.count() << "satellites proposed for removal, "
+		 << numRemoved << " removed, "
+		 << satellites.count() << " remain.";
 }
 
 int Satellites::getSecondsToUpdate(void)
@@ -1048,7 +1083,7 @@ void Satellites::saveTleSources(const QStringList& urls)
 	conf->endGroup();
 }
 
-bool Satellites::getFlagLabels()
+bool Satellites::getFlagLabels() const
 {
 	return Satellite::showLabels;
 }
@@ -1080,7 +1115,7 @@ void Satellites::enableAutoRemove(bool enabled)
 	}
 }
 
-bool Satellites::getFlagRealisticMode()
+bool Satellites::getFlagRealisticMode() const
 {
 	return Satellite::realisticModeFlag;
 }
@@ -1099,7 +1134,8 @@ void Satellites::setFlagHints(bool b)
 	if (hintFader != b)
 	{
 		hintFader = b;
-		emit settingsChanged();
+		emit settingsChanged(); // GZ IS THIS REQUIRED/USEFUL??
+		emit hintsVisibleChanged(b);
 	}
 }
 
@@ -1108,7 +1144,8 @@ void Satellites::setFlagLabels(bool b)
 	if (Satellite::showLabels != b)
 	{
 		Satellite::showLabels = b;
-		emit settingsChanged();
+		emit settingsChanged(); // GZ IS THIS REQUIRED/USEFUL??
+		emit labelsVisibleChanged(b);
 	}
 }
 
@@ -1133,20 +1170,25 @@ void Satellites::setUpdateFrequencyHours(int hours)
 void Satellites::checkForUpdate(void)
 {
 	if (updatesEnabled && updateState != Updating
-	    && lastUpdate.addSecs(updateFrequencyHours * 3600) <= QDateTime::currentDateTime())
+	    && lastUpdate.addSecs(updateFrequencyHours * 3600) <= QDateTime::currentDateTime()
+	    && downloadMgr->networkAccessible()==QNetworkAccessManager::Accessible)
 		updateFromOnlineSources();
 }
 
 void Satellites::updateFromOnlineSources()
 {
+	// never update TLE's for any date before Oct 4, 1957, 19:28:34GMT ;-)
+	if (StelApp::getInstance().getCore()->getJD()<2436116.3115)
+		return;
+
 	if (updateState==Satellites::Updating)
 	{
-		qWarning() << "Satellites: Internet update already in progress!";
+		qWarning() << "[Satellites] Internet update already in progress!";
 		return;
 	}
 	else
 	{
-		qDebug() << "Satellites: starting Internet update...";
+		qDebug() << "[Satellites] starting Internet update...";
 	}
 
 	// Setting lastUpdate should be done only when the update is finished. -BM
@@ -1154,7 +1196,7 @@ void Satellites::updateFromOnlineSources()
 	// TODO: Perhaps tie the emptyness of updateUrls to updatesEnabled... --BM
 	if (updateUrls.isEmpty())
 	{
-		qWarning() << "Satellites: update failed."
+		qWarning() << "[Satellites] update failed."
 		           << "No update sources are defined!";
 		
 		// Prevent from re-entering this method on the next check:
@@ -1171,7 +1213,7 @@ void Satellites::updateFromOnlineSources()
 	updateSources.clear();
 	numberDownloadsComplete = 0;
 
-	if (progressBar==NULL)
+	if (progressBar==Q_NULLPTR)
 		progressBar = StelApp::getInstance().addProgressBar();
 
 	progressBar->setValue(0);
@@ -1205,13 +1247,7 @@ void Satellites::updateFromOnlineSources()
 void Satellites::saveDownloadedUpdate(QNetworkReply* reply)
 {
 	// check the download worked, and save the data to file if this is the case.
-	if (reply->error() != QNetworkReply::NoError)
-	{
-		qWarning() << "Satellites: FAILED to download"
-		           << reply->url().toString(QUrl::RemoveUserInfo)
-		           << "Error:" << reply->errorString();
-	}
-	else
+	if (reply->error() == QNetworkReply::NoError && reply->bytesAvailable()>0)
 	{
 		// download completed successfully.
 		QString name = QString("tle%1.txt").arg(numberDownloadsComplete);
@@ -1220,10 +1256,44 @@ void Satellites::saveDownloadedUpdate(QNetworkReply* reply)
 		QFile* tmpFile = new QFile(path, this);
 		if (tmpFile->exists())
 			tmpFile->remove();
-		
+
 		if (tmpFile->open(QIODevice::WriteOnly | QIODevice::Text))
 		{
-			tmpFile->write(reply->readAll());
+			QByteArray fd = reply->readAll();
+			// qWarning() << "[Satellites] Processing an URL:" << reply->url().toString();
+			if (reply->url().toString().contains(".zip", Qt::CaseInsensitive))
+			{
+				QTemporaryFile zip;
+				if (zip.open())
+				{
+					// qWarning() << "[Satellites] Processing a ZIP archive...";
+					zip.write(fd);
+					zip.close();
+					QString archive = zip.fileName();
+					QByteArray data;
+
+					Stel::QZipReader reader(archive);
+					if (reader.status() != Stel::QZipReader::NoError)
+						qWarning() << "[Satellites] Unable to open as a ZIP archive";
+					else
+					{
+						QList<Stel::QZipReader::FileInfo> infoList = reader.fileInfoList();
+						foreach(Stel::QZipReader::FileInfo info, infoList)
+						{
+							// qWarning() << "[Satellites] Processing:" << info.filePath;
+							if (info.isFile)
+								data.append(reader.fileData(info.filePath));
+						}
+						// qWarning() << "[Satellites] Extracted data:" << data;
+						fd = data;
+					}
+					reader.close();
+					zip.remove();
+				}
+				else
+					qWarning() << "[Satellites] Unable to open a temporary file";
+			}
+			tmpFile->write(fd);
 			tmpFile->close();
 			
 			// The reply URL can be different form the requested one...
@@ -1242,11 +1312,14 @@ void Satellites::saveDownloadedUpdate(QNetworkReply* reply)
 		}
 		else
 		{
-			qWarning() << "Satellites: cannot save update file:"
+			qWarning() << "[Satellites] cannot save update file:"
 			           << tmpFile->error()
 			           << tmpFile->errorString();
 		}
 	}
+	else
+		qWarning() << "[Satellites] FAILED to download" << reply->url().toString(QUrl::RemoveUserInfo) << "Error:" << reply->errorString();
+
 	numberDownloadsComplete++;
 	if (progressBar)
 		progressBar->setValue(numberDownloadsComplete);
@@ -1293,7 +1366,7 @@ void Satellites::setOrbitLinesFlag(bool b)
 	Satellite::orbitLinesFlag = b;
 }
 
-bool Satellites::getOrbitLinesFlag()
+bool Satellites::getOrbitLinesFlag() const
 {
 	return Satellite::orbitLinesFlag;
 }
@@ -1309,17 +1382,9 @@ void Satellites::recalculateOrbitLines(void)
 
 void Satellites::displayMessage(const QString& message, const QString hexColor)
 {
-	messageIDs << GETSTELMODULE(LabelMgr)->labelScreen(message, 30, 30 + (20*messageIDs.count()), true, 16, hexColor);
-	messageTimer->start();
+	messageIDs << GETSTELMODULE(LabelMgr)->labelScreen(message, 30, 30 + (20*messageIDs.count()), true, 16, hexColor, false, 9000);
 }
 
-void Satellites::hideMessages()
-{
-	foreach(const int& id, messageIDs)
-	{
-		GETSTELMODULE(LabelMgr)->deleteLabel(id);
-	}
-}
 
 void Satellites::saveCatalog(QString path)
 {
@@ -1354,7 +1419,7 @@ void Satellites::updateSatellites(TleDataHash& newTleSets)
 	
 	if (newTleSets.isEmpty())
 	{
-		qWarning() << "Satellites: update files contain no TLE sets!";
+		qWarning() << "[Satellites] update files contain no TLE sets!";
 		updateState = OtherError;
 		emit(updateStateChanged(updateState));
 		return;
@@ -1398,6 +1463,9 @@ void Satellites::updateSatellites(TleDataHash& newTleSets)
 				// Update the name if it has been changed in the source list
 				sat->name = newTle.name;
 
+				// Update operational status
+				sat->status = newTle.status;
+
 				// we reset this to "now" when we started the update.
 				sat->lastUpdated = lastUpdate;
 				updatedCount++;
@@ -1411,8 +1479,16 @@ void Satellites::updateSatellites(TleDataHash& newTleSets)
 			if (autoRemoveEnabled)
 				toBeRemoved.append(sat->id);
 			else
-				qWarning() << "Satellites:" << sat->id << sat->name
+				qWarning() << "[Satellites]" << sat->id << sat->name
 				           << "is missing in the update lists.";
+			missingCount++;
+		}
+		// All satellites, who has invalid orbit should be removed.
+		if (!sat->orbitValid)
+		{
+			toBeRemoved.append(sat->id);
+			qWarning() << "[Satellites]" << sat->id << sat->name
+				   << "has invalid orbit and will be removed.";
 			missingCount++;
 		}
 	}
@@ -1434,7 +1510,7 @@ void Satellites::updateSatellites(TleDataHash& newTleSets)
 	
 	if (autoRemoveEnabled && !toBeRemoved.isEmpty())
 	{
-		qWarning() << "Satellites: purging objects that were not updated...";
+		qWarning() << "[Satellites] purging objects that were not updated...";
 		remove(toBeRemoved);
 	}
 	
@@ -1450,7 +1526,7 @@ void Satellites::updateSatellites(TleDataHash& newTleSets)
 	if (satelliteListModel)
 		satelliteListModel->endSatellitesChange();
 
-	qDebug() << "Satellites: update finished."
+	qDebug() << "[Satellites] update finished."
 	         << updatedCount << "/" << totalCount << "updated,"
 	         << addedCount << "added,"
 	         << missingCount << "missing or removed."
@@ -1470,6 +1546,7 @@ void Satellites::parseTleFile(QFile& openFile,
 	// Code mostly re-used from updateFromFiles()
 	int lineNumber = 0;
 	TleData lastData;
+	lastData.addThis = addFlagValue;
 	
 	while (!openFile.atEnd())
 	{
@@ -1480,11 +1557,47 @@ void Satellites::parseTleFile(QFile& openFile,
 			lastData = TleData();
 			lastData.addThis = addFlagValue;
 			
+			// The thing in square brackets after the name is actually
+			// Celestrak's "status code". Parse it!
+			QStringList codes;
+			codes << "+" << "-" << "P" << "B" << "S" << "X" << "D" << "?";
+
+			QRegExp statusRx("\\s*\\[(\\D{1})\\]\\s*$");
+			statusRx.setMinimal(true);
+			if (statusRx.indexIn(line)>-1)
+			{
+				lastData.status = Satellite::StatusUnknown;
+				switch (codes.indexOf(statusRx.capturedTexts().at(1).toUpper()))
+				{
+					case 0:
+						lastData.status = Satellite::StatusOperational;
+						break;
+					case 1:
+						lastData.status = Satellite::StatusNonoperational;
+						break;
+					case 2:
+						lastData.status = Satellite::StatusPartiallyOperational;
+						break;
+					case 3:
+						lastData.status = Satellite::StatusStandby;
+						break;
+					case 4:
+						lastData.status = Satellite::StatusSpare;
+						break;
+					case 5:
+						lastData.status = Satellite::StatusExtendedMission;
+						break;
+					case 6:
+						lastData.status = Satellite::StatusDecayed;
+						break;
+					default:
+						lastData.status = Satellite::StatusUnknown;
+				}
+			}
+
 			//TODO: We need to think of some kind of ecaping these
 			//characters in the JSON parser. --BM
-			// The thing in square brackets after the name is actually
-			// Celestrak's "status code". Parse automatically? --BM
-			line.replace(QRegExp("\\s*\\[([^\\]])*\\]\\s*$"),"");  // remove things in square brackets
+			line.replace(QRegExp("\\s*\\[([^\\]])*\\]\\s*$"),"");  // remove "status code" from name
 			lastData.name = line;
 		}
 		else
@@ -1504,8 +1617,7 @@ void Satellites::parseTleFile(QFile& openFile,
 				
 				// This is the second line and there will be no more,
 				// so if everything is OK, save the elements.
-				if (!lastData.name.isEmpty() &&
-						!lastData.first.isEmpty())
+				if (!lastData.name.isEmpty() &&	!lastData.first.isEmpty())
 				{
 					// Some satellites can be listed in multiple files,
 					// and only some of those files may be marked for adding,
@@ -1519,7 +1631,7 @@ void Satellites::parseTleFile(QFile& openFile,
 				//TODO: Error warnings? --BM
 			}
 			else
-				qDebug() << "Satellites: unprocessed line " << lineNumber <<  " in file " << QDir::toNativeSeparators(openFile.fileName());
+				qDebug() << "[Satellites] unprocessed line " << lineNumber <<  " in file " << QDir::toNativeSeparators(openFile.fileName());
 		}
 	}
 }
@@ -1535,7 +1647,7 @@ void Satellites::parseQSMagFile(QString qsMagFile)
 	QFile qsmFile(qsMagFile);
 	if (!qsmFile.open(QIODevice::ReadOnly))
 	{
-		qWarning() << "Satellites: oops... cannot open " << QDir::toNativeSeparators(qsMagFile);
+		qWarning() << "[Satellites] oops... cannot open " << QDir::toNativeSeparators(qsMagFile);
 		return;
 	}
 
@@ -1553,7 +1665,16 @@ void Satellites::parseQSMagFile(QString qsMagFile)
 
 void Satellites::update(double deltaTime)
 {
-	if (StelApp::getInstance().getCore()->getCurrentLocation().planetName != earth->getEnglishName() || !isValidRangeDates() || (!hintFader && hintFader.getInterstate() <= 0.))
+	// Separated because first test should be very fast.
+	if (!hintFader && hintFader.getInterstate() <= 0.)
+		return;
+
+	StelCore *core = StelApp::getInstance().getCore();
+
+	if (qAbs(core->getTimeRate())>=Satellite::timeRateLimit) // Do not show satellites when time rate is over limit
+		return;
+
+	if (core->getCurrentPlanet() != earth || !isValidRangeDates(core))
 		return;
 
 	hintFader.update((int)(deltaTime*1000));
@@ -1567,23 +1688,28 @@ void Satellites::update(double deltaTime)
 
 void Satellites::draw(StelCore* core)
 {
-	if (core->getCurrentLocation().planetName != earth->getEnglishName() ||	!isValidRangeDates() || (!hintFader && hintFader.getInterstate() <= 0.))
+	// Separated because first test should be very fast.
+	if (!hintFader && hintFader.getInterstate() <= 0.)
 		return;
 
-	StelProjectorP prj = core->getProjection(StelCore::FrameAltAz);
+	if (qAbs(core->getTimeRate())>=Satellite::timeRateLimit) // Do not show satellites when time rate is over limit
+		return;
+
+	if (core->getCurrentPlanet()!=earth || !isValidRangeDates(core))
+		return;
+
+	StelProjectorP prj = core->getProjection(StelCore::FrameJ2000);
 	StelPainter painter(prj);
 	painter.setFont(labelFont);
 	Satellite::hintBrightness = hintFader.getInterstate();
 
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_BLEND);
-	glEnable(GL_TEXTURE_2D);
+	painter.setBlending(true);
 	Satellite::hintTexture->bind();
 	Satellite::viewportHalfspace = painter.getProjector()->getBoundingCap();
 	foreach (const SatelliteP& sat, satellites)
 	{
 		if (sat && sat->initialized && sat->displayed)
-			sat->draw(core, painter, 1.0);
+			sat->draw(core, painter);
 	}
 
 	if (GETSTELMODULE(StelObjectMgr)->getFlagSelectedObjectPointer())
@@ -1604,12 +1730,10 @@ void Satellites::drawPointer(StelCore* core, StelPainter& painter)
 		// Compute 2D pos and return if outside screen
 		if (!prj->project(pos, screenpos))
 			return;
-		glColor3f(0.4f,0.5f,0.8f);
+		painter.setColor(0.4f,0.5f,0.8f);
 		texPointer->bind();
 
-		glEnable(GL_TEXTURE_2D);
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // Normal transparency mode
+		painter.setBlending(true);
 
 		// Size on screen
 		float size = obj->getAngularSize(core)*M_PI/180.*prj->getPixelPerRadAtCenter();
@@ -1627,7 +1751,7 @@ bool Satellites::checkJsonFileFormat()
 	QFile jsonFile(catalogPath);
 	if (!jsonFile.open(QIODevice::ReadOnly))
 	{
-		qWarning() << "Satellites::checkJsonFileFormat(): cannot open " << QDir::toNativeSeparators(catalogPath);
+		qWarning() << "[Satellites] cannot open " << QDir::toNativeSeparators(catalogPath);
 		return false;
 	}
 
@@ -1639,8 +1763,8 @@ bool Satellites::checkJsonFileFormat()
 	}
 	catch (std::runtime_error& e)
 	{
-		qDebug() << "Satellites::checkJsonFileFormat(): file format is wrong!";
-		qDebug() << "Satellites::checkJsonFileFormat() error:" << e.what();
+		qDebug() << "[Satellites] file format is wrong!";
+		qDebug() << "[Satellites] error:" << e.what();
 		return false;
 	}
 
@@ -1648,10 +1772,10 @@ bool Satellites::checkJsonFileFormat()
 
 }
 
-bool Satellites::isValidRangeDates() const
+bool Satellites::isValidRangeDates(const StelCore *core) const
 {
 	bool ok;
-	double tJD = StelApp::getInstance().getCore()->getJDay();
+	double tJD = core->getJD();
 	double uJD = StelUtils::getJulianDayFromISO8601String(lastUpdate.toString(Qt::ISODate), &ok);
 	if (lastUpdate.isNull()) // No updates yet?
 		uJD = tJD;
@@ -1662,6 +1786,243 @@ bool Satellites::isValidRangeDates() const
 	else
 		return true;
 }
+
+#ifdef _OLD_IRIDIUM_PREDICTIONS
+IridiumFlaresPredictionList Satellites::getIridiumFlaresPrediction()
+{
+	StelCore* pcore = StelApp::getInstance().getCore();
+	double currentJD = pcore->getJD(); // save current JD
+	bool isTimeNow = pcore->getIsTimeNow();
+	long iJD =currentJD;
+	double JDMidnight = iJD + 0.5 - pcore->getCurrentLocation().longitude / 360.f;
+	double delta = currentJD - JDMidnight;
+
+	pcore->setJD(iJD + 0.5 - pcore->getCurrentLocation().longitude / 360.f);
+	pcore->update(10); // force update to get new coordinates
+
+	IridiumFlaresPredictionList predictions;
+	predictions.clear();
+	foreach(const SatelliteP& sat, satellites)
+	{
+		if (sat->initialized && sat.data()->getEnglishName().startsWith("IRIDIUM"))
+		{
+			double dt  = 0;
+			double angle0 = 100;
+			double lat0 = -1;
+			while (dt<1)
+			{
+				Satellite::timeShift = dt+delta;
+				sat.data()->update(0);
+
+				Vec3d pos = sat.data()->getAltAzPosApparent(pcore);
+				double lat = pos.latitude();
+				double lon = M_PI - pos.longitude();
+				double v =   sat.data()->getVMagnitude(pcore);
+				double angle =  sat.data()->sunReflAngle;
+
+				if (angle>0 && angle<2)
+				{
+					if (angle>angle0 && (v<1) && lat>5*M_PI/180)
+					{
+						IridiumFlaresPrediction flare;
+						flare.datetime = StelUtils::julianDayToISO8601String(currentJD+dt+StelApp::getInstance().getCore()->getUTCOffset(currentJD+dt)/24.f);
+						flare.satellite = sat.data()->getEnglishName();
+						flare.azimuth   = lon;
+						flare.altitude  = lat;
+						flare.magnitude = v;
+
+						predictions.append(flare);
+
+						dt +=0.005;
+					}
+					angle0 = angle;
+				}
+				if (angle>0)
+					dt+=0.000002*angle*angle;
+				else
+				{
+					if (lat0>0 && lat<0)
+						dt+=0.05;
+					else
+						dt+=0.0002;
+				}
+				lat0 = lat;
+			}
+		}
+	}
+	Satellite::timeShift = 0.;
+	if (isTimeNow)
+		pcore->setTimeNow();
+	else
+		pcore->setJD(currentJD);
+
+	return predictions;
+}
+#else
+
+struct SatDataStruct {
+	double nextJD;
+	double angleToSun;
+	double altitude;
+	double azimuth;
+	double v;
+};
+
+IridiumFlaresPredictionList Satellites::getIridiumFlaresPrediction()
+{
+	StelCore* pcore = StelApp::getInstance().getCore();
+	SolarSystem* ssystem = (SolarSystem*)StelApp::getInstance().getModuleMgr().getModule("SolarSystem");
+
+	double currentJD = pcore->getJD(); // save current JD
+	bool isTimeNow = pcore->getIsTimeNow();
+
+	double predictionJD = currentJD - 1.;  //  investigate what's seen recently// yesterday
+	double predictionEndJD = currentJD + getIridiumFlaresPredictionDepth(); // 7 days interval by default
+	pcore->setJD(predictionJD);
+
+	bool useSouthAzimuth = StelApp::getInstance().getFlagSouthAzimuthUsage();
+
+	IridiumFlaresPredictionList predictions;
+
+// create a lіst of Iridiums
+	QMap<SatelliteP,SatDataStruct> iridiums;
+	SatDataStruct sds;
+	double nextJD = predictionJD + 1./24;
+
+	foreach(const SatelliteP& sat, satellites)
+	{
+		if (sat->initialized && sat.data()->getEnglishName().startsWith("IRIDIUM"))
+		{
+			Vec3d pos = sat.data()->getAltAzPosApparent(pcore);
+			sds.angleToSun = sat.data()->sunReflAngle;
+			sds.altitude = pos.latitude();
+			sds.azimuth = pos.longitude();
+			sds.v = sat.data()->getVMagnitude(pcore);
+			double t;
+			if (sds.altitude<0)
+				t = qMax(-sds.altitude, 1.) / 2880;
+			else
+			if (sds.angleToSun>0)
+				t = qMax(sds.angleToSun, 1.) / (2*86400);
+			else
+			{
+				//qDebug() << "IRIDIUM warn: alt, angleToSun = " <<sds.altitude << sds.angleToSun;
+				t = 0.25/1440; // we should never be here, but assuming 1/4 minute to leave this
+			}
+
+			sds.nextJD = predictionJD + t;
+			iridiums.insert(sat, sds);
+			//qDebug() << sat.data()->getEnglishName() << ": "
+			//		 << sds.altitude
+			//		 << sds.azimuth
+			//		 << sds.angleToSun
+			//		 << sds.v
+			//		 << StelUtils::julianDayToISO8601String(predictionJD+StelApp::getInstance().getCore()->getUTCOffset(predictionJD)/24.f)
+			//			;
+			if (nextJD>sds.nextJD)
+				nextJD = sds.nextJD;
+		}
+	}
+	predictionJD = nextJD;
+
+	while (predictionJD<predictionEndJD)
+	{
+		nextJD = predictionJD + 1./24;
+		pcore->setJD(predictionJD);
+
+		ssystem->getEarth().data()->computePosition(predictionJD);
+		pcore->update(0);
+
+		QMap<SatelliteP,SatDataStruct>::iterator i = iridiums.begin();
+		while (i != iridiums.end())
+		{
+			if ( i.value().nextJD<=predictionJD)
+			{
+
+				i.key().data()->update(0);
+
+				double v = i.key().data()->getVMagnitude(pcore);
+				bool flareFound = false;
+				if (v > i.value().v)
+				{
+					if (i.value().v < 1. // brighness limit
+					 && i.value().angleToSun>0.
+					 && i.value().angleToSun<2.)
+					{
+						IridiumFlaresPrediction flare;
+						flare.datetime = StelUtils::julianDayToISO8601String(predictionJD+StelApp::getInstance().getCore()->getUTCOffset(predictionJD)/24.f);
+						flare.satellite = i.key().data()->getEnglishName();
+						flare.azimuth   = i.value().azimuth;
+						if (useSouthAzimuth)
+						{
+							flare.azimuth += M_PI;
+							if (flare.azimuth > M_PI*2)
+								flare.azimuth -= M_PI*2;
+						}
+						flare.altitude  = i.value().altitude;
+						flare.magnitude = i.value().v;
+
+						predictions.append(flare);
+						flareFound = true;
+						//qDebug() << "Flare:" << flare.datetime << flare.satellite;
+
+					}
+				}
+
+/*				qDebug() << QString::asprintf("%20s  alt:%6.1f  az:%6.1f  sun:%6.1f  v:%6.1f",
+											 i.key().data()->getEnglishName().toStdString(),
+											 i.value().altitude*180/M_PI,
+											 i.value().azimuth*180/M_PI,
+											 i.value().angleToSun,
+											 v
+											 )
+						 <<  StelUtils::julianDayToISO8601String(predictionJD+StelApp::getInstance().getCore()->getUTCOffset(predictionJD)/24.f)
+							 ;
+*/
+
+				Vec3d pos = i.key().data()->getAltAzPosApparent(pcore);
+
+				i.value().v = flareFound ?  17 : v; // block extra report
+				i.value().altitude = pos.latitude();
+				i.value().azimuth = M_PI - pos.longitude();
+				i.value().angleToSun = i.key().data()->sunReflAngle;
+
+
+
+
+				double t;
+				if (flareFound)
+					t = 1./24;
+				else
+				if (i.value().altitude<0)
+					t = qMax((-i.value().altitude)*57,1.) / 5600;
+				else
+				if (i.value().angleToSun>0)
+					t = qMax(i.value().angleToSun,1.) / (4*86400);
+				else
+				{
+					//qDebug() << "IRIDIUM warn2: alt, angleToSun = " <<i.value().altitude << i.value().angleToSun;
+					t = 0.25/1440; // we should never be here, but assuming 1/4 minute to leave this
+				}
+				i.value().nextJD = predictionJD + t;
+				if (nextJD>i.value().nextJD)
+					nextJD = i.value().nextJD;
+			}
+			++i;
+		}
+		predictionJD = nextJD;
+	}
+
+	//Satellite::timeShift = 0.;
+	if (isTimeNow)
+		pcore->setTimeNow();
+	else
+		pcore->setJD(currentJD);
+
+	return predictions;
+}
+#endif
+
 
 void Satellites::translations()
 {
@@ -1685,14 +2046,18 @@ void Satellites::translations()
 	N_("non-operational");
 	// TRANSLATORS: Satellite group: Satellites belonging to the GPS constellation (the Global Positioning System)
 	N_("gps");
+	// TRANSLATORS: Satellite group: Satellites belonging to the GLONASS constellation (GLObal NAvigation Satellite System)
+	N_("glonass");
+	// TRANSLATORS: Satellite group: Satellites belonging to the Galileo constellation (global navigation satellite system by the European Union)
+	N_("galileo");
 	// TRANSLATORS: Satellite group: Satellites belonging to the Iridium constellation (Iridium is a proper name)
 	N_("iridium");
-	
-	/* For copy/paste:
-	// TRANSLATORS: Satellite group: 
-	N_("");
-	*/
-	
+	// TRANSLATORS: Satellite group: Space stations
+	N_("stations");
+	// TRANSLATORS: Satellite group: Education satellites
+	N_("education");
+	// TRANSLATORS: Satellite group: Satellites belonging to the space observatories
+	N_("observatory");
 	
 	// Satellite descriptions - bright and/or famous objects
 	// Just A FEW objects please! (I'm looking at you, Alex!)
@@ -1700,5 +2065,26 @@ void Satellites::translations()
 	N_("The Hubble Space Telescope");
 	// TRANSLATORS: Satellite description.
 	N_("The International Space Station");
+	// TRANSLATORS: Satellite description.
+	N_("China's first space station");
+	// TRANSLATORS: Satellite description.
+	N_("The russian space radio telescope RadioAstron");
+	// TRANSLATORS: Satellite description.
+	N_("International Gamma-Ray Astrophysics Laboratory");
+	// TRANSLATORS: Satellite description.
+	N_("The Gamma-Ray Observatory");
+
+	// Satellite names - a few famous objects only
+	// TRANSLATORS: Satellite name: International Space Station
+	N_("ISS (ZARYA)");
+	// TRANSLATORS: Satellite name: Hubble Space Telescope
+	N_("HST");
+	// TRANSLATORS: Satellite name: Spektr-R Space Observatory (or RadioAstron)
+	N_("SPEKTR-R");
+	// TRANSLATORS: Satellite name: International Gamma-Ray Astrophysics Laboratory (INTEGRAL)
+	N_("INTEGRAL");
+	// TRANSLATORS: China's first space station name
+	N_("TIANGONG 1");
+
 #endif
 }

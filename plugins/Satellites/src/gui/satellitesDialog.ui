@@ -128,6 +128,12 @@
    </item>
    <item>
     <widget class="QTabWidget" name="tabs">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="currentIndex">
       <number>0</number>
      </property>
@@ -533,7 +539,14 @@
        <item>
         <layout class="QVBoxLayout" name="verticalLayout">
          <item>
-          <widget class="QComboBox" name="groupFilterCombo"/>
+          <widget class="QComboBox" name="groupFilterCombo">
+           <property name="editable">
+            <bool>true</bool>
+           </property>
+           <property name="insertPolicy">
+            <enum>QComboBox::NoInsert</enum>
+           </property>
+          </widget>
          </item>
          <item>
           <widget class="QLineEdit" name="lineEditSearch"/>
@@ -855,6 +868,74 @@
            </property>
            <property name="text">
             <string/>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="iridiumTab">
+      <attribute name="title">
+       <string>Iridium flares</string>
+      </attribute>
+      <layout class="QGridLayout" name="gridLayout">
+       <item row="0" column="0">
+        <widget class="QTreeWidget" name="iridiumFlaresTreeWidget">
+         <property name="editTriggers">
+          <set>QAbstractItemView::NoEditTriggers</set>
+         </property>
+         <property name="sortingEnabled">
+          <bool>true</bool>
+         </property>
+         <property name="expandsOnDoubleClick">
+          <bool>false</bool>
+         </property>
+         <property name="columnCount">
+          <number>0</number>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <layout class="QHBoxLayout" name="horizontalLayout_3">
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_6">
+           <item>
+            <widget class="QLabel" name="labelFlaresPredictionDepth">
+             <property name="text">
+              <string>Flare prediction (days):</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QSpinBox" name="flaresPredictionDepthSpinBox">
+             <property name="minimum">
+              <number>1</number>
+             </property>
+             <property name="maximum">
+              <number>14</number>
+             </property>
+             <property name="value">
+              <number>1</number>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QPushButton" name="predictIridiumFlaresPushButton">
+           <property name="toolTip">
+            <string>Calculations require time, please be patient</string>
+           </property>
+           <property name="text">
+            <string>Predict Iridium flares</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="predictedIridiumFlaresSaveButton">
+           <property name="text">
+            <string>Save predictions...</string>
            </property>
           </widget>
          </item>

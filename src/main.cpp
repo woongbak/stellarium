@@ -25,6 +25,9 @@
 #include "CLIProcessor.hpp"
 #include "StelIniParser.hpp"
 #include "StelUtils.hpp"
+#ifndef DISABLE_SCRIPTING
+#include "StelScriptOutput.hpp"
+#endif
 
 #include <QDebug>
 
@@ -40,7 +43,6 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QFontDatabase>
-#include <QGLFormat>
 #include <QGuiApplication>
 #include <QSettings>
 #include <QSplashScreen>
@@ -48,18 +50,18 @@
 #include <QStringList>
 #include <QTextStream>
 #include <QTranslator>
+#include <QNetworkDiskCache>
 
 #include <clocale>
 
 #ifdef Q_OS_WIN
 	#include <windows.h>
-	#ifdef _MSC_BUILD
-		#include <MMSystem.h>
-		#pragma comment(lib,"Winmm.lib")
-	#endif
+	//we use WIN32_LEAN_AND_MEAN so this needs to be included
+	//to use timeBeginPeriod/timeEndPeriod
+	#include <mmsystem.h>
 #endif //Q_OS_WIN
 
-//! @class GettextStelTranslator
+//! @class CustomQTranslator
 //! Provides custom i18n support.
 class CustomQTranslator : public QTranslator
 {
@@ -98,10 +100,20 @@ void copyDefaultConfigFile(const QString& newPath)
 	QFile::setPermissions(newPath, QFile::permissions(newPath) | QFileDevice::WriteOwner);
 }
 
+//! Removes all items from the cache.
+void clearCache()
+{
+	QNetworkDiskCache* cacheMgr = new QNetworkDiskCache();
+	cacheMgr->setCacheDirectory(StelFileMgr::getCacheDir());
+	cacheMgr->clear(); // Removes all items from the cache.
+}
 
 // Main stellarium procedure
 int main(int argc, char **argv)
 {
+    Q_INIT_RESOURCE(mainRes);
+    Q_INIT_RESOURCE(guiRes);
+
 #ifdef Q_OS_WIN
 	// Fix for the speeding system clock bug on systems that use ACPI
 	// See http://support.microsoft.com/kb/821893
@@ -114,32 +126,25 @@ int main(int argc, char **argv)
 			timerGrain = 0;
 	}
 #endif
-#ifdef Q_OS_MAC
-	// This block does not currently work
-//	 QDir dir(argv[0]);
-//	 dir.cdUp();
-//	 dir.cdUp();
-//	 dir.cd("plugins");
-//	 qDebug() << dir.absolutePath();
-//	 QCoreApplication::setLibraryPaths(QStringList(dir.absolutePath()));
 
-	 char ** newArgv = (char**) malloc((argc + 2) * sizeof(*newArgv));
-	 memmove(newArgv, argv, sizeof(*newArgv) * argc);
-	 char * option = new char[20];
-	 char * value = new char[21];
-	 strcpy( option, "-platformpluginpath");
-	 strcpy( value, "../plugins/platforms");
-	 newArgv[argc++] = option;
-	 newArgv[argc++] = value;
-	 argv = newArgv;
-
-#endif
+	// Seed the PRNG
+	qsrand(QDateTime::currentMSecsSinceEpoch());
 
 	QCoreApplication::setApplicationName("stellarium");
 	QCoreApplication::setApplicationVersion(StelUtils::getApplicationVersion());
 	QCoreApplication::setOrganizationDomain("stellarium.org");
 	QCoreApplication::setOrganizationName("stellarium");
-	
+
+	#if defined(Q_OS_MAC)
+	QFileInfo appInfo(QString::fromUtf8(argv[0]));
+	QDir appDir(appInfo.absolutePath());
+	appDir.cdUp();
+	QCoreApplication::addLibraryPath(appDir.absoluteFilePath("plugins"));
+	#elif defined(Q_OS_WIN)
+	QFileInfo appInfo(QString::fromUtf8(argv[0]));
+	QCoreApplication::addLibraryPath(appInfo.absolutePath());
+	#endif	
+
 	QGuiApplication::setDesktopSettingsAware(false);
 
 #ifndef USE_QUICKVIEW
@@ -150,20 +155,25 @@ int main(int argc, char **argv)
 	QGuiApplication::setDesktopSettingsAware(false);
 	QGuiApplication app(argc, argv);
 #endif
-	QPixmap pixmap(":/splash.png");
-	QSplashScreen splash(pixmap);
-	splash.show();
-	app.processEvents();
 
 	// QApplication sets current locale, but
 	// we need scanf()/printf() and friends to always work in the C locale,
 	// otherwise configuration/INI file parsing will be erroneous.
 	setlocale(LC_NUMERIC, "C");
 
+	// Solution for bug: https://bugs.launchpad.net/stellarium/+bug/1498616
+	qputenv("QT_HARFBUZZ", "old");
+
 	// Init the file manager
 	StelFileMgr::init();
 
-	// Log command line arguments
+	QPixmap pixmap(StelFileMgr::findFile("data/splash.png"));
+	QSplashScreen splash(pixmap);
+	splash.show();
+	splash.showMessage(StelUtils::getApplicationVersion() , Qt::AlignLeft, Qt::white);
+	app.processEvents();
+
+	// Log command line arguments.
 	QString argStr;
 	QStringList argList;
 	for (int i=0; i<argc; ++i)
@@ -171,9 +181,30 @@ int main(int argc, char **argv)
 		argList << argv[i];
 		argStr += QString("%1 ").arg(argv[i]);
 	}
+	// add contents of STEL_OPTS environment variable.
+	QString envStelOpts(qgetenv("STEL_OPTS").constData());
+	if (envStelOpts.length()>0)
+	{
+		argList+= envStelOpts.split(" ");
+		argStr += " " + envStelOpts;
+	}
+	//save the modified arg list as an app property for later use
+	qApp->setProperty("stelCommandLine", argList);
+
 	// Parse for first set of CLI arguments - stuff we want to process before other
 	// output, such as --help and --version
 	CLIProcessor::parseCLIArgsPreConfig(argList);
+
+	#ifdef Q_OS_WIN
+	if (qApp->property("onetime_angle_mode").isValid())
+	{
+		app.setAttribute(Qt::AA_UseOpenGLES, true);
+	}
+	if (qApp->property("onetime_mesa_mode").isValid())
+	{
+		app.setAttribute(Qt::AA_UseSoftwareOpenGL, true);
+	}
+	#endif
 
 	// Start logging.
 	StelLogger::init(StelFileMgr::getUserDir()+"/log.txt");
@@ -182,7 +213,7 @@ int main(int argc, char **argv)
 	// OK we start the full program.
 	// Print the console splash and get on with loading the program
 	QString versionLine = QString("This is %1 - http://www.stellarium.org").arg(StelUtils::getApplicationName());
-	QString copyrightLine = QString("Copyright (C) 2000-2014 Fabien Chereau et al");
+	QString copyrightLine = QString("Copyright (C) %1 Fabien Chereau et al.").arg(COPYRIGHT_YEARS);
 	int maxLength = qMax(versionLine.size(), copyrightLine.size());
 	qDebug() << qPrintable(QString(" %1").arg(QString().fill('-', maxLength+2)));
 	qDebug() << qPrintable(QString("[ %1 ]").arg(versionLine.leftJustified(maxLength, ' ')));
@@ -217,7 +248,7 @@ int main(int argc, char **argv)
 			qFatal("Could not create configuration file %s.", qPrintable(configName));
 	}
 
-	QSettings* confSettings = NULL;
+	QSettings* confSettings = Q_NULLPTR;
 	if (StelFileMgr::exists(configFileFullPath))
 	{
 		// Implement "restore default settings" feature.
@@ -228,7 +259,7 @@ int main(int argc, char **argv)
 		}
 		else
 		{
-			confSettings = new QSettings(configFileFullPath, StelIniFormat, NULL);
+			confSettings = new QSettings(configFileFullPath, StelIniFormat, Q_NULLPTR);
 			restoreDefaultConfigFile = confSettings->value("main/restore_defaults", false).toBool();
 		}
 		if (!restoreDefaultConfigFile)
@@ -253,6 +284,9 @@ int main(int argc, char **argv)
 				else
 				{
 					qDebug() << "Attempting to use an existing older config file.";
+					confSettings->setValue("main/version", QString(PACKAGE_VERSION)); // Upgrade version of config.ini
+					clearCache();
+					qDebug() << "Clear cache and update config.ini...";
 				}
 			}
 		}
@@ -267,6 +301,7 @@ int main(int argc, char **argv)
 			copyDefaultConfigFile(configFileFullPath);
 			confSettings = new QSettings(configFileFullPath, StelIniFormat);
 			qWarning() << "Resetting defaults config file. Previous config file was backed up in " << QDir::toNativeSeparators(backupFile);
+			clearCache();
 		}
 	}
 	else
@@ -279,11 +314,19 @@ int main(int argc, char **argv)
 	Q_ASSERT(confSettings);
 	qDebug() << "Config file is: " << QDir::toNativeSeparators(configFileFullPath);
 
+	#ifndef DISABLE_SCRIPTING
+	QString outputFile = StelFileMgr::getUserDir()+"/output.txt";
+	if (confSettings->value("main/use_separate_output_file", false).toBool())
+		outputFile = StelFileMgr::getUserDir()+"/output-"+QDateTime::currentDateTime().toString("yyyyMMdd-HHmmss")+".txt";
+	StelScriptOutput::init(outputFile);
+	#endif
+
+
 	// Override config file values from CLI.
 	CLIProcessor::parseCLIArgsPostConfig(argList, confSettings);
 
 	// Support hi-dpi pixmaps
-	app.setAttribute(Qt::AA_UseHighDpiPixmaps);
+	app.setAttribute(Qt::AA_UseHighDpiPixmaps, true);	
 
 	// Add the DejaVu font that we use everywhere in the program
 	const QString& fName = StelFileMgr::findFile("data/DejaVuSans.ttf");
@@ -300,14 +343,16 @@ int main(int argc, char **argv)
 			qWarning() << "ERROR while loading custom font " << QDir::toNativeSeparators(fileFont);
 	}
 
-	QString baseFont = confSettings->value("gui/base_font_name", "DejaVu Sans").toString();
-
 	// Set the default application font and font size.
 	// Note that style sheet will possibly override this setting.
 #ifdef Q_OS_WIN
+	// Let's try avoid ugly font rendering on Windows.
+	// Details: https://sourceforge.net/p/stellarium/discussion/278769/thread/810a1e5c/
+	QString baseFont = confSettings->value("gui/base_font_name", "Verdana").toString();
 	QFont tmpFont(baseFont);
 	tmpFont.setStyleHint(QFont::AnyStyle, QFont::OpenGLCompatible);
 #else
+	QString baseFont = confSettings->value("gui/base_font_name", "DejaVu Sans").toString();
 	QFont tmpFont(baseFont);
 #endif
 	tmpFont.setPixelSize(confSettings->value("gui/base_font_size", 13).toInt());
@@ -320,13 +365,8 @@ int main(int argc, char **argv)
 	CustomQTranslator trans;
 	app.installTranslator(&trans);
 
-	StelMainView mainWin;
-	// some basic diagnostics
-	if (!QGLFormat::hasOpenGL()){
-		QMessageBox::warning(0, "Stellarium", q_("This system does not support OpenGL."));
-	}
-
-	mainWin.init(confSettings);
+	StelMainView mainWin(confSettings);
+	mainWin.show();
 	splash.finish(&mainWin);
 	app.exec();
 	mainWin.deinit();
@@ -334,15 +374,10 @@ int main(int argc, char **argv)
 	delete confSettings;
 	StelLogger::deinit();
 
-#ifdef Q_OS_WIN
+	#ifdef Q_OS_WIN
 	if(timerGrain)
 		timeEndPeriod(timerGrain);
-#endif //Q_OS_WIN
-#ifdef Q_OS_MAC
-	delete(newArgv);
-	delete(option);
-	delete(value);
-#endif
+	#endif //Q_OS_WIN
 
 	return 0;
 }

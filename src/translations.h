@@ -19,6 +19,7 @@
 
 // This file contains translations for all translatable strings stored within data files
 // It is not meant to be compiled but just parsed by gettext
+// names of celestial objects for screen display (Sky language) have been taken to translations_skycultures.h
 
 class Translations
 {
@@ -28,127 +29,16 @@ class Translations
 	{
 		// Generate Gettext strings for traduction
 		Q_ASSERT(0);
-		
-		// Planets and satellites from ssystem.ini
-		N_("Sun");
-		N_("Mercury");
-		N_("Venus");
-		N_("Earth");
-		N_("Moon");
-		N_("Mars");
-		N_("Deimos");
-		N_("Phobos");
-		N_("Ceres");
-		N_("Pallas");
-		N_("Juno");
-		N_("Vesta");
-		N_("Jupiter");
-		N_("Io");
-		N_("Europa");
-		N_("Ganymede");
-		N_("Callisto");
-		N_("Amalthea");
-		N_("Himalia");
-		N_("Elara");
-		N_("Pasiphae");
-		N_("Sinope");
-		N_("Lysithea");
-		N_("Carme");
-		N_("Ananke");
-		N_("Leda");
-		N_("Thebe");
-		N_("Adrastea");
-		N_("Metis");
-		N_("Saturn");
-		N_("Mimas");
-		N_("Enceladus");
-		N_("Tethys");
-		N_("Dione");
-		N_("Rhea");
-		N_("Titan");
-		N_("Hyperion");
-		N_("Iapetus");
-		N_("Phoebe");
-		N_("Neptune");
-		N_("Uranus");
-		N_("Miranda");
-		N_("Ariel");
-		N_("Umbriel");
-		N_("Titania");
-		N_("Oberon");
-		N_("Pluto");
-		N_("Charon");
-		// TRANSLATORS: Moon of Pluto (II)
-		N_("Nix");
-		// TRANSLATORS: Moon of Pluto (III)
-		N_("Hydra (moon)");
-		N_("Eris");
-		N_("Triton");
-		N_("Nereid");
-		N_("Naiad");
-		N_("Thalassa");
-		N_("Despina");
-		N_("Galatea");
-		N_("Larissa");
-		N_("Proteus");
-		N_("Halimede");
-		N_("Psamathe");
-		N_("Sao");
-		N_("Laomedeia");
-		N_("Neso");
-		N_("Solar System Observer");
-		//TNO's that are in the default ssystem.ini
-		// TRANSLATORS: TNO/Asteroid (90377) Sedna
-		N_("Sedna");
-		// TRANSLATORS: TNO/Asteroid (50000) Quaoar
-		N_("Quaoar");
-		// TRANSLATORS: TNO/Asteroid (90482) Orcus
-		N_("Orcus");
-		// TRANSLATORS: TNO/Asteroid (136108) Haumea
-		N_("Haumea");
-		//Asteroids that are not in the default ssystem.ini
-		// TRANSLATORS: Asteroid (5) Astraea
-		N_("Astraea");
-		// TRANSLATORS: Asteroid (6) Hebe
-		N_("Hebe");
-		// TRANSLATORS: Asteroid (7) Iris
-		N_("Iris");
-		// TRANSLATORS: Asteroid (8) Flora
-		N_("Flora");
-		// TRANSLATORS: Asteroid (9) Metis
-		N_("Metis");
-		// TRANSLATORS: Asteroid (10) Hygiea
-		N_("Hygiea");
-		// TRANSLATORS: Asteroid (41) Daphne
-		N_("Daphne");
-		// TRANSLATORS: Asteroid (1221) Amor
-		N_("Amor");
-		// TRANSLATORS: Asteroid (99942) Apophis
-		N_("Apophis");
-		// TRANSLATORS: Asteroid (2060) Chiron
-		N_("Chiron");
-		// TRANSLATORS: Asteroid (433) Eros
-		N_("Eros");
-		// TRANSLATORS: Asteroid (624) Hektor
-		N_("Hektor");
-		// TRANSLATORS: Asteroid (20000) Varuna
-		N_("Varuna");
-		// TRANSLATORS: Asteroid (136472) Makemake
-		N_("Makemake");
-		
-		// TRANSLATORS: Proper name of comet C/1680 V1
-		N_("Great Comet of 1680 (C/1680 V1)")
-		
-		// TRANSLATORS: Name of supernova SN 1572A and script name
-		N_("Tycho's Supernova");
-		// TRANSLATORS: Name of supernova SN 1604A
-		N_("Kepler's Supernova");
-		
+
 		// Cardinals names
-		N_("N");	// North
-		N_("S");	// South
-		N_("E");	// East
-		N_("W");	// West
+		// TRANSLATORS: Cardinals names: North
+		N_("N");
+		// TRANSLATORS: Cardinals names: South
+		N_("S");
+		// TRANSLATORS: Cardinals names: East
+		N_("E");
+		// TRANSLATORS: Cardinals names: West
+		N_("W");
 
 		// =====================================================================
 		// List of types solar system bodies
@@ -163,27 +53,430 @@ class Translations
 		// TRANSLATORS: Type of object
 		N_("moon");
 		// TRANSLATORS: Type of object
-		N_("plutoid");
+		N_("plutino");
+		// TRANSLATORS: Type of object
+		N_("dwarf planet");
+		// TRANSLATORS: Type of object
+		N_("cubewano");
+		// TRANSLATORS: Type of object
+		N_("scattered disc object");
+		// TRANSLATORS: Type of object
+		N_("Oort cloud object");
+		// TRANSLATORS: Type of object
+		N_("sednoid");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Planets");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Comets");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Asteroids");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Moons");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Plutinos");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Dwarf planets");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Cubewanos");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Scattered disc objects");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Oort cloud objects");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Sednoids");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Constellations");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Custom Objects");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Asterisms");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features");
 
 		// =====================================================================
+		// List of geological features by type
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: albedo features");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: arcūs");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: astra");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: catenae");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: cavi");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: chaoses");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: chasmata");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: colles");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: coronae");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: craters");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: dorsa");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: eruptive centers");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: faculae");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: farra");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: flexūs");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: fluctūs");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: flumina");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: freta");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: fossae");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: insulae");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: labēs");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: labyrinthi");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: lacunae");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: lacūs");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: large ringed features");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: lineae");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: lingulae");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: maculae");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: maria");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: mensae");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: montes");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: oceani");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: paludes");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: paterae");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: planitiae");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: plana");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: plumes");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: promontoria");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: regiones");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: rimae");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: rupēs");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: scopuli");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: serpentes");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: sulci");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: sinūs");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: terrae");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: tholi");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: undae");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: valles");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: vastitates");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: virgae");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: landing sites");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: lenticulae");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: reticula");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Geological features: tesserae");
+
+		// =====================================================================
+		// List of geological features by celestial body
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of Epimetheus");
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of Vesta");
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of Mathilde");
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of Venus");
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of Mercury");
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of Iapetus");
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of Ganymede");
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of Ceres");
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of Ida");
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of Triton");
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of Oberon");
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of Itokawa");
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of Thebe");
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of Gaspra");
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of Rhea");
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of Enceladus");
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of the Moon");
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of Dione");
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of Steins");
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of Phoebe");
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of Puck");
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of Europa");
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of Lutetia");
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of Tethys");
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of Eros");
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of Callisto");
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of Phobos");
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of Proteus");
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of Hyperion");
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of Titania");
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of Deimos");
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of Io");
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of Ariel");
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of Dactyl");
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of Titan");
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of Amalthea");
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of Umbriel");
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of Janus");
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of Mars");
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of Miranda");
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of Mimas");
+		// TRANSLATORS: List of geological features by celestial body (for "Lists" in the search tool)
+		N_("Named geological features of Pluto");
+
+		// =====================================================================
+		// List of deep-sky objects types
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Bright galaxies");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Open star clusters");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Globular star clusters");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Nebulae");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Planetary nebulae");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Dark nebulae");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Clusters associated with nebulosity");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("HII regions");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Reflection nebulae");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Active galaxies");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Radio galaxies");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Interacting galaxies");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Bright quasars");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Star clusters");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Stellar associations");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Star clouds");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Bipolar nebulae");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Emission nebulae");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Supernova remnants");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Supernova candidates");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Supernova remnant candidates");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Interstellar matter");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Emission objects");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("BL Lac objects");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Blazars");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Molecular Clouds");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Young Stellar Objects");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Possible Quasars");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Possible Planetary Nebulae");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Protoplanetary Nebulae");
+		// TRANSLATORS: Type of stars (for "Lists" in the search tool)
+		N_("Symbiotic stars");
+		// TRANSLATORS: Type of stars (for "Lists" in the search tool)
+		N_("Emission-line stars");
+		// TRANSLATORS: Type of stars (for "Lists" in the search tool)
+		N_("Clusters of galaxies");
+		// TRANSLATORS: Catalogue of objects (for "Lists" in the search tool)
+		N_("Messier Catalogue");
+		// TRANSLATORS: Catalogue of objects (for "Lists" in the search tool)
+		N_("Caldwell Catalogue");
+		// TRANSLATORS: Catalogue of objects (for "Lists" in the search tool)
+		N_("Barnard Catalogue");
+		// TRANSLATORS: Catalogue of objects (for "Lists" in the search tool)
+		N_("Sharpless Catalogue");
+		// TRANSLATORS: Catalogue of objects (for "Lists" in the search tool)
+		N_("Van den Bergh Catalogue");
+		// TRANSLATORS: Catalogue of objects (for "Lists" in the search tool)
+		N_("The Catalogue of Rodgers, Campbell, and Whiteoak");
+		// TRANSLATORS: Catalogue of objects (for "Lists" in the search tool)
+		N_("Collinder Catalogue");
+		// TRANSLATORS: Catalogue of objects (for "Lists" in the search tool)
+		N_("Melotte Catalogue");
+		// TRANSLATORS: Catalogue of objects (for "Lists" in the search tool)
+		N_("New General Catalogue");
+		// TRANSLATORS: Catalogue of objects (for "Lists" in the search tool)
+		N_("Index Catalogue");
+		// TRANSLATORS: Catalogue of objects (for "Lists" in the search tool)
+		N_("Lynds' Catalogue of Bright Nebulae");
+		// TRANSLATORS: Catalogue of objects (for "Lists" in the search tool)
+		N_("Lynds' Catalogue of Dark Nebulae");
+		// TRANSLATORS: Catalogue of objects (for "Lists" in the search tool)
+		N_("Cederblad Catalog");
+		// TRANSLATORS: Catalogue of objects (for "Lists" in the search tool)
+		N_("The Catalogue of Peculiar Galaxies");
+		// TRANSLATORS: Catalogue of objects (for "Lists" in the search tool)
+		N_("The Catalogue of Interacting Galaxies");
+		// TRANSLATORS: Catalogue of objects (for "Lists" in the search tool)
+		N_("The Catalogue of Galactic Planetary Nebulae");
+		// TRANSLATORS: Catalogue of objects (for "Lists" in the search tool)
+		N_("The Strasbourg-ESO Catalogue of Galactic Planetary Nebulae");
+		// TRANSLATORS: Catalogue of objects (for "Lists" in the search tool)
+		N_("A catalogue of Galactic supernova remnants");
+		// TRANSLATORS: Catalogue of objects (for "Lists" in the search tool)
+		N_("A Catalog of Rich Clusters of Galaxies");
+		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
+		N_("Dwarf galaxies");
+		// TRANSLATORS: Catalogue of objects (for "Lists" in the search tool)
+		N_("Herschel 400 Catalogue");
+		
+		// =====================================================================
+		// List of stars types
+		// TRANSLATORS: Type of stars (for "Lists" in the search tool)
+		N_("Interesting double stars");
+		// TRANSLATORS: Type of stars (for "Lists" in the search tool)
+		N_("Interesting variable stars");
+		// TRANSLATORS: Type of stars (for "Lists" in the search tool)
+		N_("Bright double stars");
+		// TRANSLATORS: Type of stars (for "Lists" in the search tool)
+		N_("Bright variable stars");
+		// TRANSLATORS: Type of stars (for "Lists" in the search tool)
+		N_("Bright stars with high proper motion");
+		
+		// =====================================================================
 		// Constellation cultures
+		// TRANSLATORS: Name of the sky culture
 		N_("Arabic");
+		// TRANSLATORS: Name of the sky culture
+		N_("Arabic Moon Stations");
+		// TRANSLATORS: Name of the sky culture
 		N_("Aztec");
+		// TRANSLATORS: Name of the sky culture
+		N_("Belarusian");
+		// TRANSLATORS: Name of the sky culture
+		N_("Boorong");
+		// TRANSLATORS: Name of the sky culture
 		N_("Chinese");
+		// TRANSLATORS: Name of the sky culture
 		N_("Egyptian");
+		// TRANSLATORS: Name of the sky culture
+		N_("Hawaiian Starlines");
+		// TRANSLATORS: Name of the sky culture
 		N_("Inuit");
+		// TRANSLATORS: Name of the sky culture
 		N_("Indian Vedic");
+		// TRANSLATORS: Name of the sky culture
+		N_("Japanese Moon Stations");
+		// TRANSLATORS: Name of the sky culture
+		N_("Kamilaroi/Euahlayi");
+		// TRANSLATORS: Name of the sky culture
 		N_("Korean");
-		N_("Lakota");
+		// TRANSLATORS: Name of the sky culture
+		N_("Dakota/Lakota/Nakota");
+		// TRANSLATORS: Name of the sky culture
+		N_("Macedonian");
+		// TRANSLATORS: Name of the sky culture
 		N_("Maori");
+		// TRANSLATORS: Name of the sky culture
+		N_("Mongolian");
+		// TRANSLATORS: Name of the sky culture
 		N_("Navajo");
+		// TRANSLATORS: Name of the sky culture
 		N_("Norse");
-		N_("Polynesian");
+		// TRANSLATORS: Name of the sky culture
+		N_("Ojibwe");
+		// TRANSLATORS: Name of the sky culture
 		N_("Romanian");
+		// TRANSLATORS: Name of the sky culture
 		N_("Sami");
+		// TRANSLATORS: Name of the sky culture
+		N_("Sardinian");
+		// TRANSLATORS: Name of the sky culture
+		N_("Siberian");
+		// TRANSLATORS: Name of the sky culture
+		N_("Tukano");
+		// TRANSLATORS: Name of the sky culture
 		N_("Tupi-Guarani");
+		// TRANSLATORS: Name of the sky culture
 		N_("Tongan");
+		// TRANSLATORS: Name of the sky culture
 		N_("Western");
+		// TRANSLATORS: Name of the sky culture
+		N_("Western (H.A.Rey)");
 
 		
 		// =====================================================================
@@ -192,7 +485,7 @@ class Translations
 		N_("Guereins");
 		// TRANSLATORS: Name of landscape
 		N_("Trees");
-		// TRANSLATORS: Name of landscape and Earth's satellite
+		// TRANSLATORS: Name of landscape
 		N_("Moon");
 		// TRANSLATORS: Landscape name: Hurricane Ridge
 		N_("Hurricane");
@@ -200,16 +493,31 @@ class Translations
 		N_("Ocean");
 		// TRANSLATORS: Landscape name: Garching bei Munchen
 		N_("Garching");
-		// TRANSLATORS: Name of landscape and planet
+		// TRANSLATORS: Name of landscape
 		N_("Mars");
-		// TRANSLATORS: Name of landscape and planet
+		// TRANSLATORS: Name of landscape
+		N_("Jupiter");
+		// TRANSLATORS: Name of landscape
 		N_("Saturn");
+		// TRANSLATORS: Name of landscape
+		N_("Uranus");
+		// TRANSLATORS: Name of landscape
+		N_("Neptune");
 		// TRANSLATORS: Name of landscape
 		N_("Geneva");
 		// TRANSLATORS: Name of landscape
 		N_("Grossmugl");
+		// TRANSLATORS: Name of landscape
+		N_("Zero Horizon");
+		// TRANSLATORS: Name of landscape
+		N_("Sun");
 
-
+		// =====================================================================
+		// 3D landscapes (scenes) names
+		// TRANSLATORS: Name of 3D scene ("Sterngarten" is proper name)
+		N_("Vienna Sterngarten");
+		// TRANSLATORS: Name of 3D scene
+		N_("Testscene");
 		
 		// =====================================================================
 		// Script names
@@ -250,19 +558,37 @@ class Translations
 		// TRANSLATORS: Name of script
 		N_("Transit of Venus");
 		// TRANSLATORS: Name of script
-		N_("Analemma");
-		// TRANSLATORS: Name of script
 		N_("Sky Culture Tour");
 		// TRANSLATORS: Name and description of script
 		N_("Earth Events from Mercury");
 		// TRANSLATORS: Name and description of script
-		N_("Earth Events from Venus");
+		N_("Earth Events from a floating city on Venus");
 		// TRANSLATORS: Name and description of script
 		N_("Earth Events from Mars");
 		// TRANSLATORS: Name of script
-		N_("Earth Greatest Elongations and Brilliancies from Mars");
+		N_("Earth and other planet's Greatest Elongations and Oppositions from Mars");
 		// TRANSLATORS: Name of script
-		N_("Earth and Mars Greatest Elongations from Jupiter");
+		N_("Earth and Mars Greatest Elongations and Transits from Callisto");
+		// TRANSLATORS: Name of script
+		N_("Tycho's Supernova");
+		// TRANSLATORS: Name of script
+		N_("Earth and other Planets from Ceres");
+		// TRANSLATORS: Name of script
+		N_("Messier Objects Tour");
+		// TRANSLATORS: Name of script
+		N_("Binocular Highlights");
+		// TRANSLATORS: Name of script
+		N_("20 Fun Naked-Eye Double Stars");
+		// TRANSLATORS: Name of script
+		N_("List of largest known stars");
+		// TRANSLATORS: Name of script
+		N_("Herschel 400 Tour");
+		// TRANSLATORS: Name of script
+		N_("Binosky: Deep Sky Objects for Binoculars");
+		// TRANSLATORS: Name of script
+		N_("The Jack Bennett Catalog");
+		// TRANSLATORS: Name of script
+		N_("Best objects in the New General Catalog");
 		
 		// =====================================================================
 		// Script descriptions
@@ -280,263 +606,27 @@ class Translations
 		N_("Due to the quirks in Mercury's orbit and rotation at certain spots the sun will rise & set 3 different times in one Mercury day.");
 		N_("Just before Mars eclipses the sun, Phobos pops out from behind and eclipses it first. Takes place between Scorpio and Sagittarius on April 26, 2017.");
 		N_("Just before Mars eclipses the sun, Phobos pops out from behind and eclipses it first. Takes place between Taurus and Gemini on July 23, 2031.");
-		N_("Phobos eclipsing the Sun as seen from Olympus Mons on Jan 10, 2068.");
+		N_("Phobos eclipsing the Sun as seen from Olympus Mons on Jan 2, 2021.");
 		N_("Phobos occultations of Earth are common, as are occultations of Jupiter. But occultations of both on the same day are very rare. Here's one that takes place 1/23/2048. In real speed.");
 		N_("Phobos races ahead of Mars and transits the sun, passes through it and then retrogrades back towards the sun and just partially transits it again (only seen in the southern hemisphere of Deimos), then Mars totally eclipses the sun while Phobos transits in darkness between Mars and Deimos. When Phobos emerges from Mars it is still eclipsed and dimmed in Mars' shadow, only to light up later.");
-		N_("Screensaver of various happenings in the Solar System. 187 events in all!");
+		N_("Screensaver of various happenings in the Solar System. 300 events in all!");
 		N_("A tour of the western constellations.");
 		N_("Look at the Sun from big planets of Solar System and Pluto.");
 		N_("Best views of Earth from other Solar System bodies in the 21st Century.");
 		N_("Transit of Venus as seen from Sydney Australia, 6th June 2012.");
-		N_("A demonstration of the analemma - the path of the Sun across the sky during the year.");
 		N_("Flash of the supernova observed by Tycho Brahe in 1572. The Supernovae plugin has to be enabled.");
-		N_("Earth Greatest Elongations and Brilliancies from Mars 2000-3000");
-		N_("Earth Greatest Elongations from Jupiter 2000-3000");
+		N_("Earth and other planet's Greatest Elongations and Oppositions from Mars 2000-3000");
+		N_("Earth Greatest Elongations and Transits from Callisto 2000-3000. Why Callisto? Well of the 4 Galilean Moons, Callisto is the only one outside of Jupiter's radiation belt. Therefore, if humans ever colonize Jupiter's moons, Callisto will be the one.");
+		N_("Earth the other visible Planet's Greatest Elongations and Oppositions from Ceres 2000-2200");
+		N_("A tour of Messier Objects");
+		N_("Tours around interesting objects, which accessible to observation with binoculars. The data for the script are taken from the eponymous book by Gary Seronik.");
+		N_("This script helps you make an excursion around 20 fun double stars. The list has been collected by Jerry Lodriguss and published in Sky & Telescope 09/2014. Data taken from his website, http://www.astropix.com/doubles/");
+		N_("This script helps you make an excursion around largest known stars.");
+		N_("A tour around objects from the Herschel 400 Catalogue");
+		N_("Ben Crowell has created Binosky, an observing list of Deep Sky Objects for Binoculars. In the script we give a list of these 31 objects, ordered by Right Ascension (2000.0).");
+		N_("The Jack Bennett Catalog of Southern Deep-Sky Objects (152 objects in all). The Bennett catalog was contributed by Auke Slotegraaf.");
+		N_("This list of 111 objects by A.J. Crayon and Steve Coe is used by members of the Saguaro Astronomy Club of Phoenix, AZ, for the Best of the NGC achievement award.");
 		
-		// =====================================================================
-		// List of countries
-		N_("Andorra");
-		N_("United Arab Emirates");
-		N_("Afghanistan");
-		N_("Antigua and Barbuda");
-		N_("Anguilla");
-		N_("Albania");
-		N_("Armenia");
-		N_("Netherlands Antilles");
-		N_("Angola");
-		N_("Antarctica");
-		N_("Argentina");
-		N_("American Samoa");
-		N_("Austria");
-		N_("Australia");
-		N_("Aruba");
-		N_("Azerbaijan");
-		N_("Bosnia and Herzegowina");
-		N_("Barbados");
-		N_("Bangladesh");
-		N_("Belgium");
-		N_("Burkina Faso");
-		N_("Bulgaria");
-		N_("Bahrain");
-		N_("Burundi");
-		N_("Benin");
-		N_("Bermuda");
-		N_("Brunei Darussalam");
-		N_("Bolivia");
-		N_("Brazil");
-		N_("Bahamas");
-		N_("Bhutan");
-		N_("Bouvet Island");
-		N_("Botswana");
-		N_("Belarus");
-		N_("Belize");
-		N_("Canada");
-		N_("Cocos Islands");
-		N_("Democratic Republic of the Congo");
-		N_("Central African Republic");
-		N_("Republic of the Congo");
-		N_("Switzerland");
-		N_("Cote d'Ivoire");
-		N_("Cook Islands");
-		N_("Chile");
-		N_("Cameroon");
-		N_("China");
-		N_("Colombia");
-		N_("Costa Rica");
-		N_("Serbia and Montenegro");
-		N_("Cuba");
-		N_("Cape Verde");
-		N_("Christmas Island");
-		N_("Cyprus");
-		N_("Czech Republic");
-		N_("Germany");
-		N_("Djibouti");
-		N_("Denmark");
-		N_("Dominica");
-		N_("Dominican Republic");
-		N_("Algeria");
-		N_("Ecuador");
-		N_("Estonia");
-		N_("Egypt");
-		N_("Western Sahara");
-		N_("Eritrea");
-		N_("Spain");
-		N_("Ethiopia");
-		N_("Finland");
-		N_("Fiji");
-		N_("Falkland Islands");
-		N_("Micronesia");
-		N_("Faroe Islands");
-		N_("France");
-		N_("Gabon");
-		N_("United Kingdom");
-		N_("Grenada");
-		N_("Georgia");
-		N_("French Guiana");
-		N_("Ghana");
-		N_("Gibraltar");
-		N_("Greenland");
-		N_("Gambia");
-		N_("Guinea");
-		N_("Guadeloupe");
-		N_("Equatorial Guinea");
-		N_("Greece");
-		N_("South Georgia and the South Sandwich Islands");
-		N_("Guatemala");
-		N_("Guam");
-		N_("Guinea-Bissau");
-		N_("Guyana");
-		N_("Hong Kong");
-		N_("Heard Island and McDonald Islands");
-		N_("Honduras");
-		N_("Croatia");
-		N_("Haiti");
-		N_("Hungary");
-		N_("Indonesia");
-		N_("Ireland");
-		N_("Israel");
-		N_("India");
-		N_("British Indian Ocean Territory");
-		N_("Iraq");
-		N_("Iran");
-		N_("Iceland");
-		N_("Italy");
-		N_("Jamaica");
-		N_("Jordan");
-		N_("Japan");
-		N_("Kenya");
-		N_("Kyrgyzstan");
-		N_("Cambodia");
-		N_("Kiribati");
-		N_("Comoros");
-		N_("Saint Kitts and Nevis");
-		N_("Democratic People's Republic of Korea");
-		N_("Republic of Korea");
-		N_("Kuwait");
-		N_("Cayman Islands");
-		N_("Kazakhstan");
-		N_("Lao");
-		N_("Lebanon");
-		N_("Saint Lucia");
-		N_("Liechtenstein");
-		N_("Sri Lanka");
-		N_("Liberia");
-		N_("Lesotho");
-		N_("Lithuania");
-		N_("Luxembourg");
-		N_("Latvia");
-		N_("Libyan Arab Jamahiriya");
-		N_("Morocco");
-		N_("Monaco");
-		N_("Moldova");
-		N_("Madagascar");
-		N_("Marshall Islands");
-		N_("Macedonia");
-		N_("Mali");
-		N_("Myanmar");
-		N_("Mongolia");
-		N_("Macau");
-		N_("Northern Mariana Islands");
-		N_("Martinique");
-		N_("Mauritania");
-		N_("Montserrat");
-		N_("Malta");
-		N_("Mauritius");
-		N_("Maldives");
-		N_("Malawi");
-		N_("Mexico");
-		N_("Malaysia");
-		N_("Mozambique");
-		N_("Namibia");
-		N_("New Caledonia");
-		N_("Niger");
-		N_("Norfolk Island");
-		N_("Nigeria");
-		N_("Nicaragua");
-		N_("Netherlands");
-		N_("Norway");
-		N_("Nepal");
-		N_("Nauru");
-		N_("Niue");
-		N_("New Zealand");
-		N_("Oman");
-		N_("Panama");
-		N_("Peru");
-		N_("French Polynesia");
-		N_("Papua New Guinea");
-		N_("Philippines");
-		N_("Pakistan");
-		N_("Poland");
-		N_("Saint Pierre and Miquelon");
-		N_("Pitcairn");
-		N_("Puerto Rico");
-		N_("Palestinian Territories");
-		N_("Portugal");
-		N_("Palau");
-		N_("Paraguay");
-		N_("Qatar");
-		N_("Réunion");
-		N_("Romania");
-		N_("Serbia");
-		N_("Russian Federation");
-		N_("Rwanda");
-		N_("Saudi Arabia");
-		N_("Solomon Islands");
-		N_("Seychelles");
-		N_("Sudan");
-		N_("Sweden");
-		N_("Singapore");
-		N_("Saint Helena");
-		N_("Slovenia");
-		N_("Svalbard and Jan Mayen");
-		N_("Slovakia");
-		N_("Sierra Leone");
-		N_("San Marino");
-		N_("Senegal");
-		N_("Somalia");
-		N_("Suriname");
-		N_("Sao Tome and Principe");
-		N_("El Salvador");
-		N_("Syrian Arab Republic");
-		N_("Swaziland");
-		N_("Turks and Caicos Islands");
-		N_("Chad");
-		N_("French Southern Territories");
-		N_("Togo");
-		N_("Thailand");
-		N_("Tajikistan");
-		N_("Tokelau");
-		N_("East Timor");
-		N_("Turkmenistan");
-		N_("Tunisia");
-		N_("Tonga");
-		N_("Turkey");
-		N_("Trinidad and Tobago");
-		N_("Tuvalu");
-		N_("Taiwan");
-		N_("Tanzania");
-		N_("Ukraine");
-		N_("Uganda");
-		N_("United States Minor Outlying Islands");
-		N_("United States");
-		N_("Uruguay");
-		N_("Uzbekistan");
-		N_("Vatican City State");
-		N_("Saint Vincent and the Grenadines");
-		N_("Venezuela");
-		N_("British Virgin Islands");
-		N_("United States Virgin Islands");
-		N_("Viet Nam");
-		N_("Vanuatu");
-		N_("Wallis and Futuna");
-		N_("Samoa");
-		N_("Yemen");
-		N_("Mayotte");
-		N_("Yugoslavia");
-		N_("South Africa");
-		N_("Zambia");
-		N_("Zimbabwe");
-
 		// =====================================================================
 		// List of GUI elements (Qt's dialogs)
 		N_("&Undo");
@@ -551,12 +641,38 @@ class Translations
 		N_("Folder");
 		N_("&Choose");
 		N_("Cancel");
+		N_("&Cancel");
 		N_("Files of type:");
 		N_("Date Modified");
 		N_("Directories");
 		N_("Computer");
 		N_("&Open");
+		N_("&Save");
 		N_("File &name:");
 		N_("Copy &Link Location");
+		N_("Abort");
+		N_("Ignore");
+		N_("&Basic colors");
+		N_("&Pick Screen Color");
+		N_("&Custom colors");
+		N_("&Add to Custom Colors");
+		N_("Hu&e:");
+		N_("&Sat:");
+		N_("&Val:");
+		N_("&Red:");
+		N_("&Green:");
+		N_("Bl&ue:");
+		N_("Select Color");
+		N_("Cursor at %1, %2 Press ESC to cancel");
+		N_("Back");
+		N_("Forward");
+		N_("Parent Directory");
+		N_("Create New Folder");
+		N_("List View");
+		N_("Detail View");
+		N_("Recent Places");
+		N_("%1 already exists.\nDo you want to replace it?");
+		N_("&Yes");
+		N_("&No");
 	}
 };

@@ -25,8 +25,10 @@
 #include "StelLocaleMgr.hpp"
 #include "StelModule.hpp"
 #include "StelMovementMgr.hpp"
+#include "StelActionMgr.hpp"
 
 #include <QSettings>
+#include <QSignalMapper>
 
 StelModule* FOVStelPluginInterface::getStelModule() const
 {
@@ -41,7 +43,8 @@ StelPluginInfo FOVStelPluginInterface::getPluginInfo() const
 	info.authors = "Alexander Wolf";
 	info.contact = "http://stellarium.org";
 	info.description = N_("This plugin allows stepwise zooming via keyboard shortcuts like in the <em>Cartes du Ciel</em> planetarium program.");
-	info.version = FOV_VERSION;
+	info.version = FOV_PLUGIN_VERSION;
+	info.license = FOV_PLUGIN_LICENSE;
 	return info;
 }
 
@@ -49,7 +52,7 @@ FOV::FOV()
 {
 	setObjectName("FOV");
 	mainWindow = new FOVWindow();
-	conf = StelApp::getInstance().getSettings();
+	conf = StelApp::getInstance().getSettings();	
 }
 
 FOV::~FOV()
@@ -65,7 +68,7 @@ void FOV::init()
 	FOVdefault.clear();
 	FOVdefault << 0.5 << 180.0 << 90.0 << 60.0 << 45.0 << 20.0 << 10.0 << 5.0 << 2.0 << 1.0;
 
-	if (!conf->childGroups().contains("fov"))
+	if (!conf->childGroups().contains("FOV"))
 	{
 		qDebug() << "FOV: no fov section exists in main config file - creating with defaults";
 		restoreDefaultConfigIni();
@@ -75,14 +78,17 @@ void FOV::init()
 	readSettingsFromConfig();
 
 	// key bindings
+	QSignalMapper* mapper = new QSignalMapper(this);
 	QString section = N_("Field of View");
 	for (int i=0; i<10; i++)
 	{
-		QString name = QString("actionSetFOV%1").arg(i);
+		QString name = QString("actionSet_FOV_%1").arg(i);
 		QString shortcut = QString("Ctrl+Alt+%1").arg(i);
-		QString text = q_("Set FOV to %1%2").arg(getQuickFOV(i)).arg(QChar(0x00B0));
-		addAction(name, section, text, "setFOV()", shortcut);
+		QString text = QString("%1 %2%3").arg(q_("Set FOV to")).arg(getQuickFOV(i)).arg(QChar(0x00B0));
+		StelAction* action = addAction(name, section, text, mapper, "map()", shortcut);
+		mapper->setMapping(action,i);
 	}
+	connect(mapper,SIGNAL(mapped(int)),this,SLOT(setFOV(int)));
 }
 
 void FOV::deinit()
@@ -118,7 +124,7 @@ void FOV::restoreDefaults(void)
 
 void FOV::restoreDefaultConfigIni(void)
 {
-	conf->beginGroup("fov");
+	conf->beginGroup("FOV");
 
 	// delete all existing FOV settings...
 	conf->remove("");
@@ -133,7 +139,7 @@ void FOV::restoreDefaultConfigIni(void)
 
 void FOV::readSettingsFromConfig(void)
 {
-	conf->beginGroup("fov");
+	conf->beginGroup("FOV");
 
 	for(int i=0; i<10; i++)
 	{
@@ -145,7 +151,7 @@ void FOV::readSettingsFromConfig(void)
 
 void FOV::saveSettingsToConfig(void)
 {
-	conf->beginGroup("fov");
+	conf->beginGroup("FOV");
 
 	for(int i=0; i<10; i++)
 	{
@@ -165,16 +171,8 @@ void FOV::setQuickFOV(const double value, const int item)
 	FOVitem[item] = value;
 }
 
-void FOV::setFOV()
+void FOV::setFOV(const int idx) const
 {
-	// Find out for which FOV is the command
-	if (sender() == NULL)
-	{
-		return;
-	}
-	// XXX: we could use a QSignalMapper instead of this trick.
-	int slotNumber = sender()->objectName().right(1).toInt();
-
 	StelMovementMgr *movementManager = StelApp::getInstance().getCore()->getMovementMgr();
-	movementManager->zoomTo(getQuickFOV(slotNumber), 1.f); // One second for zooming
+	movementManager->zoomTo(getQuickFOV(idx), 1.f); // One second for zooming
 }

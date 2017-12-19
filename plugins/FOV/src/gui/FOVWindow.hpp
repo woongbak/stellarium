@@ -29,6 +29,7 @@ class Ui_fovWindowForm;
 class FOV;
 
 //! Main window of the FOV plug-in.
+//! @ingroup fieldOfView
 class FOVWindow : public StelDialog
 {
 	Q_OBJECT
@@ -47,7 +48,7 @@ private:
 	Ui_fovWindowForm* ui;
 	FOV* fov;
 
-	void updateAboutText();	
+	void setAboutHtml();
 	void populateFOV();
 
 private slots:

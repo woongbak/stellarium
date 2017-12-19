@@ -30,12 +30,39 @@ class QPixmap;
 class StelButton;
 class EquationOfTimeWindow;
 
+/*! @defgroup equationOfTime Equation of Time plug-in
+@{
+The %Equation of Time plugin shows the solution of the equation of time.
+
+The equation of time describes the discrepancy between two kinds of solar
+time. These are apparent solar time, which directly tracks the motion of
+the sun, and mean solar time, which tracks a fictitious "mean" sun with
+noons 24 hours apart. There is no universally accepted definition of the
+sign of the equation of time. Some publications show it as positive when
+a sundial is ahead of a clock; others when the clock is ahead of the sundial.
+In the English-speaking world, the former usage is the more common, but is
+not always followed. Anyone who makes use of a published table or graph
+should first check its sign usage.
+
+<b>Configuration</b>
+
+The plug-ins' configuration data is stored in Stellarium's main configuration
+file (section [EquationOfTime]).
+
+@}
+*/
+
+//! @class EquationOfTime
+//! @ingroup equationOfTime
+//! Main class of the %Equation of Time plugin.
+//! @author Alexander Wolf
 class EquationOfTime : public StelModule
 {
 	Q_OBJECT
-	Q_PROPERTY(bool enabled
+	Q_PROPERTY(bool showEOT
 		   READ isEnabled
-		   WRITE enableEquationOfTime)
+		   WRITE enableEquationOfTime
+		   NOTIFY equationOfTimeStateChanged)
 
 public:
 	EquationOfTime();
@@ -48,7 +75,7 @@ public:
 	virtual double getCallOrder(StelModuleActionName actionName) const;
 	virtual bool configureGui(bool show);
 
-	//! Set up the plugin with default values.  This means clearing out the Pulsars section in the
+	//! Set up the plugin with default values.  This means clearing out the EquationOfTime section in the
 	//! main config.ini (if one already exists), and populating it with default values.
 	void restoreDefaults(void);
 
@@ -57,42 +84,57 @@ public:
 	void readSettingsFromConfig(void);
 
 	//! Save the settings to the main configuration file.
-	void saveSettingsToConfig(void);
-
-	//! Get solution of equation of time
-	//! Source: J. Meeus "Astronomical Algorithms" (2nd ed., with corrections as of August 10, 2009) p.183-187.
-	//! @param JDay JD
-	//! @return time in minutes
-	double getSolutionEquationOfTime(const double JDay) const;
+	void saveSettingsToConfig(void) const;
 
 	//! Is plugin enabled?
-	bool isEnabled() const {return flagShowSolutionEquationOfTime;}
+	bool isEnabled() const
+	{
+		return flagShowSolutionEquationOfTime;
+	}
 
 	//! Get font size for messages
-	int getFontSize(void) { return fontSize; }
+	int getFontSize(void) const
+	{
+		return fontSize;
+	}
 	//! Get status of usage minutes and seconds for value of equation
-	bool getFlagMsFormat(void) { return flagUseMsFormat; }
+	bool getFlagMsFormat(void) const
+	{
+		return flagUseMsFormat;
+	}
 	//! Get status of usage inverted values for equation of time
-	bool getFlagInvertedValue(void) { return flagUseInvertedValue; }
-	bool getFlagEnableAtStartup(void) { return flagEnableAtStartup; }
-	bool getFlagShowEOTButton(void) { return flagShowEOTButton; }
+	bool getFlagInvertedValue(void) const
+	{
+		return flagUseInvertedValue;
+	}
+	bool getFlagEnableAtStartup(void) const
+	{
+		return flagEnableAtStartup;
+	}
+	bool getFlagShowEOTButton(void) const
+	{
+		return flagShowEOTButton;
+	}
 
 public slots:
 	//! Enable plugin usage
 	void enableEquationOfTime(bool b);
 	//! Enable usage inverted value for equation of time (switch sign of equation)
-	void setFlagInvertedValue(bool b) { flagUseInvertedValue=b; }
+	void setFlagInvertedValue(bool b);
 	//! Enable usage minutes and seconds for value
-	void setFlagMsFormat(bool b) { flagUseMsFormat=b; }
+	void setFlagMsFormat(bool b);
 	//! Enable plugin usage at startup
-	void setFlagEnableAtStartup(bool b) { flagEnableAtStartup=b; }
+	void setFlagEnableAtStartup(bool b);
 	//! Set font size for message
-	void setFontSize(int size) { fontSize=size; }
+	void setFontSize(int size);
 	//! Display plugin button on toolbar
 	void setFlagShowEOTButton(bool b);
 
 private slots:
 	void updateMessageText();
+
+signals:
+	void equationOfTimeStateChanged(bool b);
 
 private:
 	// if existing, delete EquationOfTime section in main config.ini, then create with default values
@@ -124,11 +166,12 @@ private:
 class EquationOfTimeStelPluginInterface : public QObject, public StelPluginInterface
 {
 	Q_OBJECT
-	Q_PLUGIN_METADATA(IID "stellarium.StelGuiPluginInterface/1.0")
+	Q_PLUGIN_METADATA(IID StelPluginInterface_iid)
 	Q_INTERFACES(StelPluginInterface)
 public:
 	virtual StelModule* getStelModule() const;
 	virtual StelPluginInfo getPluginInfo() const;
+	virtual QObjectList getExtensionList() const { return QObjectList(); }
 };
 
 #endif /* _EQUATIONOFTIME_HPP_ */

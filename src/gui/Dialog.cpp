@@ -31,6 +31,8 @@ void BarFrame::mousePressEvent(QMouseEvent *event)
 void BarFrame::mouseReleaseEvent(QMouseEvent *)
 {
 	moving = false;
+	QWidget* p = dynamic_cast<QWidget*>(QFrame::parent());
+	emit movedTo(p->pos());
 }
 
 void BarFrame::mouseMoveEvent(QMouseEvent *event)
@@ -56,43 +58,47 @@ void BarFrame::mouseMoveEvent(QMouseEvent *event)
 		targetPos.setY(lowerBoundY);
 	
 	p->move(targetPos);
+	//emit movedTo(targetPos);
 }
 
 void ResizeFrame::mouseMoveEvent(QMouseEvent *event)
 {
 	QPoint dpos = event->pos() - mousePos;
 	QWidget* p = dynamic_cast<QWidget*>(QFrame::parent()->parent());
-	int w = p->size().width();
-	int h = p->size().height();
-	int minw;
-	int minh;
-
-	if (p->minimumSizeHint().isValid())
+	if (p!=Q_NULLPTR)
 	{
-		minw = p->minimumSizeHint().width();
-		minh = p->minimumSizeHint().height();
-	}
-	else
-	{
-		minw = p->minimumWidth() > 0 ? p->minimumWidth() : 24;
-		minh = p->minimumHeight() > 0 ? p->minimumHeight() : 24;
-	}
+		int w = p->size().width();
+		int h = p->size().height();
+		int minw;
+		int minh;
 
-	// The minimum size will only be enforced if the widget is being
-	// shrunk, and its size is larger than its minimum size. (If, for some
-	// reason, the widget's size is already *smaller* than its minimum
-	// size, and the user is actually trying to *shrink* it, then it would
-	// be rather odd to *enlarge* the widget to its minimum size.)
-	if (w + dpos.x() >= minw)
-		w += dpos.x();
-	else if (w > minw && dpos.x() < 0)
-		w = minw;
-	if (h + dpos.y() >= minh)
-		h += dpos.y();
-	else if (h > minh && dpos.y() < 0)
-		h = minh;
+		if (p->minimumSizeHint().isValid())
+		{
+			minw = p->minimumSizeHint().width();
+			minh = p->minimumSizeHint().height();
+		}
+		else
+		{
+			minw = p->minimumWidth() > 0 ? p->minimumWidth() : 24;
+			minh = p->minimumHeight() > 0 ? p->minimumHeight() : 24;
+		}
 
-	p->setUpdatesEnabled(false);
-	p->resize(w, h);
-	p->setUpdatesEnabled(true);
+		// The minimum size will only be enforced if the widget is being
+		// shrunk, and its size is larger than its minimum size. (If, for some
+		// reason, the widget's size is already *smaller* than its minimum
+		// size, and the user is actually trying to *shrink* it, then it would
+		// be rather odd to *enlarge* the widget to its minimum size.)
+		if (w + dpos.x() >= minw)
+			w += dpos.x();
+		else if (w > minw && dpos.x() < 0)
+			w = minw;
+		if (h + dpos.y() >= minh)
+			h += dpos.y();
+		else if (h > minh && dpos.y() < 0)
+			h = minh;
+
+		p->setUpdatesEnabled(false);
+		p->resize(w, h);
+		p->setUpdatesEnabled(true);
+	}
 }

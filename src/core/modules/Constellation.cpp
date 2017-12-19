@@ -26,6 +26,9 @@
 #include "StelPainter.hpp"
 #include "StelApp.hpp"
 #include "StelCore.hpp"
+#include "StelModuleMgr.hpp"
+#include "StelTranslator.hpp"
+#include "ConstellationMgr.hpp"
 
 #include <algorithm>
 #include <QString>
@@ -33,19 +36,28 @@
 #include <QDebug>
 #include <QFontMetrics>
 
+const QString Constellation::CONSTELLATION_TYPE = QStringLiteral("Constellation");
+
 Vec3f Constellation::lineColor = Vec3f(0.4,0.4,0.8);
 Vec3f Constellation::labelColor = Vec3f(0.4,0.4,0.8);
 Vec3f Constellation::boundaryColor = Vec3f(0.8,0.3,0.3);
 bool Constellation::singleSelected = false;
+bool Constellation::seasonalRuleEnabled = false;
+float Constellation::artIntensityFovScale = 1.0f;
 
-Constellation::Constellation() : asterism(NULL)
+Constellation::Constellation()
+	: numberOfSegments(0)
+	, beginSeason(0)
+	, endSeason(0)
+	, constellation(Q_NULLPTR)
+	, artOpacity(1.f)
 {
 }
 
 Constellation::~Constellation()
 {
-	delete[] asterism;
-	asterism = NULL;
+	delete[] constellation;
+	constellation = Q_NULLPTR;
 }
 
 bool Constellation::read(const QString& record, StarMgr *starMgr)
@@ -62,9 +74,11 @@ bool Constellation::read(const QString& record, StarMgr *starMgr)
 	if (istr.status()!=QTextStream::Ok)
 		return false;
 
-	abbreviation = abb.toUpper();
+	// It's better to allow mixed-case abbreviations now that they can be displayed on screen. We then need toUpper() in comparisons.
+	//abbreviation = abb.toUpper();
+	abbreviation=abb;
 
-	asterism = new StelObjectP[numberOfSegments*2];
+	constellation = new StelObjectP[numberOfSegments*2];
 	for (unsigned int i=0;i<numberOfSegments*2;++i)
 	{
 		HP = 0;
@@ -72,16 +86,16 @@ bool Constellation::read(const QString& record, StarMgr *starMgr)
 		if(HP == 0)
 		{
 			// TODO: why is this delete commented?
-			// delete[] asterism;
+			// delete[] constellation;
 			return false;
 		}
 
-		asterism[i]=starMgr->searchHP(HP);
-		if (!asterism[i])
+		constellation[i]=starMgr->searchHP(HP);
+		if (!constellation[i])
 		{
 			qWarning() << "Error in Constellation " << abbreviation << " asterism : can't find star HP= " << HP;
 			// TODO: why is this delete commented?
-			// delete[] asterism;
+			// delete[] constellation;
 			return false;
 		}
 	}
@@ -89,7 +103,7 @@ bool Constellation::read(const QString& record, StarMgr *starMgr)
 	XYZname.set(0.,0.,0.);
 	for(unsigned int ii=0;ii<numberOfSegments*2;++ii)
 	{
-		XYZname+= asterism[ii]->getJ2000EquatorialPos(StelApp::getInstance().getCore());
+		XYZname+= constellation[ii]->getJ2000EquatorialPos(StelApp::getInstance().getCore());
 	}
 	XYZname.normalize();
 
@@ -101,54 +115,78 @@ void Constellation::drawOptim(StelPainter& sPainter, const StelCore* core, const
 	if (lineFader.getInterstate()<=0.0001f)
 		return;
 
-	sPainter.setColor(lineColor[0], lineColor[1], lineColor[2], lineFader.getInterstate());
-
-	Vec3d star1;
-	Vec3d star2;
-	for (unsigned int i=0;i<numberOfSegments;++i)
+	if (checkVisibility())
 	{
-		star1=asterism[2*i]->getJ2000EquatorialPos(core);
-		star2=asterism[2*i+1]->getJ2000EquatorialPos(core);
-		star1.normalize();
-		star2.normalize();
-		sPainter.drawGreatCircleArc(star1, star2, &viewportHalfspace);
+		sPainter.setColor(lineColor[0], lineColor[1], lineColor[2], lineFader.getInterstate());
+
+		Vec3d star1;
+		Vec3d star2;
+		for (unsigned int i=0;i<numberOfSegments;++i)
+		{
+			star1=constellation[2*i]->getJ2000EquatorialPos(core);
+			star2=constellation[2*i+1]->getJ2000EquatorialPos(core);
+			star1.normalize();
+			star2.normalize();			
+			sPainter.drawGreatCircleArc(star1, star2, &viewportHalfspace);			
+		}
 	}
 }
 
-void Constellation::drawName(StelPainter& sPainter) const
+void Constellation::drawName(StelPainter& sPainter, ConstellationMgr::ConstellationDisplayStyle style) const
 {
 	if (!nameFader.getInterstate())
 		return;
-	sPainter.setColor(labelColor[0], labelColor[1], labelColor[2], nameFader.getInterstate());
-	sPainter.drawText(XYname[0], XYname[1], nameI18, 0., -sPainter.getFontMetrics().width(nameI18)/2, 0, false);
+
+	if (checkVisibility())
+	{
+		QString name;
+		switch (style)
+		{
+			case ConstellationMgr::constellationsTranslated:
+				name=nameI18;
+				break;
+			case ConstellationMgr::constellationsNative:
+				name=nativeName;
+				break;
+			case ConstellationMgr::constellationsEnglish:
+				name=englishName;
+				break;
+			case ConstellationMgr::constellationsAbbreviated:
+				name=(abbreviation.startsWith('.') ? "" : abbreviation);
+				break;
+		}
+
+		sPainter.setColor(labelColor[0], labelColor[1], labelColor[2], nameFader.getInterstate());
+		sPainter.drawText(XYname[0], XYname[1], name, 0., -sPainter.getFontMetrics().width(name)/2, 0, false);
+	}
 }
 
 void Constellation::drawArtOptim(StelPainter& sPainter, const SphericalRegion& region) const
 {
-	const float intensity = artFader.getInterstate();
-	if (artTexture && intensity && region.intersects(boundingCap))
+	if (checkVisibility())
 	{
-		sPainter.setColor(intensity,intensity,intensity);
+		const float intensity = artFader.getInterstate() * artOpacity * artIntensityFovScale;
+		if (artTexture && intensity > 0.0f && region.intersects(boundingCap))
+		{
+			sPainter.setColor(intensity,intensity,intensity);
 
-		// The texture is not fully loaded
-		if (artTexture->bind()==false)
-			return;
+			// The texture is not fully loaded
+			if (artTexture->bind()==false)
+				return;
 
-		sPainter.drawStelVertexArray(artPolygon);
+			sPainter.drawStelVertexArray(artPolygon);
+		}
 	}
 }
 
 // Draw the art texture
 void Constellation::drawArt(StelPainter& sPainter) const
 {
-	glBlendFunc(GL_ONE, GL_ONE);
-	sPainter.enableTexture2d(true);
-	glEnable(GL_BLEND);
-	glEnable(GL_CULL_FACE);
+	sPainter.setBlending(true, GL_ONE, GL_ONE);
+	sPainter.setCullFace(true);
 	SphericalRegionP region = sPainter.getProjector()->getViewportConvexPolygon();
 	drawArtOptim(sPainter, *region);
-
-	glDisable(GL_CULL_FACE);
+	sPainter.setCullFace(false);
 }
 
 const Constellation* Constellation::isStarIn(const StelObject* s) const
@@ -156,14 +194,14 @@ const Constellation* Constellation::isStarIn(const StelObject* s) const
 	for(unsigned int i=0;i<numberOfSegments*2;++i)
 	{
 
-		// asterism[i]==s test was not working
-		if (asterism[i]->getEnglishName()==s->getEnglishName())
+		// constellation[i]==s test was not working
+		if (constellation[i]->getEnglishName()==s->getEnglishName())
 		{
 			// qDebug() << "Const matched. " << getEnglishName();
 			return this;
 		}
 	}
-	return NULL;
+	return Q_NULLPTR;
 }
 
 void Constellation::update(int deltaTime)
@@ -179,13 +217,11 @@ void Constellation::drawBoundaryOptim(StelPainter& sPainter) const
 	if (!boundaryFader.getInterstate())
 		return;
 
-	sPainter.enableTexture2d(false);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); // Normal transparency mode
-
+	sPainter.setBlending(true);
 	sPainter.setColor(boundaryColor[0], boundaryColor[1], boundaryColor[2], boundaryFader.getInterstate());
 
-	unsigned int i, j, size;
+	unsigned int i, j;
+	size_t size;
 	Vec3f pt1, pt2;
 	Vec3d ptd1, ptd2;
 	std::vector<Vec3f> *points;
@@ -213,6 +249,55 @@ void Constellation::drawBoundaryOptim(StelPainter& sPainter) const
 	}
 }
 
+bool Constellation::checkVisibility() const
+{
+	// Is supported seasonal rules by current starlore?
+	if (!seasonalRuleEnabled)
+		return true;
+
+	bool visible = false;
+	int year, month, day;
+	// Get the current month
+	StelUtils::getDateFromJulianDay(StelApp::getInstance().getCore()->getJD(), &year, &month, &day);
+	if (endSeason >= beginSeason)
+	{
+		// OK, it's a "normal" season rule...
+		if ((month >= beginSeason) && (month <= endSeason))
+			visible = true;
+	}
+	else
+	{
+		// ...oops, it's a "inverted" season rule
+		if (((month>=1) && (month<=endSeason)) || ((month>=beginSeason) && (month<=12)))
+			visible = true;
+
+	}
+	return visible;
+}
+
+QString Constellation::getInfoString(const StelCore *core, const InfoStringGroup &flags) const
+{
+	Q_UNUSED(core);
+	QString str;
+	QTextStream oss(&str);
+
+	if (flags&Name)
+	{
+		oss << "<h2>" << getNameI18n();
+		if (!getShortName().isEmpty())
+			oss << " (" << getShortName() << ")";
+		oss << "</h2>";
+	}
+
+	if (flags&ObjectType)
+		oss << QString("%1: <b>%2</b>").arg(q_("Type"), q_("constellation")) << "<br />";
+
+	postProcessInfoString(str, flags);
+
+	return str;
+}
+
+
 StelObjectP Constellation::getBrightestStarInConstellation(void) const
 {
 	float maxMag = 99.f;
@@ -221,10 +306,10 @@ StelObjectP Constellation::getBrightestStarInConstellation(void) const
 	// so check all segment endpoints:
 	for (int i=2*numberOfSegments-1;i>=0;i--)
 	{
-		const float Mag = asterism[i]->getVMagnitude(0);
+		const float Mag = constellation[i]->getVMagnitude(0);
 		if (Mag < maxMag)
 		{
-			brightest = asterism[i];
+			brightest = constellation[i];
 			maxMag = Mag;
 		}
 	}

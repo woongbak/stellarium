@@ -136,8 +136,8 @@ bool SphericalRegion::contains(const SphericalRegion* r) const
 		default:
 			return containsDefault(r);
 	}
-	Q_ASSERT(0);
-	return false;
+	//Q_ASSERT(0);
+	//return false;
 }
 
 bool SphericalRegion::intersects(const SphericalPolygon& r) const {return intersectsDefault(&r);}
@@ -164,8 +164,8 @@ bool SphericalRegion::intersects(const SphericalRegion* r) const
 		default:
 			return intersectsDefault(r);
 	}
-	Q_ASSERT(0);
-	return false;
+	//Q_ASSERT(0);
+	//return false;
 }
 
 SphericalRegionP SphericalRegion::getIntersection(const SphericalRegion* r) const
@@ -187,8 +187,8 @@ SphericalRegionP SphericalRegion::getIntersection(const SphericalRegion* r) cons
 		default:
 			return getIntersectionDefault(r);
 	}
-	Q_ASSERT(0);
-	return SphericalRegionP();
+	// Q_ASSERT(0);
+	// return SphericalRegionP();
 }
 SphericalRegionP SphericalRegion::getIntersection(const SphericalPolygon& r) const {return getIntersectionDefault(&r);}
 SphericalRegionP SphericalRegion::getIntersection(const SphericalConvexPolygon& r) const {return getIntersectionDefault(&r);}
@@ -216,8 +216,8 @@ SphericalRegionP SphericalRegion::getUnion(const SphericalRegion* r) const
 		default:
 			return getUnionDefault(r);
 	}
-	Q_ASSERT(0);
-	return SphericalRegionP();
+	// Q_ASSERT(0);
+	// return SphericalRegionP();
 }
 SphericalRegionP SphericalRegion::getUnion(const SphericalPolygon& r) const {return getUnionDefault(&r);}
 SphericalRegionP SphericalRegion::getUnion(const SphericalConvexPolygon& r) const {return getUnionDefault(&r);}
@@ -246,8 +246,8 @@ SphericalRegionP SphericalRegion::getSubtraction(const SphericalRegion* r) const
 		default:
 			return getSubtractionDefault(r);
 	}
-	Q_ASSERT(0);
-	return SphericalRegionP();
+	// Q_ASSERT(0);
+	// return SphericalRegionP();
 }
 SphericalRegionP SphericalRegion::getSubtraction(const SphericalPolygon& r) const {return getSubtractionDefault(&r);}
 SphericalRegionP SphericalRegion::getSubtraction(const SphericalConvexPolygon& r) const {return getSubtractionDefault(&r);}
@@ -404,7 +404,8 @@ bool SphericalCap::clipGreatCircle(Vec3d& v1, Vec3d& v2) const
 			Vec3d v = v1^v2;
 			v.normalize();
 			Vec3d vv;
-			SphericalCap::intersectionPoints(*this, SphericalCap(v, 0), v, vv);
+			if (!SphericalCap::intersectionPoints(*this, SphericalCap(v, 0), v, vv))
+				return false;
 			const float cosDist = v1*v2;
 			v2 = (v1*v >= cosDist && v2*v >= cosDist) ? v : vv;
 			return true;
@@ -418,7 +419,8 @@ bool SphericalCap::clipGreatCircle(Vec3d& v1, Vec3d& v2) const
 			Vec3d v = v1^v2;
 			v.normalize();
 			Vec3d vv;
-			SphericalCap::intersectionPoints(*this, SphericalCap(v, 0), v, vv);
+			if (!SphericalCap::intersectionPoints(*this, SphericalCap(v, 0), v, vv))
+				return false;
 			const float cosDist = v1*v2;
 			v1 = (v1*v >= cosDist && v2*v >= cosDist) ? v : vv;
 			return true;
@@ -441,8 +443,8 @@ bool SphericalCap::clipGreatCircle(Vec3d& v1, Vec3d& v2) const
 			return false;
 		}
 	}
-	Q_ASSERT(0);
-	return false;
+	//Q_ASSERT(0);
+	//return false;
 }
 
 //! Compute the intersection of the circles defined by the 2 caps on the sphere (usually on 2 points) and return it in p1 and p2.
@@ -477,7 +479,7 @@ bool SphericalCap::intersectionPoints(const SphericalCap& h1, const SphericalCap
 	// u gives the direction of the line, still need to find a suitable start point p0
 	// Find the axis on which the line varies the fastest, and solve the system for value == 0 on this axis
 	int maxI = (fabs(u[0])>=fabs(u[1])) ? (fabs(u[0])>=fabs(u[2]) ? 0 : 2) : (fabs(u[2])>fabs(u[1]) ? 2 : 1);
-	Vec3d p0(0);
+	Vec3d p0(0.);
 	switch (maxI)
 	{
 		case 0:
@@ -709,7 +711,8 @@ struct TriangleSerializer
 
 	TriangleSerializer() {}
 	inline void operator()(const Vec3d* v1, const Vec3d* v2, const Vec3d* v3,
-						   const Vec2f* , const Vec2f* , const Vec2f* ,
+			       const Vec2f* , const Vec2f* , const Vec2f* ,
+			       const Vec3f* , const Vec3f* , const Vec3f* , // GZ NEW
 						   unsigned int , unsigned int , unsigned int )
 	{
 		QVariantList triangle;
@@ -1122,8 +1125,7 @@ Vec3d greatCircleIntersection(const Vec3d& p1, const Vec3d& p2, const Vec3d& n2,
 ///////////////////////////////////////////////////////////////////////////////
 SphericalRegionP SphericalRegionP::loadFromJson(QIODevice* in)
 {
-	StelJsonParser parser;
-	return loadFromQVariant(parser.parse(in).toMap());
+    return loadFromQVariant(StelJsonParser::parse(in).toMap());
 }
 
 SphericalRegionP SphericalRegionP::loadFromJson(const QByteArray& a)
@@ -1151,7 +1153,8 @@ struct TriangleDumper
 
 	TriangleDumper() {}
 	inline void operator()(const Vec3d* v1, const Vec3d* v2, const Vec3d* v3,
-						   const Vec2f* , const Vec2f* , const Vec2f* ,
+			       const Vec2f* , const Vec2f* , const Vec2f* ,
+			       const Vec3f* , const Vec3f* , const Vec3f* , // GZ NEW
 						   unsigned int , unsigned int , unsigned int )
 	{
 		QVector<Vec3d> triangle;
@@ -1310,6 +1313,11 @@ SphericalRegionP SphericalRegionP::loadFromQVariant(const QVariantList& l)
 	{
 		return SphericalRegionP(new SphericalPolygon(pathFromQVariantList(l)));
 	}
+	else if (code=="CONVEX_POLYGON")
+	{
+		return SphericalRegionP(new SphericalConvexPolygon(singleContourFromQVariantList(l.at(1).toList())));
+	}
+
 	Q_ASSERT(0);
 	return EmptySphericalRegion::staticInstance;
 }
@@ -1373,8 +1381,8 @@ SphericalRegionP SphericalRegionP::loadFromQVariant(const QVariantMap& map)
 		}
 		return SphericalRegionP(new SphericalTexturedPolygon(contours));
 	}
-	Q_ASSERT(0);
-	return SphericalRegionP(new SphericalCap());
+	// Q_ASSERT(0);
+	// return SphericalRegionP(new SphericalCap());
 }
 
 void SphericalRegionP::serializeToJson(const QVariant& jsonObject, QIODevice* output, int indentLevel)

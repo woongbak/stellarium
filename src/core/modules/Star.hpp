@@ -25,11 +25,12 @@
 #include "ZoneData.hpp"
 #include "StelObjectType.hpp"
 #include <QString>
+#include <QtEndian>
 
 class StelObject;
 
-typedef int Int32;
-typedef unsigned int Uint32;
+extern const QString STAR_TYPE;
+
 typedef short int Int16;
 typedef unsigned short int Uint16;
 
@@ -43,117 +44,238 @@ template <class Star> struct SpecialZoneData;
 // makes it feasable to store hundreds of millions of them in main memory.
 
 
-static inline float IndexToBV(unsigned char bV) {
-  return (float)bV*(4.f/127.f)-0.5f;
+static inline float IndexToBV(unsigned char bV)
+{
+	return (float)bV*(4.f/127.f)-0.5f;
 }
 
-#if (defined(__sgi) && defined(_COMPILER_VERSION) && !defined(__GNUC__))
-#pragma pack(1)
-#endif
+
 struct Star1 { // 28 byte
-#ifdef _MSC_BUILD
-  unsigned int hip:24;         // 17 bits needed
-  unsigned int componentIds:8; //  5 bits needed
-#else
-  int hip:24;                  // 17 bits needed
-  unsigned char componentIds;  //  5 bits needed
-#endif
-  Int32 x0;                    // 32 bits needed
-  Int32 x1;                    // 32 bits needed
-  unsigned char bV;            //  7 bits needed
-  unsigned char mag;           //  8 bits needed
-  Uint16 spInt;                // 14 bits needed
-  Int32 dx0,dx1,plx;
-  enum {MaxPosVal=0x7FFFFFFF};
-  StelObjectP createStelObject(const SpecialZoneArray<Star1> *a,
-					 const SpecialZoneData<Star1> *z) const;
-  void getJ2000Pos(const ZoneData *z,float movementFactor, Vec3f& pos) const {
-	  pos = z->axis0;
-	  pos*=((float)(x0)+movementFactor*dx0);
-	  pos+=((float)(x1)+movementFactor*dx1)*z->axis1;
-	  pos+=z->center;
-  }
-  float getBV(void) const {return IndexToBV(bV);}
-  bool hasName() const {return hip;}
-  QString getNameI18n(void) const;
-  int hasComponentID(void) const;
-  void repack(bool fromBe);
-  void print(void);
-}
-#if defined(__GNUC__)
-   __attribute__ ((__packed__))
-#endif
-;
-#if (defined(__sgi) && defined(_COMPILER_VERSION) && !defined(__GNUC__))
-#pragma pack(0)
-#endif
+
+	/*
+	          _______________
+	0    hip |               |
+	1        |               |
+	2        |_______________|
+	3   cIds |_______________|
+	4     x0 |               |
+	5        |               |
+	6        |               |
+	7        |_______________|
+	8     x1 |               |
+	9        |               |
+	10       |               |
+	11       |_______________|
+	12    bV |_______________|
+	13   mag |_______________|
+	14 spInt |               |
+	15       |_______________|
+	16   dx0 |               |
+	17       |               |
+	18       |               |
+	19       |_______________|
+	20   dx1 |               |
+	21       |               |
+	22       |               |
+	23       |_______________|
+	24   plx |               |
+	25       |               |
+	26       |               |
+	27       |_______________|
+
+	*/
+
+	// componentIds         8
+	// hip                  24
+	//
+	// qint32 x0            32
+	// qint32 x1            32
+	//
+	// unsigned char bV     8
+	// unsigned char mag    8
+	// Uint16 spInt         16
+	//
+	// qint32 dx0,dx1,plx   32
+private:
+	// Use an union so we can access the data as different types without
+	// aliasing issues.
+	union {
+		quint8  uint8[28];
+		quint16 uint16[14];
+		qint32  int32[7];
+	} d;
+
+public:
+	enum {MaxPosVal=0x7FFFFFFF};
+	StelObjectP createStelObject(const SpecialZoneArray<Star1> *a, const SpecialZoneData<Star1> *z) const;
+	void getJ2000Pos(const ZoneData *z,float movementFactor, Vec3f& pos) const
+	{
+		pos = z->axis0;
+		pos*=((float)(getX0())+movementFactor*getDx0());
+		pos+=((float)(getX1())+movementFactor*getDx1())*z->axis1;
+		pos+=z->center;
+	}
+	inline int getBVIndex() const {return d.uint8[12];}
+	inline int getMag() const {return d.uint8[13];}
+	inline int getSpInt() const {return d.uint16[7];}
+	inline int getX0() const { return qFromLittleEndian(d.int32[1]);}
+	inline int getX1() const { return qFromLittleEndian(d.int32[2]);}
+	inline int getDx0() const {return qFromLittleEndian(d.int32[4]);}
+	inline int getDx1() const {return qFromLittleEndian(d.int32[5]);}
+	inline int getPlx() const {return qFromLittleEndian(d.int32[6]);}
+
+	inline int getHip() const
+	{
+		quint32 v = d.uint8[0] | d.uint8[1] << 8 | d.uint8[2] << 16;
+		return ((qint32)v) << 8 >> 8;
+	}
+
+	inline int getComponentIds() const
+	{
+		return d.uint8[3];
+	}
+
+	float getBV(void) const {return IndexToBV(getBVIndex());}
+	bool hasName() const {return getHip();}
+	QString getNameI18n(void) const;
+	int hasComponentID(void) const;
+	void print(void) const;
+};
 
 
-#if (defined(__sgi) && defined(_COMPILER_VERSION) && !defined(__GNUC__))
-#pragma pack(1)
-#endif
 struct Star2 {  // 10 byte
-  int x0:20;
-  int x1:20;
-  int dx0:14;
-  int dx1:14;
-  unsigned int bV:7;
-  unsigned int mag:5;
-  enum {MaxPosVal=((1<<19)-1)};
-  StelObjectP createStelObject(const SpecialZoneArray<Star2> *a,
-					 const SpecialZoneData<Star2> *z) const;
-  void getJ2000Pos(const ZoneData *z,float movementFactor, Vec3f& pos) const {
-	  pos = z->axis0;
-	  pos*=((float)(x0)+movementFactor*dx0);
-	  pos+=((float)(x1)+movementFactor*dx1)*z->axis1;
-	  pos+=z->center;
-  }
-  float getBV(void) const {return IndexToBV(bV);}
-  QString getNameI18n(void) const {return QString();}
-  int hasComponentID(void) const {return 0;}
-  bool hasName() const {return false;}
-  void repack(bool fromBe);
-  void print(void);
-}
-#if defined(__GNUC__)
-   __attribute__ ((__packed__))
-#endif
-;
-#if (defined(__sgi) && defined(_COMPILER_VERSION) && !defined(__GNUC__))
-#pragma pack(0)
-#endif
 
+	/*
+	          _______________
+	0     x0 |               |
+	1        |_______        |
+	2     x1 |       |_______|
+	3        |               |
+	4        |_______________|
+	5    dx0 |___            |
+	6    dx1 |   |___________|
+	7        |_______        |
+	8     bV |_______|_______|
+	9    mag |_________|_____| bV
 
-#if (defined(__sgi) && defined(_COMPILER_VERSION) && !defined(__GNUC__))
-#pragma pack(1)
-#endif
+	int x0          :20;
+	int x1          :20;
+	int dx0         :14;
+	int dx1         :14;
+	unsigned int bV :7;
+	unsigned int mag:5;
+	*/
+
+private:
+	quint8 d[10];
+
+public:
+	inline int getX0() const
+	{
+		quint32 v = d[0] | d[1] << 8 | (d[2] & 0xF) << 16;
+		return ((qint32)v) << 12 >> 12;
+	}
+
+	inline int getX1() const
+	{
+		quint32 v = d[2] >> 4 | d[3] << 4 | d[4] << 12;
+		return ((qint32)v) << 12 >> 12;
+	}
+
+	inline int getDx0() const
+	{
+		Uint16 v = d[5] | (d[6] & 0x3F) << 8;
+		return ((Int16)(v << 2)) >> 2;
+	}
+
+	inline int getDx1() const
+	{
+		Uint16 v = d[6] >> 6 | d[7] << 2 | (d[8] & 0xF) << 10;
+		return ((Int16)(v << 2)) >> 2;
+	}
+
+	inline int getBVIndex() const
+	{
+		return d[8] >> 4 | (d[9] & 0x7) << 4;
+	}
+
+	inline int getMag() const
+	{
+		return d[9] >> 3;
+	}
+
+	enum {MaxPosVal=((1<<19)-1)};
+	StelObjectP createStelObject(const SpecialZoneArray<Star2> *a, const SpecialZoneData<Star2> *z) const;
+	void getJ2000Pos(const ZoneData *z,float movementFactor, Vec3f& pos) const
+	{
+		pos = z->axis0;
+		pos*=((float)(getX0())+movementFactor*getDx0());
+		pos+=((float)(getX1())+movementFactor*getDx1())*z->axis1;
+		pos+=z->center;
+	}
+	float getBV(void) const {return IndexToBV(getBVIndex());}
+	QString getNameI18n(void) const {return QString();}
+	int hasComponentID(void) const {return 0;}
+	bool hasName() const {return false;}
+	void print(void) const;
+};
+
 struct Star3 {  // 6 byte
-  int x0:18;
-  int x1:18;
-  unsigned int bV:7;
-  unsigned int mag:5;
-  enum {MaxPosVal=((1<<17)-1)};
-  StelObjectP createStelObject(const SpecialZoneArray<Star3> *a, const SpecialZoneData<Star3> *z) const;
-  void getJ2000Pos(const ZoneData *z,float, Vec3f& pos) const
-  {
-	  pos = z->axis0;
-	  pos*=(float)(x0);
-	  pos+=z->center;
-	  pos+=(float)(x1)*z->axis1;
-  }
-  float getBV() const {return IndexToBV(bV);}
-  QString getNameI18n() const {return QString();}
-  int hasComponentID() const {return 0;}
-  bool hasName() const {return false;}
-  void repack(bool fromBe);
-  void print();
-}
-#if defined(__GNUC__)
-   __attribute__ ((__packed__))
-#endif
-;
-#if (defined(__sgi) && defined(_COMPILER_VERSION) && !defined(__GNUC__))
-#pragma pack(0)
-#endif
+
+	/*
+	          _______________
+	0     x0 |               |
+	1        |___________    |
+	2     x1 |           |___|
+	3        |_______        |
+	4     bV |_______|_______|
+	5    mag |_________|_____| bV
+
+	int x0               :18
+	int x1               :18
+	unsigned int bV      :7
+	unsigned int mag     :5
+	*/
+private:
+	quint8 d[6];
+
+public:
+	inline int getX0() const
+	{
+		quint32 v = d[0] | d[1] << 8 | (d[2] & 0x3) << 16;
+		return ((qint32)v) << 14 >> 14;
+	}
+
+	inline int getX1() const
+	{
+		quint32 v = d[2] >> 2 | d[3] << 6 | (d[4] & 0xF) << 14;
+		return ((qint32)v) << 14 >> 14;
+	}
+
+	inline int getBVIndex() const
+	{
+		return d[4] >> 4 | (d[5] & 0x7) << 4;
+	}
+
+	inline int getMag() const
+	{
+		return d[5] >> 3;
+	}
+
+	enum {MaxPosVal=((1<<17)-1)};
+	StelObjectP createStelObject(const SpecialZoneArray<Star3> *a, const SpecialZoneData<Star3> *z) const;
+	void getJ2000Pos(const ZoneData *z,float, Vec3f& pos) const
+	{
+		pos = z->axis0;
+		pos*=(float)(getX0());
+		pos+=z->center;
+		pos+=(float)(getX1())*z->axis1;
+	}
+	float getBV() const {return IndexToBV(getBVIndex());}
+	QString getNameI18n() const {return QString();}
+	int hasComponentID() const {return 0;}
+	bool hasName() const {return false;}
+	void print();
+};
 
 #endif // _STAR_HPP_

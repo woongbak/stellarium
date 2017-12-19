@@ -36,13 +36,26 @@
 #include <QVariant>
 #include <QList>
 
+const QString Supernova::SUPERNOVA_TYPE = QStringLiteral("Supernova");
+
 Supernova::Supernova(const QVariantMap& map)
-		: initialized(false)
+	: initialized(false)
+	, designation("")
+	, sntype("")
+	, maxMagnitude(21.)
+	, peakJD(0.)
+	, snra(0.)
+	, snde(0.)
+	, note("")
+	, distance(0.)
 {
-	// return initialized if the mandatory fields are not present
-	if (!map.contains("designation"))
+	if (!map.contains("designation") || !map.contains("alpha") || !map.contains("delta"))
+	{
+		qWarning() << "Supernova: INVALID quasar!" << map.value("designation").toString();
+		qWarning() << "Supernova: Please, check your 'supernovae.json' catalog!";
 		return;
-		
+	}
+
 	designation  = map.value("designation").toString();
 	sntype = map.value("type").toString();
 	maxMagnitude = map.value("maxMagnitude").toFloat();
@@ -60,7 +73,7 @@ Supernova::~Supernova()
 	//
 }
 
-QVariantMap Supernova::getMap(void)
+QVariantMap Supernova::getMap(void) const
 {
 	QVariantMap map;
 	map["designation"] = designation;
@@ -78,8 +91,9 @@ QVariantMap Supernova::getMap(void)
 QString Supernova::getNameI18n(void) const
 {
 	QString name = designation;
+	const StelTranslator& trans = StelApp::getInstance().getLocaleMgr().getSkyTranslator();
 	if (note.size()!=0)
-		name = QString("%1 (%2)").arg(name).arg(q_(note));
+		name = QString("%1 (%2)").arg(name).arg(trans.qtranslate(note));
 
 	return name;
 }
@@ -88,7 +102,7 @@ QString Supernova::getEnglishName(void) const
 {
 	QString name = designation;
 	if (note.size()!=0)
-		name = QString("%1 (%2)").arg(name).arg(note);
+		name = QString("%1 (%2)").arg(name).arg(note);	
 
 	return name;
 }
@@ -111,37 +125,53 @@ QString Supernova::getInfoString(const StelCore* core, const InfoStringGroup& fl
 
 	if (flags&Name)
 	{
-		oss << "<h2>" << designation;
-		if (note.size()!=0)
-		    oss << " (" << q_(note) << ")";
-		
-		oss << "</h2>";
+		oss << "<h2>" << getNameI18n() << "</h2>";
 	}
 
 	if (flags&ObjectType)
-		oss << q_("Type: <b>%1</b>").arg(q_("supernova")) << "<br />";
+		oss << QString("%1: <b>%2</b>").arg(q_("Type"), q_("supernova")) << "<br />";
 
 	if (flags&Magnitude)
 	{
-	    if (core->getSkyDrawer()->getFlagHasAtmosphere() && getVMagnitude(core) <= maglimit)
-		oss << q_("Magnitude: <b>%1</b> (extincted to: <b>%2</b>)").arg(mag, mage) << "<br>";
-	    else
-		oss << q_("Magnitude: <b>%1</b>").arg(mag) << "<br>";
+	    QString emag = "";
+	    if (core->getSkyDrawer()->getFlagHasAtmosphere())
+		    emag = QString(" (%1: <b>%2</b>)").arg(q_("extincted to"), mage);
+
+	    oss << QString("%1: <b>%2</b>%3").arg(q_("Magnitude"), mag, emag) << "<br />";
+
 	}
 
 	// Ra/Dec etc.
-	oss << getPositionInfoString(core, flags);
+	oss << getCommonInfoString(core, flags);
 
 	if (flags&Extra)
 	{
-		oss << q_("Type of supernova: %1").arg(sntype) << "<br>";
-		oss << q_("Maximum brightness: %1").arg(getMaxBrightnessDate(peakJD)) << "<br>";
+		oss << QString("%1: %2").arg(q_("Type of supernova"), sntype) << "<br />";
+		oss << QString("%1: %2").arg(q_("Maximum brightness"), getMaxBrightnessDate(peakJD)) << "<br />";
 		if (distance>0)
-			oss << q_("Distance: %1 Light Years").arg(distance*1000) << "<br>";
+		{
+			//TRANSLATORS: Unit of measure for distance - Light Years
+			QString ly = qc_("ly", "distance");
+			oss << QString("%1: %2 %3").arg(q_("Distance"), QString::number(distance*1000, 'f', 2), ly) << "<br />";
+		}
 	}
 
 	postProcessInfoString(str, flags);
 	return str;
+}
+
+
+QVariantMap Supernova::getInfoMap(const StelCore *core) const
+{
+	QVariantMap map = StelObject::getInfoMap(core);
+
+	map["sntype"] = sntype;
+	map["max-magnitude"] = maxMagnitude;
+	map["peakJD"] = peakJD;
+	map["note"] = note;
+	map["distance"] = distance;
+
+	return map;
 }
 
 Vec3f Supernova::getInfoColor(void) const
@@ -152,8 +182,8 @@ Vec3f Supernova::getInfoColor(void) const
 float Supernova::getVMagnitude(const StelCore* core) const
 {
 	double vmag = 20;
-	double currentJD = core->getJDay();
-	double deltaJD = std::abs(peakJD-currentJD);
+	double currentJD = core->getJDE(); // GZ JDfix for 0.14. I hope the JD in the list is JDE? (Usually difference should be negligible)
+	double deltaJD = qAbs(peakJD-currentJD);
 
 	// Use supernova light curve model from here - http://www.astronet.ru/db/msg/1188703
 
@@ -167,10 +197,13 @@ float Supernova::getVMagnitude(const StelCore* core) const
 				vmag = maxMagnitude + 0.05 * deltaJD;
 
 			if (deltaJD>30 && deltaJD<=80)
-				vmag = maxMagnitude + 0.013 * deltaJD + 1.5;
+				vmag = maxMagnitude + 0.013 * (deltaJD - 30) + 1.5;
 
-			if (deltaJD>80)
-				vmag = maxMagnitude + 0.05 * deltaJD + 2.15;
+			if (deltaJD>80 && deltaJD<=100)
+				vmag = maxMagnitude + 0.075 * (deltaJD - 80) + 2.15;
+
+			if (deltaJD>100)
+				vmag = maxMagnitude + 0.025 * (deltaJD - 100) + 3.65;
 
 		}
 		else
@@ -190,7 +223,7 @@ float Supernova::getVMagnitude(const StelCore* core) const
 				vmag = maxMagnitude + 0.1 * deltaJD;
 
 			if (deltaJD>25)
-				vmag = maxMagnitude + 0.016 * deltaJD + 2.5;
+				vmag = maxMagnitude + 0.016 * (deltaJD - 25) + 2.5;
 
 		}
 		else
@@ -235,9 +268,9 @@ void Supernova::draw(StelCore* core, StelPainter& painter)
 	if (mag <= mlimit)
 	{
 		sd->computeRCMag(mag, &rcMag);		
-		sd->drawPointSource(&painter, Vec3f(XYZ[0], XYZ[1], XYZ[2]), rcMag, color, false);
-		painter.setColor(color[0], color[1], color[2], 1);
-		size = getAngularSize(NULL)*M_PI/180.*painter.getProjector()->getPixelPerRadAtCenter();
+		sd->drawPointSource(&painter, Vec3f(XYZ[0],XYZ[1],XYZ[2]), rcMag, color, false);
+		painter.setColor(color[0], color[1], color[2], 1.f);
+		size = getAngularSize(Q_NULLPTR)*M_PI/180.*painter.getProjector()->getPixelPerRadAtCenter();
 		shift = 6.f + size/1.8f;
 		if (labelsFader.getInterstate()<=0.f && (mag+5.f)<mlimit && smgr->getFlagLabels())
 		{
