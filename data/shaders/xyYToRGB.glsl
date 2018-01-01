@@ -11,6 +11,7 @@ uniform highp float brightnessScale;
 uniform highp vec3 sunPos;
 uniform mediump float term_x, Ax, Bx, Cx, Dx, Ex;
 uniform mediump float term_y, Ay, By, Cy, Dy, Ey;
+uniform bool doSRGB;
 
 // The current projection matrix
 uniform mediump mat4 projectionMatrix;
@@ -97,20 +98,26 @@ void main()
 		// Convert from xyY to XZY
 		// Use a XYZ to Adobe RGB (1998) matrix which uses a D65 reference white
 		mediump vec3 tmpXYZ = vec3(color[0] * color[2] / color[1], color[2], (1. - color[0] - color[1]) * color[2] / color[1]);
-		// Apparently AdobeRGB1998 transformation. TODO: sRGB!
-        //resultSkyColor = vec3(2.04148  *tmpXYZ.x -0.564977*tmpXYZ.y-0.344713 *tmpXYZ.z, 
-        //                     -0.969258 *tmpXYZ.x +1.87599 *tmpXYZ.y+0.0415557*tmpXYZ.z, 
-        //                      0.0134455*tmpXYZ.x -0.118373*tmpXYZ.y+1.01527  *tmpXYZ.z);
+                if(!doSRGB)
+		{
+                    // Apparently AdobeRGB1998 transformation.
+                    resultSkyColor = vec3(2.04148  *tmpXYZ.x -0.564977*tmpXYZ.y-0.344713 *tmpXYZ.z,
+                                         -0.969258 *tmpXYZ.x +1.87599 *tmpXYZ.y+0.0415557*tmpXYZ.z,
+                                          0.0134455*tmpXYZ.x -0.118373*tmpXYZ.y+1.01527  *tmpXYZ.z);
+		}
+		else
+		{
+                    // sRGB transformation. Recipe contains low-level linearity, however this causes a really ugly artifact.
+                    resultSkyColor = vec3(3.2406   *tmpXYZ.x -1.5372  *tmpXYZ.y-0.4986   *tmpXYZ.z,
+                                         -0.9689   *tmpXYZ.x +1.8758  *tmpXYZ.y+0.0415   *tmpXYZ.z,
+                                          0.0557   *tmpXYZ.x -0.2040  *tmpXYZ.y+1.0570   *tmpXYZ.z);
+                    // This is now preliminary sRGB. We have to scale this with preset Gamma=2.2, channel-wise!
+                    resultSkyColor.x=( resultSkyColor.x <= 0.0031308 ? 12.92*resultSkyColor.x : 1.055*pow(resultSkyColor.x, 1./2.4) - 0.055);
+                    resultSkyColor.y=( resultSkyColor.y <= 0.0031308 ? 12.92*resultSkyColor.y : 1.055*pow(resultSkyColor.y, 1./2.4) - 0.055);
+                    resultSkyColor.z=( resultSkyColor.z <= 0.0031308 ? 12.92*resultSkyColor.z : 1.055*pow(resultSkyColor.z, 1./2.4) - 0.055);
+		}
 
-		resultSkyColor = vec3(3.2406   *tmpXYZ.x -1.5372  *tmpXYZ.y-0.4986   *tmpXYZ.z, 
-                             -0.9689   *tmpXYZ.x +1.8758  *tmpXYZ.y+0.0415   *tmpXYZ.z, 
-                              0.0557   *tmpXYZ.x -0.2040  *tmpXYZ.y+1.0570   *tmpXYZ.z);
-		// This is now preliminary sRGB. We have to scale this with preset Gamma=2.2, channel-wise!
-        resultSkyColor.x=( resultSkyColor.x <= 0.0031308 ? 12.92*resultSkyColor.x : 1.055*pow(resultSkyColor.x, 1/2.4) - 0.055);
-        resultSkyColor.y=( resultSkyColor.y <= 0.0031308 ? 12.92*resultSkyColor.y : 1.055*pow(resultSkyColor.y, 1/2.4) - 0.055);
-        resultSkyColor.z=( resultSkyColor.z <= 0.0031308 ? 12.92*resultSkyColor.z : 1.055*pow(resultSkyColor.z, 1/2.4) - 0.055);
-
-        // final scaling. GZ: Not sre, maybe do this scale before the Gamma step just above.
+        // final scaling. GZ: Not sure, maybe do this scale before the Gamma step just above.
 		resultSkyColor*=brightnessScale;
 	}
 }

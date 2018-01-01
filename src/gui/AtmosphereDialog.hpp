@@ -68,8 +68,6 @@ protected:
 	Ui_atmosphereDialogForm *ui;
 
 private:
-//        Refraction *refraction;
-//        Extinction *extinction;
 	Skylight *skylight;
 };
 
