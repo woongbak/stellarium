@@ -1291,7 +1291,8 @@ void SolarSystem::draw(StelCore* core)
 	// Draw the elements
 	foreach (const PlanetP& p, systemPlanets)
 	{
-		//if (p->getEnglishName() != "Sun")
+		if ( (p->getEnglishName() != "Sun") ||
+				((p->getEnglishName() == "Sun") && !(core->getSkyDrawer()->getFlagDrawSunAfterAtmosphere())))
 			p->draw(core, maxMagLabel, planetNameFont);
 	}
 

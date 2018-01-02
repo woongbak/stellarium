@@ -193,7 +193,7 @@ LandscapeMgr::LandscapeMgr()
 	, defaultMinimalBrightness(0.01)
 	, flagLandscapeSetsMinimalBrightness(false)
 	, flagAtmosphereAutoEnabling(false)
-	, atmLumFactor(1.3f)
+	, atmLumFactor(1.0f)
 {
 	setObjectName("LandscapeMgr"); // should be done by StelModule's constructor.
 
@@ -288,7 +288,6 @@ void LandscapeMgr::update(double deltaTime)
 		15.f, 40.f, drawer->getExtinctionCoefficient());	// Temperature = 15c, relative humidity = 40%
 
 	// GZ Experimenting with better sunrise, add some factor here.
-	//core->getSkyDrawer()->reportLuminanceInFov(1.3*(3.75+atmosphere->getAverageLuminance()*3.5), true);
 	core->getSkyDrawer()->reportLuminanceInFov(atmLumFactor*(3.75+atmosphere->getAverageLuminance()*3.5), true);
 
 
@@ -467,7 +466,7 @@ void LandscapeMgr::init()
 	setFlagIllumination(conf->value("landscape/flag_enable_illumination_layer", true).toBool());
 	setFlagLabels(conf->value("landscape/flag_enable_labels", true).toBool());
 	// GZ new
-	setAtmLumFactor(conf->value("landscape/atm_lum_factor", 1.3).toFloat());
+	setAtmLumFactor(conf->value("landscape/atm_lum_factor", 1.0).toFloat());
 
 	// Load colors from config file
 	QString defaultColor = conf->value("color/default_color").toString();

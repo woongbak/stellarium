@@ -2259,25 +2259,6 @@ void Planet::draw3dModel(StelCore* core, StelProjector::ModelViewTranformP trans
 			sPainter->setColor(overbright, pow(0.75f, extinctedMag)*overbright, pow(0.42f, 0.9f*extinctedMag)*overbright);
 		}
 
-// GZ noted during rebase: Not sure why rings were taken away from master?
-//		if (rings)
-//		{
-//			// The planet has rings, we need to use depth buffer and adjust the clipping planes to avoid
-//			// reaching the maximum resolution of the depth buffer
-//			const double dist = getEquinoxEquatorialPos(core).length();
-//			double z_near = 0.9*(dist - rings->getSize());
-//			double z_far  = 1.1*(dist + rings->getSize());
-//			if (z_near < 0.0) z_near = 0.0;
-//			double n,f;
-//			core->getClippingPlanes(&n,&f); // Save clipping planes
-//			core->setClippingPlanes(z_near,z_far);
-
-//			drawSphere(sPainter, screenSz, drawOnlyRing);
-
-//			core->setClippingPlanes(n,f);  // Restore old clipping planes
-//		}
-
-		//if (rings) /// GZ This was the previous condition. Not sure why rings were dropped?
 		if(ssm->getFlagUseObjModels() && !objModelPath.isEmpty())
 		{
 			if(!drawObjModel(sPainter, screenSz))
@@ -2294,7 +2275,7 @@ void Planet::draw3dModel(StelCore* core, StelProjector::ModelViewTranformP trans
 		sPainter=Q_NULLPTR;
 	}
 
-	bool allowDrawHalo = true;
+	bool allowDrawHalo = (this!=ssm->getSun()); // We had drawn the sun already before the sphere.
 	if ((this!=ssm->getSun()) && ((this !=ssm->getMoon() && core->getCurrentLocation().planetName=="Earth" )))
 	{
 		// Let's hide halo when inner planet between Sun and observer (or moon between planet and observer).
