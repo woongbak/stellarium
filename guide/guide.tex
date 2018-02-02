@@ -39,25 +39,41 @@
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%---------------------------------------------------------------------------------------
+%   DETECT SWITCH FOR htlatex.
+%---------------------------------------------------------------------------------------
+% We can use package ifpdf to detect pdf creation. However, htlatex needs dvipdfmx in the document global options. 
+% Therefore we need a new command (\ifhtlatex...\else...\fi) that even works before documentclass.
+
+\newif\ifhtlatex
+\ifx\HCode\UnDeFiNeD
+  \htlatexfalse
+\else
+  \htlatextrue
+\fi
+
 %----------------------------------------------------------------------------------------
 %	PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
 %----------------------------------------------------------------------------------------
-
+\ifhtlatex
+\documentclass[12pt,fleqn,dvipdfmx]{book} % Default font size and left-justified equations
+\else
+% There is still also demand of discerning latex from pdflatex at the documentclass line.
+% http://tug.org/pipermail/macostex-archives/2006-January/020022.html
+\ifx\pdfoutput\undefined
+\documentclass[12pt,fleqn,dvipdfmx]{book} % Default font size and left-justified equations
+\else
 \documentclass[12pt,fleqn]{book} % Default font size and left-justified equations
-
+\pdfcompresslevel=9
+\fi
+\fi
 %----------------------------------------------------------------------------------------
 
 \input{structure} % Insert the commands.tex file which contains the majority of the structure behind the template
 \input{version}
-\usepackage{fancyvrb}% provides \VerbatimFootnotes
-\usepackage{marvosym}% For the Zodiac symbols, \Aries etc. 
-\usepackage{tocvsec2} % Allows fine-tuning TOC depth. (to suppress GPL sections in TOC but have them still numbered)
-%\newenvironment{commands}{\begin{wBox}\begin{Verbatim}}{\end{Verbatim}\end{wBox}}
-%\DefineVerbatimEnvironment{commands}{\begin{wBox}\begin{Verbatim}}{\end{Verbatim}\end{wBox}}
-%\lstnewenvironment{commands}{\begin{wBox}\lstset{basicstyle=\ttfamily}\begin{lstlisting}}{\end{lstlisting}\end{wBox}}
 
-%% This can be used to verify general page layout with the command \layout given later.
-%% \usepackage{layout}
+\title{Stellarium User Guide}
+\author{Georg Zotti \and Alexander Wolf (editors)}
 
 %% GZ Some commands which can be used later, like version number etc.
 
@@ -69,14 +85,16 @@
 %----------------------------------------------------------------------------------------
 %	TITLE PAGE
 %----------------------------------------------------------------------------------------
-
+\ifhtlatex
+\maketitle
+\else
 \begingroup
 \thispagestyle{empty}
 \begin{tikzpicture}[remember picture,overlay]
 \coordinate [below=12cm] (midpoint) at (current page.north);
 \node at (current page.north west)
 {\begin{tikzpicture}[remember picture,overlay]
-\node[anchor=north west,inner sep=0pt] at (0,0) {\includegraphics[width=\paperwidth]{bookcover_cygnus}}; % Background image
+\node[anchor=north west,inner sep=0pt] at (0,0) {\includegraphics[width=\paperwidth]{bookcover_cygnus.png}}; % Background image
 \draw[anchor=north] (midpoint) node [fill=ocre!30!white,fill opacity=0.6,text opacity=1,inner sep=1cm]%
      {\Huge\centering\bfseries\sffamily\parbox[c][][t]{\paperwidth}%
                                               {\centering Stellarium \StelVersion\space User Guide\\[18pt] % Book title
@@ -87,7 +105,7 @@
 \end{tikzpicture}
 \vfill
 \endgroup
-
+\fi
 %----------------------------------------------------------------------------------------
 %	COPYRIGHT PAGE
 %----------------------------------------------------------------------------------------
@@ -108,7 +126,12 @@
   \end{minipage}
 }\\}{}
 
-\noindent \textsc{stellarium.org}\\ % URL
+\noindent%
+\ifhtlatex
+\url{http://stellarium.org}
+\else
+\textsc{stellarium.org}\\ % URL
+\fi
 
 \noindent Permission is granted to copy, distribute and/or modify 
 this document under the terms of the GNU Free Documentation License, 
@@ -131,12 +154,12 @@ implying a violation of copyright law.}}\\
 %	TABLE OF CONTENTS
 %----------------------------------------------------------------------------------------
 
-\chapterimage{chapter-t1-bg} % Table of contents heading image
+\chapterimage{chapter-t1-bg.png} % Table of contents heading image
 
 \pagestyle{empty} % No headers
-
-\tableofcontents % Print the table of contents itself
-
+\ifpdf
+ \tableofcontents % Print the table of contents itself
+\fi
 \cleardoublepage % Forces the first chapter to start on an odd page so it's on the right
 
 \pagestyle{fancy} % Print headers again
@@ -153,7 +176,7 @@ implying a violation of copyright law.}}\\
 %----------------------------------------------------------------------------------------
 %	CHAPTER 1 (Introduction)
 %----------------------------------------------------------------------------------------
-\chapterimage{chapter-t2-bg} % Chapter heading image
+\chapterimage{chapter-t2-bg.png} % Chapter heading image
 
 \include{ch_introduction}
 
@@ -163,7 +186,7 @@ implying a violation of copyright law.}}\\
 %----------------------------------------------------------------------------------------
 %	CHAPTER 2 (Installation)
 %----------------------------------------------------------------------------------------
-% \chapterimage{chapter-t2-bg} % Chapter heading image Did not change...
+% \chapterimage{chapter-t2-bg.png} % Chapter heading image Did not change...
 
 \include{ch_getting_started}
 
@@ -189,7 +212,7 @@ implying a violation of copyright law.}}\\
 %----------------------------------------------------------------------------------------
 %	CHAPTER 5 (Advanced Use)
 %----------------------------------------------------------------------------------------
-\chapterimage{chapter-t3-bg} % Chapter heading image
+\chapterimage{chapter-t3-bg.png} % Chapter heading image
 
 \include{ch_advanced_use}
 %% GZ: I replaced the old chapter with course notes I have developed in late 2015. To get the old version, activate next line instead.
@@ -200,9 +223,11 @@ implying a violation of copyright law.}}\\
 %----------------------------------------------------------------------------------------
 %	PART III
 %----------------------------------------------------------------------------------------
+
+
 \renewcommand{\StelTOCdepth}{0}
 \part{Extending Stellarium}
-\chapterimage{chapter-t3-bg} % Chapter heading image
+%\chapterimage{chapter-t3-bg.png} % Chapter heading image
 \include{ch_plugins}
 \include{plg_interfaces} % TUI, RemoteControl, RemoteSync, (2018: D-BUS?)
 \include{plg_catalogs}
@@ -223,7 +248,7 @@ implying a violation of copyright law.}}\\
 %----------------------------------------------------------------------------------------
 %	CHAPTER 16 (Astronomical Concepts)
 %----------------------------------------------------------------------------------------
-\chapterimage{chapter-t4-bg} % Chapter heading image
+\chapterimage{chapter-t4-bg.png} % Chapter heading image
 \include{ch_astronomical_concepts}
 
 %----------------------------------------------------------------------------------------
@@ -235,26 +260,24 @@ implying a violation of copyright law.}}\\
 %----------------------------------------------------------------------------------------
 %	CHAPTER 18 (A Short Sky Guide)
 %----------------------------------------------------------------------------------------
-
 \include{ch_sky_guide}
 
 %----------------------------------------------------------------------------------------
 %	CHAPTER 19 (Exercises)
 %----------------------------------------------------------------------------------------
-\chapterimage{chapter-t4-bg} % Chapter heading image
+\chapterimage{chapter-t4-bg.png} % Chapter heading image
 \include{ch_exercises}
 
 %----------------------------------------------------------------------------------------
 %	PART V
 %----------------------------------------------------------------------------------------
-
 \appendix
 %% GZ reset counter to avoid section entries in Appendix.
 \renewcommand{\StelTOCdepth}{0}% reset this to 0 before appendix!
 
 \part{Appendices}
 \renewcommand{\chaptername}{Appendix}
-\chapterimage{chapter-t1-bg} % Chapter heading image
+\chapterimage{chapter-t1-bg.png} % Chapter heading image
 
 %----------------------------------------------------------------------------------------
 %	CHAPTER A (Hotkeys) -- N.B. "H" :-)
@@ -318,15 +341,17 @@ implying a violation of copyright law.}}\\
 %	INDEX
 %----------------------------------------------------------------------------------------
 
+\ifhtlatex
+% No index for now!
+\else
 \cleardoublepage
 \phantomsection
 \setlength{\columnsep}{0.75cm}
 \addcontentsline{toc}{chapter}{\textcolor{ocre}{Index}}
 \markboth{\textsf{\textbf{INDEX}}}{\textsf{\textbf{INDEX}}}
 \printindex
-
+\fi
 %----------------------------------------------------------------------------------------
-
 \end{document}
 
 %%% Local Variables: 

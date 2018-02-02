@@ -33,21 +33,22 @@
 //! @ingroup exoplanets
 typedef struct
 {
-	QString planetName;		//! Exoplanet designation
+	QString planetName;			//! Exoplanet designation
 	QString planetProperName;	//! Exoplanet proper name
-	float mass;			//! Exoplanet mass (Mjup)
-	float radius;			//! Exoplanet radius (Rjup)
-	float period;			//! Exoplanet period (days)
-	float semiAxis;			//! Exoplanet orbit semi-major axis (AU)
-	float eccentricity;		//! Exoplanet orbit eccentricity
-	float inclination;		//! Exoplanet orbit inclination
-	float angleDistance;		//! Exoplanet angle distance
-	int discovered;			//! Exoplanet discovered year
-	QString pclass;			//! Exoplanet classification from host star spectral type (F, G, K, M), habitable zone (hot, warm, cold) and size (miniterran, subterran, terran, superterran, jovian, neptunian)
-	int EqTemp;			//! Exoplanet equilibrium temperature in kelvins (K) assuming a 0.3 bond albedo (Earth = 255 K).
-	int ESI;			//! Exoplanet Earth Similarity Index
-	QString detectionMethod;	//! Method of detection of exoplanet
-	bool conservative;		//! Conservative sample
+	float mass;				//! Exoplanet mass (Mjup)
+	float radius;				//! Exoplanet radius (Rjup)
+	float period;				//! Exoplanet period (days)
+	float semiAxis;				//! Exoplanet orbit semi-major axis (AU)
+	float eccentricity;			//! Exoplanet orbit eccentricity
+	float inclination;				//! Exoplanet orbit inclination
+	float angleDistance;			//! Exoplanet angle distance
+	int discovered;				//! Exoplanet discovered year
+	QString pclass;				//! Exoplanet classification from host star spectral type (F, G, K, M), habitable zone (hot, warm, cold) and size (miniterran, subterran, terran, superterran, jovian, neptunian)
+	int EqTemp;				//! Exoplanet equilibrium temperature in kelvins (K) assuming a 0.3 bond albedo (Earth = 255 K).
+	int flux;					//! Average stellar flux of the planet in Earth fluxes (Earth = 1.0 SE).
+	int ESI;					//! Exoplanet Earth Similarity Index
+	QString detectionMethod;		//! Method of detection of exoplanet
+	bool conservative;			//! Conservative sample
 } exoplanetData;
 
 class StelPainter;
@@ -195,9 +196,13 @@ private:
 	static bool distributionMode;
 	static bool timelineMode;
 	static bool habitableMode;
-	static bool showDesignations;
+	static bool showDesignations;	
+	static int temperatureScaleID;
 
 	void draw(StelCore* core, StelPainter *painter);
+
+	QString getTemperatureScaleUnit() const;
+	float getTemperature(float temperature) const;
 
 	int EPCount;
 	int PHEPCount;

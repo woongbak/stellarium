@@ -52,7 +52,7 @@
 
 // Define version of valid Stellarium DSO Catalog
 // This number must be incremented each time the content or file format of the stars catalogs change
-static const QString StellariumDSOCatalogVersion = "3.3";
+static const QString StellariumDSOCatalogVersion = "3.4";
 
 void NebulaMgr::setLabelsColor(const Vec3f& c) {Nebula::labelColor = c; emit labelsColorChanged(c);}
 const Vec3f NebulaMgr::getLabelsColor(void) const {return Nebula::labelColor;}
@@ -747,7 +747,7 @@ void NebulaMgr::loadNebulaSet(const QString& setName)
 	if (flagConverter)
 	{
 		if (!srcCatalogPath.isEmpty())
-			convertDSOCatalog(srcCatalogPath, StelFileMgr::findFile("nebulae/" + setName + "/catalog.pack"), flagDecimalCoordinates);
+			convertDSOCatalog(srcCatalogPath, StelFileMgr::findFile("nebulae/" + setName + "/catalog.pack", StelFileMgr::New), flagDecimalCoordinates);
 		else
 			qWarning() << "ERROR convert catalogue, because source data set is not exists for " << setName;
 

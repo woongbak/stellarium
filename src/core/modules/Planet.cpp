@@ -299,10 +299,10 @@ void Planet::init()
 		qDebug() << "Planet::init(): Non-empty static map. This is a programming error, but we can fix that.";
 		vMagAlgorithmMap.clear();
 	}
-	vMagAlgorithmMap.insert(Planet::Expl_Sup_2013,	"ExpSup2013");
-	vMagAlgorithmMap.insert(Planet::Expl_Sup_1992,	"ExpSup1992");
+	vMagAlgorithmMap.insert(Planet::ExplanatorySupplement_2013,	"ExpSup2013");
+	vMagAlgorithmMap.insert(Planet::ExplanatorySupplement_1992,	"ExpSup1992");
 	vMagAlgorithmMap.insert(Planet::Mueller_1893,	"Mueller1893"); // better name	
-	vMagAlgorithmMap.insert(Planet::Astr_Alm_1984,	"AstrAlm1984"); // consistent name
+	vMagAlgorithmMap.insert(Planet::AstronomicalAlmanac_1984,	"AstrAlm1984"); // consistent name
 	vMagAlgorithmMap.insert(Planet::Generic,	"Generic"),	
 	vMagAlgorithmMap.insert(Planet::UndefinedAlgorithm, "");
 }
@@ -476,7 +476,10 @@ QString Planet::getInfoString(const StelCore* core, const InfoStringGroup& flags
 		if (distanceAu < 0.1)
 		{
 			distAU = QString::number(distanceAu, 'f', 6);
-			distKM = QString::number(distanceKm, 'f', 3);		}
+			distKM = QString::number(distanceKm, 'f', 3);
+			// TRANSLATORS: Unit of measure for distance - kilometers
+			km = qc_("km", "distance");
+		}
 		else
 		{
 			distAU = QString::number(distanceAu, 'f', 3);
@@ -560,13 +563,20 @@ QString Planet::getInfoString(const StelCore* core, const InfoStringGroup& flags
 	double siderealDay = getSiderealDay();
 	if (flags&Extra)
 	{
+		static SolarSystem *ssystem=GETSTELMODULE(SolarSystem);
+		PlanetP earth = ssystem->getEarth();
+		PlanetP currentPlanet = core->getCurrentPlanet();
+		bool onEarth = (core->getCurrentPlanet()==earth);
+
 		// This is a string you can activate for debugging. It shows the distance between observer and center of the body you are standing on.
 		// May be helpful for debugging critical parallax corrections for eclipses.
 		// For general use, find a better location first.
 		// oss << q_("Planetocentric distance &rho;: %1 (km)").arg(core->getCurrentObserver()->getDistanceFromCenter() * AU) <<"<br>";
-		if (siderealPeriod>0)
+
+		// TRANSLATORS: Unit of measure for period - days
+		QString days = qc_("days", "duration");
+		if (siderealPeriod>0.0)
 		{
-			QString days = qc_("days", "duration");
 			// Sidereal (orbital) period for solar system bodies in days and in Julian years (symbol: a)
 			oss << QString("%1: %2 %3 (%4 a)").arg(q_("Sidereal period"), QString::number(siderealPeriod, 'f', 2), days, QString::number(siderealPeriod/365.25, 'f', 3)) << "<br />";
 
@@ -580,38 +590,22 @@ QString Planet::getInfoString(const StelCore* core, const InfoStringGroup& flags
 				oss << q_("The period of rotation is chaotic") << "<br />";
 			}
 		}
+
+		double siderealPeriodCurrentPlanet = currentPlanet->getSiderealPeriod();
+		QString celestialObject = getEnglishName();
+		if (celestialObject!="Sun")
+			celestialObject = getParent()->getEnglishName();
+		if (siderealPeriodCurrentPlanet > 0.0 && siderealPeriod > 0.0 && currentPlanet->getPlanetType()==Planet::isPlanet && (getPlanetType()==Planet::isPlanet || currentPlanet->getEnglishName()==celestialObject))
+		{
+			double sp = qAbs(1/(1/siderealPeriodCurrentPlanet - 1/siderealPeriod));
+			// Synodic period for major planets in days and in Julian years (symbol: a)
+			oss << QString("%1: %2 %3 (%4 a)").arg(q_("Synodic period")).arg(QString::number(sp, 'f', 2)).arg(days).arg(QString::number(sp/365.25, 'f', 3)) << "<br />";
+		}
+
 		if (englishName != "Sun")
 		{
 			const Vec3d& observerHelioPos = core->getObserverHeliocentricEclipticPos();
 			const double elongation = getElongation(observerHelioPos);
-			QString moonPhase = "";
-			if (englishName=="Moon" && core->getCurrentLocation().planetName=="Earth")
-			{
-				double eclJDE = GETSTELMODULE(SolarSystem)->getEarth()->getRotObliquity(core->getJDE());
-				double ra_equ, dec_equ, lambdaMoon, lambdaSun, beta;
-				StelUtils::rectToSphe(&ra_equ,&dec_equ, getEquinoxEquatorialPos(core));
-				StelUtils::equToEcl(ra_equ, dec_equ, eclJDE, &lambdaMoon, &beta);
-				StelUtils::rectToSphe(&ra_equ,&dec_equ, GETSTELMODULE(SolarSystem)->searchByEnglishName("Sun")->getEquinoxEquatorialPos(core));
-				StelUtils::equToEcl(ra_equ, dec_equ, eclJDE, &lambdaSun, &beta);
-				int deltaLong = (int)(lambdaMoon*180.f/M_PI - lambdaSun*180.f/M_PI);
-				if (deltaLong<0) deltaLong+=360;
-				if (deltaLong==45)
-					moonPhase = qc_("Waxing Crescent", "Moon phase");
-				if (deltaLong==90)
-					moonPhase = qc_("First Quarter", "Moon phase");
-				if (deltaLong==135)
-					moonPhase = qc_("Waxing Gibbous", "Moon phase");
-				if (deltaLong==180)
-					moonPhase = qc_("Full Moon", "Moon phase");
-				if (deltaLong==225)
-					moonPhase = qc_("Waning Gibbous", "Moon phase");
-				if (deltaLong==270)
-					moonPhase = qc_("Third Quarter", "Moon phase");
-				if (deltaLong==315)
-					moonPhase = qc_("Waning Crescent", "Moon phase");
-				if (deltaLong==0 || deltaLong==360)
-					moonPhase = qc_("New Moon", "Moon phase");
-			}
 
 			QString pha, elo;
 			if (withDecimalDegree)
@@ -629,17 +623,58 @@ QString Planet::getInfoString(const StelCore* core, const InfoStringGroup& flags
 			oss << QString("%1: %2").arg(q_("Elongation"), elo) << "<br />";
 			oss << QString("%1: %2%").arg(q_("Illuminated"), QString::number(getPhase(observerHelioPos) * 100, 'f', 1)) << "<br />";
 			oss << QString("%1: %2").arg(q_("Albedo"), QString::number(getAlbedo(), 'f', 3)) << "<br />";
-			if (!moonPhase.isEmpty())
-				oss << QString("%1: %2").arg(q_("Phase"), moonPhase) << "<br />";
 
+			if (englishName=="Moon" && onEarth)
+			{
+				QString moonPhase = "";
+				double eclJDE = earth->getRotObliquity(core->getJDE());
+				double ra_equ, dec_equ, lambdaMoon, lambdaSun, beta;
+				StelUtils::rectToSphe(&ra_equ,&dec_equ, getEquinoxEquatorialPos(core));
+				StelUtils::equToEcl(ra_equ, dec_equ, eclJDE, &lambdaMoon, &beta);
+				StelUtils::rectToSphe(&ra_equ,&dec_equ, ssystem->getSun()->getEquinoxEquatorialPos(core));
+				StelUtils::equToEcl(ra_equ, dec_equ, eclJDE, &lambdaSun, &beta);
+				double deltaLong = lambdaMoon*180.f/M_PI - lambdaSun*180.f/M_PI;
+				if (deltaLong<0.) deltaLong += 360.;
+				int deltaLongI = (int)deltaLong;
+				if (deltaLongI==45)
+					moonPhase = qc_("Waxing Crescent", "Moon phase");
+				if (deltaLongI==90)
+					moonPhase = qc_("First Quarter", "Moon phase");
+				if (deltaLongI==135)
+					moonPhase = qc_("Waxing Gibbous", "Moon phase");
+				if (deltaLongI==180)
+					moonPhase = qc_("Full Moon", "Moon phase");
+				if (deltaLongI==225)
+					moonPhase = qc_("Waning Gibbous", "Moon phase");
+				if (deltaLongI==270)
+					moonPhase = qc_("Third Quarter", "Moon phase");
+				if (deltaLongI==315)
+					moonPhase = qc_("Waning Crescent", "Moon phase");
+				if (deltaLongI==0 || deltaLongI==360)
+					moonPhase = qc_("New Moon", "Moon phase");
+
+				double age = deltaLong*29.530588853/360.;
+				oss << QString("%1: %2 %3").arg(q_("Moon age"), QString::number(age, 'f', 1), q_("days old"));
+				if (!moonPhase.isEmpty())
+					oss << QString(" (%4)").arg(moonPhase);
+				oss << "<br />";
+			}
 		}
+
 		if (englishName=="Sun")
 		{
 			// Only show during eclipse, show percent?
-			static SolarSystem *ssystem=GETSTELMODULE(SolarSystem);
-			float eclipseFactor = 100.f*(1.f-ssystem->getEclipseFactor(core));
-			if (eclipseFactor>1.e-7) // needed to avoid false display of 1e-14 or so.
-				oss << QString("%1: %2%").arg(q_("Eclipse Factor")).arg(QString::number(eclipseFactor, 'f', 2)) << "<br />";
+			float eclipseObscuration = 100.f*(1.f-ssystem->getEclipseFactor(core));
+			if (eclipseObscuration>1.e-7) // needed to avoid false display of 1e-14 or so.
+			{
+				oss << QString("%1: %2%").arg(q_("Eclipse obscuration")).arg(QString::number(eclipseObscuration, 'f', 2)) << "<br />";
+				if (onEarth)
+				{
+					PlanetP moon = ssystem->getMoon();
+					const float eclipseMagnitude = (0.5*angularSize + (moon->getAngularSize(core)*M_PI/180.)/moon->getInfoMap(core)["scale"].toFloat() - getJ2000EquatorialPos(core).angle(moon->getJ2000EquatorialPos(core)))/angularSize;
+					oss << QString("%1: %2").arg(q_("Eclipse magnitude")).arg(QString::number(eclipseMagnitude, 'f', 3)) << "<br />";
+				}
+			}
 
 		}
 	}
@@ -672,6 +707,7 @@ QVariantMap Planet::getInfoMap(const StelCore *core) const
 		// TBD: Is there ANY reason to keep "type"="Planet" and add a "ptype"=getPlanetTypeString() field?
 		map.insert("velocity", getEclipticVelocity().toString());
 		map.insert("heliocentric-velocity", getHeliocentricEclipticVelocity().toString());
+		map.insert("scale", sphereScale);
 
 	}
 
@@ -1363,7 +1399,7 @@ float Planet::getVMagnitude(const StelCore* core) const
 		switch (Planet::getApparentMagnitudeAlgorithm())
 		{
 			case UndefinedAlgorithm:	// The most recent solution should be activated by default			
-			case Expl_Sup_2013:
+			case ExplanatorySupplement_2013:
 			{
 				// GZ2017: This is taken straight from the Explanatory Supplement to the Astronomical Ephemeris 2013 (chap. 10.3)
 				// AW2017: Updated data from Errata in The Explanatory Supplement to the Astronomical Almanac (3rd edition, 1st printing)
@@ -1424,7 +1460,7 @@ float Planet::getVMagnitude(const StelCore* core) const
 				break;
 			}
 
-			case Expl_Sup_1992:
+			case ExplanatorySupplement_1992:
 			{
 				// Algorithm provided by Pere Planesas (Observatorio Astronomico Nacional)
 				// GZ2016: Actually, this is taken straight from the Explanatory Supplement to the Astronomical Ephemeris 1992! (chap. 7.12)
@@ -1467,9 +1503,11 @@ float Planet::getVMagnitude(const StelCore* core) const
 
 				break;
 			}
+
 			case Mueller_1893:
 			{
 				// (1)
+				// Publicationen des Astrophysikalischen Observatoriums zu Potsdam, 8, 366, 1893.
 				if (englishName=="Mercury")
 				{
 					double ph50=phaseDeg-50.0;
@@ -1507,7 +1545,7 @@ float Planet::getVMagnitude(const StelCore* core) const
 
 				break;
 			}
-			case Astr_Alm_1984:
+			case AstronomicalAlmanac_1984:
 			{
 				// (2)
 				if (englishName=="Mercury")
@@ -3156,5 +3194,5 @@ void Planet::update(int deltaTime)
 void Planet::setApparentMagnitudeAlgorithm(QString algorithm)
 {
 	// sync default value with ViewDialog and SolarSystem!
-	vMagAlgorithm = vMagAlgorithmMap.key(algorithm, Planet::Expl_Sup_2013);
+	vMagAlgorithm = vMagAlgorithmMap.key(algorithm, Planet::ExplanatorySupplement_2013);
 }

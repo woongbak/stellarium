@@ -1,12 +1,34 @@
+/*
+ * Copyright (C) 2017 Alessandro Siniscalchi <asiniscalchi@gmail.com>
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
+ */
+
 #include "TelescopeClientINDI.hpp"
 
 #include <QDebug>
+#include <cmath>
+#include <limits>
 
 #include "StelCore.hpp"
 #include "StelUtils.hpp"
+#include "indibase/inditelescope.h"
+#include "INDIControlWidget.hpp"
 
 TelescopeClientINDI::TelescopeClientINDI(const QString &name, const QString &params):
-    TelescopeClient(name)
+	TelescopeClient(name)
 {
 	qDebug() << "TelescopeClientINDI::TelescopeClientINDI";
 
@@ -75,3 +97,75 @@ bool TelescopeClientINDI::hasKnownPosition() const
 	return mConnection.isDeviceConnected();
 }
 
+int TelescopeClientINDI::toINDISpeed(double speed) const
+{
+	speed = std::abs(speed);
+
+	if (speed < std::numeric_limits<double>::epsilon())
+		return INDIConnection::SLEW_STOP;
+	else if (speed <= 0.25)
+		return INDI::Telescope::SLEW_GUIDE;
+	else if (speed <= 0.5)
+		return INDI::Telescope::SLEW_CENTERING;
+	else if (speed <= 0.75)
+		return INDI::Telescope::SLEW_FIND;
+	else
+		return INDI::Telescope::SLEW_MAX;
+}
+
+void TelescopeClientINDI::move(double angle, double speed)
+{
+	if (angle < 0.0 || angle >= 360.0)
+	{
+		qWarning() << "TelescopeClientINDI::move angle " << angle << " out of range [0,360)";
+		return;
+	}
+
+	if (speed < 0.0 || speed > 1.0)
+	{
+		qWarning() << "TelescopeClientINDI::move speed " << speed << "out of range [0,1]";
+		return;
+	}
+
+	double rad = angle * M_PI / 180.0;
+	double vEst = speed * std::sin(rad);
+	double vNorth = speed * std::cos(rad);
+
+	int indiSpeedE = toINDISpeed(vEst);
+	int indiSpeedN = toINDISpeed(vNorth);
+
+	if (angle < 90)
+	{
+		mConnection.moveNorth(indiSpeedN);
+		mConnection.moveEast(indiSpeedE);
+		mConnection.moveSouth(INDIConnection::SLEW_STOP);
+		mConnection.moveWest(INDIConnection::SLEW_STOP);
+	}
+	else if (angle < 180)
+	{
+		mConnection.moveNorth(INDIConnection::SLEW_STOP);
+		mConnection.moveEast(indiSpeedE);
+		mConnection.moveSouth(indiSpeedN);
+		mConnection.moveWest(INDIConnection::SLEW_STOP);
+	}
+	else if (angle < 270)
+	{
+		mConnection.moveNorth(INDIConnection::SLEW_STOP);
+		mConnection.moveEast(INDIConnection::SLEW_STOP);
+		mConnection.moveSouth(indiSpeedN);
+		mConnection.moveWest(indiSpeedE);
+	}
+	else
+	{
+		mConnection.moveNorth(indiSpeedN);
+		mConnection.moveEast(INDIConnection::SLEW_STOP);
+		mConnection.moveSouth(INDIConnection::SLEW_STOP);
+		mConnection.moveWest(indiSpeedE);
+	}
+}
+
+
+QWidget *TelescopeClientINDI::createControlWidget(QSharedPointer<TelescopeClient> telescope, QWidget *parent) const
+{
+	return new INDIControlWidget(telescope, parent);
+}

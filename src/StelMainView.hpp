@@ -28,6 +28,7 @@
 #ifdef OPENGL_DEBUG_LOGGING
 #include <QOpenGLDebugMessage>
 #endif
+#include "StelUtils.hpp"
 
 class StelGLWidget;
 class StelGraphicsScene;
@@ -53,7 +54,7 @@ class StelMainView : public QGraphicsView
 	Q_PROPERTY(bool flagUseButtonsBackground   READ getFlagUseButtonsBackground   WRITE setFlagUseButtonsBackground   NOTIFY flagUseButtonsBackgroundChanged)
 	Q_PROPERTY(bool flagCursorTimeout          READ getFlagCursorTimeout          WRITE setFlagCursorTimeout          NOTIFY flagCursorTimeoutChanged)
 	Q_PROPERTY(double cursorTimeout            READ getCursorTimeout              WRITE setCursorTimeout              NOTIFY cursorTimeoutChanged)
-
+	Q_PROPERTY(Vec3f skyBackgroundColor        READ getSkyBackgroundColor         WRITE setSkyBackgroundColor         NOTIFY skyBackgroundColorChanged)
 
 public:
 	//! Contains some basic info about the OpenGL context used
@@ -132,12 +133,12 @@ public slots:
 
 	//! Get the state of the mouse cursor timeout flag
 	bool getFlagCursorTimeout() {return flagCursorTimeout;}
-	//! Get the mouse cursor timeout in seconds
-	double getCursorTimeout() const {return cursorTimeout;}
 	//! Get the state of the mouse cursor timeout flag
-	void setFlagCursorTimeout(bool b) {flagCursorTimeout=b; emit flagCursorTimeoutChanged(b);}
+	void setFlagCursorTimeout(bool b);
+	//! Get the mouse cursor timeout in seconds
+	double getCursorTimeout() const {return cursorTimeoutTimer->interval() / 1000.0;}
 	//! Set the mouse cursor timeout in seconds
-	void setCursorTimeout(double t) {cursorTimeout=t; emit cursorTimeoutChanged(t);}
+	void setCursorTimeout(double t) {cursorTimeoutTimer->setInterval(t * 1000); emit cursorTimeoutChanged(t);}
 
 	//! Set the minimum frames per second. Usually this minimum will be switched to after there are no
 	//! user events for some seconds to save power. However, if can be useful to set this to a high
@@ -167,6 +168,11 @@ public slots:
 	//! Get the state of the flag of usage background for GUI buttons
 	bool getFlagUseButtonsBackground() { return flagUseButtonsBackground; }
 
+	//! Set the sky background color. (Actually forwards to the StelRootItem.)  Everything else than black creates an work of art!
+	void setSkyBackgroundColor(Vec3f color);
+	//! Get the sky background color. (Actually retrieves from the StelRootItem.)  Everything else than black creates an work of art!
+	Vec3f getSkyBackgroundColor();
+
 protected:
 	//! Hack to determine current monitor pixel ratio
 	//! @todo Find a better way to handle this
@@ -176,8 +182,8 @@ protected:
 	//! Handle window resized events, and change the size of the underlying
 	//! QGraphicsScene to be the same
 	virtual void resizeEvent(QResizeEvent* event) Q_DECL_OVERRIDE;
-//	//! Wake up mouse cursor (if it was hidden)
-//	virtual void mouseMoveEvent(QMouseEvent *event) Q_DECL_OVERRIDE;
+	//! Wake up mouse cursor (if it was hidden)
+	virtual void mouseMoveEvent(QMouseEvent *event) Q_DECL_OVERRIDE;
 signals:
 	//! emitted when saveScreenShot is requested with saveScreenShot().
 	//! doScreenshot() does the actual work (it has to do it in the main
@@ -195,6 +201,7 @@ signals:
 	void flagInvertScreenShotColorsChanged(bool b);
 	void flagOverwriteScreenshotsChanged(bool b);
 	void flagUseButtonsBackgroundChanged(bool b);
+	void skyBackgroundColorChanged(Vec3f color);
 	void flagCursorTimeoutChanged(bool b);
 	void cursorTimeoutChanged(double t);
 
@@ -202,6 +209,8 @@ private slots:
 	// Do the actual screenshot generation in the main thread with this method.
 	void doScreenshot(void);
 	void minFPSUpdate();
+	void hideCursor();
+
 #ifdef OPENGL_DEBUG_LOGGING
 	void logGLMessage(const QOpenGLDebugMessage& debugMessage);
 	void contextDestroyed();
@@ -213,8 +222,6 @@ private slots:
 private:
 	//! The graphics scene notifies us when a draw finished, so that we can queue the next one
 	void drawEnded();
-	//! hide mouse cursor after some time if configured.
-	void handleMouseCursorTimeout(const double now);
 	//! Returns the desired OpenGL format settings,
 	//! on desktop this corresponds to a GL 2.1 context,
 	//! with 32bit RGBA buffer and 24/8 depth/stencil buffer
@@ -252,9 +259,9 @@ private:
 	QString screenShotPrefix;
 	QString screenShotDir;
 
-	// Number of seconds before the mouse cursor disappears
-	double cursorTimeout;
 	bool flagCursorTimeout;
+	//! Timer that triggers with the cursor timeout.
+	QTimer* cursorTimeoutTimer;
 
 	bool flagUseButtonsBackground;
 
@@ -265,6 +272,7 @@ private:
 	//! The maximum desired frame rate in frame per second.
 	float maxfps;
 	QTimer* minFpsTimer;
+
 
 #ifdef OPENGL_DEBUG_LOGGING
 	QOpenGLDebugLogger* glLogger;

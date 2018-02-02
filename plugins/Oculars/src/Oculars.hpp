@@ -98,8 +98,9 @@ class Oculars : public StelModule
 	Q_PROPERTY(bool flagScaleImageCircle   READ getFlagScaleImageCircle    WRITE setFlagScaleImageCircle    NOTIFY flagScaleImageCircleChanged)// flag scale image circle scaleImageCirclCheckBox
 	Q_PROPERTY(bool flagSemiTransparency   READ getFlagUseSemiTransparency WRITE setFlagUseSemiTransparency NOTIFY flagUseSemiTransparencyChanged) 
 	Q_PROPERTY(bool flagDMSDegrees         READ getFlagDMSDegrees          WRITE setFlagDMSDegrees          NOTIFY flagDMSDegreesChanged)
-	Q_PROPERTY(bool flagAutosetMountForCCD READ getFlagAutosetMountForCCD  WRITE setFlagAutosetMountForCCD  NOTIFY flagAutosetMountForCCDChanged )
+	Q_PROPERTY(bool flagAutosetMountForCCD READ getFlagAutosetMountForCCD  WRITE setFlagAutosetMountForCCD  NOTIFY flagAutosetMountForCCDChanged)
 
+	Q_PROPERTY(double arrowButtonScale     READ getArrowButtonScale        WRITE setArrowButtonScale        NOTIFY arrowButtonScaleChanged)
 
 	//BM: Temporary, until the GUI is finalized and some other method of getting
 	//info from the main class is implemented.
@@ -149,27 +150,19 @@ public slots:
 	void incrementLensIndex();
 	void disableLens();
 
-
-	// GZ For now (2017-11), have duplicated setters. But why do we need the string-based methods?
-	void rotateCCD(QString amount); //!< amount must be a number. Overload of:
 	void rotateCCD(int amount);     //!< amount must be a number. This adds to the current rotation.
-	double getSelectedCCDRotationAngle(void) const; // {return 0;}
-	void setSelectedCCDRotationAngle(double angle); // {selectedCCDRotationAngle=angle; emit selectedCCDRotationAngleChanged(angle);}
+	double getSelectedCCDRotationAngle(void) const; //!< get rotation angle from currently selected CCD
+	void setSelectedCCDRotationAngle(double angle); //!< set rotation angle for currently selected CCD
 	
-
-	void selectCCDAtIndex(QString indexString); //!< indexString must be an integer, in the range of -1:ccds.count()
 	void selectCCDAtIndex(int index);           //!< index in the range of -1:ccds.count(), else call is ignored
 	int getSelectedCCDIndex() const {return selectedCCDIndex; }
 
-	void selectOcularAtIndex(QString indexString);  //!< indexString must be an integer, in the range of -1:oculars.count()
 	void selectOcularAtIndex(int index);            //!< index in the range of -1:oculars.count(), else call is ignored
 	int getSelectedOcularIndex() const {return selectedOcularIndex; }
 
-	void selectTelescopeAtIndex(QString indexString);  //!< indexString must be an integer, in the range of -1:telescopes.count()
 	void selectTelescopeAtIndex(int index);            //!< index in the range of -1:telescopes.count(), else call is ignored
 	int getSelectedTelescopeIndex() const {return selectedTelescopeIndex; }
 
-	void selectLensAtIndex(QString indexString); //!< indexString must be an integer, in the range -1:lense.count()
 	void selectLensAtIndex(int index);           //!< index in the range -1:lenses.count(), else call is ignored
 	int getSelectedLensIndex() const {return selectedLensIndex; }
 
@@ -213,6 +206,9 @@ public slots:
 	void setFlagShowResolutionCriterions(const bool b);
 	bool getFlagShowResolutionCriterions(void) const;
 
+	void setArrowButtonScale(const double val);
+	double getArrowButtonScale() const;
+
 	void setFlagHideGridsLines(const bool b);
 	bool getFlagHideGridsLines(void) const;
 	
@@ -235,6 +231,7 @@ signals:
 	void flagAutosetMountForCCDChanged(bool value);
 	void flagUseSemiTransparencyChanged(bool value);
 	void flagShowResolutionCriterionsChanged(bool value);
+	void arrowButtonScaleChanged(double value);
 	void flagInitDirectionUsageChanged(bool value);
 	void flagInitFOVUsageChanged(bool value);
 	void flagRequireSelectionChanged(bool value);
@@ -311,7 +308,8 @@ private:
 	int selectedOcularIndex;        //!< index of the current ocular, in the range of -1:oculars.count().  -1 means no ocular is selected.
 	int selectedTelescopeIndex;     //!< index of the current telescope, in the range of -1:telescopes.count(). -1 means none is selected.
 	int selectedLensIndex;          //!< index of the current lens, in the range of -1:lense.count(). -1 means no lens is selected
-	double selectedCCDRotationAngle;//!< GZ 2017-11 NOT SURE YET HOW TO PROPERLY DEAL WITH IT.
+	double selectedCCDRotationAngle;//!< allows rotating via property/remotecontrol API
+	double arrowButtonScale;        //!< allows scaling of the GUI "previous/next" Ocular/CCD/Telescope etc. buttons
 
 	QFont font;			//!< The font used for drawing labels.
 	bool flagShowCCD;		//!< flag used to track if we are in CCD mode.

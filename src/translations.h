@@ -39,6 +39,14 @@ class Translations
 		N_("E");
 		// TRANSLATORS: Cardinals names: West
 		N_("W");
+		// TRANSLATORS: Ordinals names: Northeast
+		N_("NE");
+		// TRANSLATORS: Ordinals names: Southeast
+		N_("SE");
+		// TRANSLATORS: Ordinals names: Southwest
+		N_("SW");
+		// TRANSLATORS: Ordinals names: Northwest
+		N_("NW");
 
 		// =====================================================================
 		// List of types solar system bodies
@@ -477,6 +485,8 @@ class Translations
 		N_("Western");
 		// TRANSLATORS: Name of the sky culture
 		N_("Western (H.A.Rey)");
+		// TRANSLATORS: Name of the sky culture
+		N_("Western (O.Hlad)");
 
 		
 		// =====================================================================
@@ -674,5 +684,8 @@ class Translations
 		N_("%1 already exists.\nDo you want to replace it?");
 		N_("&Yes");
 		N_("&No");
+		N_("&Select All");
+		N_("&Step up");
+		N_("Step &down");
 	}
 };

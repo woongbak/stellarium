@@ -175,7 +175,9 @@ OcularsGuiPanel::OcularsGuiPanel(Oculars* plugin,
 	fieldLensName->setTextWidth(maxWidth);
 	fieldLensMultipler->setTextWidth(maxWidth);
 
-	float scale = lineHeight*1.5; // TODO: change hardcoded 1.5 to editable value of scaling coefficient
+	// Retrieve value from setting directly, because at this stage the plugin has not parsed it yet.
+	float scale=lineHeight*plugin->appSettings()->value("arrow_scale", 1.5).toDouble();
+	// TODO: change this load-once to interactively editable value of scaling coefficient
 	QPixmap pa(":/graphicGui/btTimeRewind-on.png");
 	QPixmap prevArrow = pa.scaledToHeight(scale, Qt::SmoothTransformation);
 	QPixmap paOff(":/graphicGui/btTimeRewind-off.png");
@@ -357,12 +359,12 @@ OcularsGuiPanel::OcularsGuiPanel(Oculars* plugin,
 	rotateCcdPlus15Button->setToolTip(q_("Rotate the sensor frame 15 degrees clockwise"));
 
 	QSignalMapper* sm = ocularsPlugin->ccdRotationSignalMapper;
-	sm->setMapping(rotateCcdMinus15Button, QString("-15"));
-	sm->setMapping(rotateCcdMinus5Button,  QString("-5"));
-	sm->setMapping(rotateCcdMinus1Button,  QString("-1"));
-	sm->setMapping(rotateCcdPlus1Button,   QString("1"));
-	sm->setMapping(rotateCcdPlus5Button,   QString("5"));
-	sm->setMapping(rotateCcdPlus15Button,  QString("15"));
+	sm->setMapping(rotateCcdMinus15Button, -15);
+	sm->setMapping(rotateCcdMinus5Button,   -5);
+	sm->setMapping(rotateCcdMinus1Button,   -1);
+	sm->setMapping(rotateCcdPlus1Button,     1);
+	sm->setMapping(rotateCcdPlus5Button,     5);
+	sm->setMapping(rotateCcdPlus15Button,   15);
 
 	connect(rotateCcdMinus15Button, SIGNAL(triggered()), sm, SLOT(map()));
 	connect(rotateCcdMinus5Button,  SIGNAL(triggered()), sm, SLOT(map()));

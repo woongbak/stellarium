@@ -16,6 +16,10 @@ IF(NOT ("${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}.${CMAKE_PATCH_VERSION}" L
      CMAKE_POLICY(SET CMP0054 OLD)
 ENDIF()
 
+IF(POLICY CMP0071)
+     CMAKE_POLICY(SET CMP0071 NEW)
+ENDIF()
+
 # warn about deprecated stuff so that we may try fixing it
 SET(CMAKE_WARN_DEPRECATED 1)
 
@@ -32,7 +36,7 @@ ADD_DEFINITIONS(
 )
 SET(VERSION "${STELLARIUM_MAJOR}.${STELLARIUM_MINOR}.${STELLARIUM_PATCH}")
 SET(PACKAGE stellarium)
-SET(COPYRIGHT_YEARS "2000-2017")
+SET(COPYRIGHT_YEARS "2000-2018")
 
 SET(PACKAGE_VERSION "${VERSION}")
 ADD_DEFINITIONS(-DPACKAGE_VERSION="${PACKAGE_VERSION}")
@@ -552,7 +556,7 @@ IF(WIN32)
      #######################################################
 
      IF(STELLARIUM_RELEASE_BUILD)
-           SET(PACKAGE_VERSION_RC "${PACKAGE_VERSION},0")
+          SET(PACKAGE_VERSION_RC "${PACKAGE_VERSION},0")
      ELSE()
           SET(PACKAGE_VERSION_RC "${PACKAGE_VERSION}")
      ENDIF()
@@ -723,7 +727,7 @@ IF(GENERATE_PACKAGE_TARGET)
      INCLUDE(InstallRequiredSystemLibraries)
      SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Stellarium is a free open source planetarium for your computer. It shows a realistic sky in 3D, just like what you see with the naked eye, binoculars or a telescope.")
      SET(CPACK_PACKAGE_VENDOR "Stellarium's team")
-     SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README")
+     SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
      SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/COPYING")
      SET(CPACK_PACKAGE_VERSION_MAJOR "${STELLARIUM_MAJOR}")
      SET(CPACK_PACKAGE_VERSION_MINOR "${STELLARIUM_MINOR}")
@@ -734,11 +738,11 @@ IF(GENERATE_PACKAGE_TARGET)
      SET(CPACK_GENERATOR "TGZ")
      SET(CPACK_STRIP_FILES "bin/stellarium")
      SET(CPACK_PACKAGE_EXECUTABLES "stellarium" "Stellarium")
-     SET(CPACK_SOURCE_IGNORE_FILES "/.tx/" "/CVS/" "/.svn/" "/.git/" "/.bzr/" "builds/" "installers/" "util/spout2" "util/DSSToStellarium/toastForShape$" "Stellarium.tag$" "Stellarium.kdevelop.pcs$" "/CMakeLists.txt.user$" "\\\\.bzrignore$" "\\\\.yml$" "~$" "\\\\.swp$" "\\\\.#" "/#")
+     SET(CPACK_SOURCE_IGNORE_FILES "/.tx/" "/CVS/" "/.svn/" "/.git/" "/.github/" "/.bzr/" "builds/" "installers/" "util/spout2" "util/DSSToStellarium/toastForShape$" "Stellarium.tag$" "Stellarium.kdevelop.pcs$" "/CMakeLists.txt.user$" "\\\\.bzrignore$" "\\\\.gitignore$" "\\\\.clang-format$" "\\\\.yml$" "~$" "\\\\.swp$" "\\\\.#" "/#")
      SET(CPACK_RPM_PACKAGE_LICENSE "GPLv2+")
      SET(CPACK_RPM_PACKAGE_GROUP "Amusements/Graphics")
      SET(CPACK_RPM_PACKAGE_URL "http://stellarium.org/")
-     SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "${CPACK_PACKAGE_VENDOR} <stellarium-pubdevel@lists.sourceforge.net>")
+     SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "${CPACK_PACKAGE_VENDOR} <stellarium@googlegroups.com>")
      SET(CPACK_DEBIAN_PACKAGE_SECTION "science")
      SET(CPACK_DEBIAN_PACKAGE_VERSION "${VERSION}+deb1")
      SET(CPACK_DEBIAN_PACKAGE_HOMEPAGE "${CPACK_RPM_PACKAGE_URL}")
@@ -748,6 +752,12 @@ ENDIF()
 
 ########### OS X Bundling ###############
 IF(APPLE)
+     IF(CMAKE_OSX_DEPLOYMENT_TARGET)
+          SET(PACKAGE_OSX_TARGET ${CMAKE_OSX_DEPLOYMENT_TARGET})
+     ELSE()
+          SET(PACKAGE_OSX_TARGET "10.11")
+     ENDIF()
+     ADD_DEFINITIONS(-DPACKAGE_OSX_TARGET)
      CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/cmake/Info.plist.cmake ${CMAKE_SOURCE_DIR}/data/Info.plist @ONLY)
 
      # ${Qt5Core_INCLUDE_DIRS} is a list; I'm expecting the first entry to always be QtCore.framework.
