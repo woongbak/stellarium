@@ -200,24 +200,8 @@ before_script:
   - cd build
 
 script:
-<<<<<<< HEAD
-  # Linux
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-      if [ ${COVERITY_SCAN_BRANCH} != 1 ]; then
-        cmake -DENABLE_TESTING=1 .. -G "Ninja";
-        ninja all;
-        sudo ninja install;
-      fi
-    fi
-  # Mac OS X
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-      cmake -DENABLE_TESTING=1 ..;
-      make;
-    fi
-=======
   - cmake -DENABLE_TESTING=1 ..
   - make -j 2
->>>>>>> master
   - ctest --output-on-failure
 
 after_success:
