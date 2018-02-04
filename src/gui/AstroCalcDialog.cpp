@@ -249,6 +249,7 @@ void AstroCalcDialog::createDialogContent()
 	connect(ui->monthlyElevationTime, SIGNAL(sliderReleased()), this, SLOT(updateMonthlyElevationTime()));
 	connect(ui->monthlyElevationTime, SIGNAL(sliderMoved(int)), this, SLOT(syncMonthlyElevationTime()));
 	connect(objectMgr, SIGNAL(selectedObjectChanged(StelModule::StelModuleSelectAction)), this, SLOT(drawMonthlyElevationGraph()));
+	connect(core, SIGNAL(dateChangedByYear()), this, SLOT(drawMonthlyElevationGraph()));
 	drawMonthlyElevationGraph();
 
 	connect(ui->graphsCelestialBodyComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(saveGraphsCelestialBody(int)));
@@ -276,8 +277,7 @@ void AstroCalcDialog::createDialogContent()
 	currentTimeLine->start(500); // Update 'now' line position every 0.5 seconds
 
 	connect(ui->firstCelestialBodyComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(saveFirstCelestialBody(int)));
-	connect(ui->secondCelestialBodyComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(saveSecondCelestialBody(int)));
-	connect(ui->computePlanetaryDataButton, SIGNAL(clicked(bool)), this, SLOT(computePlanetaryData()));
+	connect(ui->secondCelestialBodyComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(saveSecondCelestialBody(int)));	
 
 	connect(solarSystem, SIGNAL(solarSystemDataReloaded()), this, SLOT(updateSolarSystemData()));
 	connect(core, SIGNAL(locationChanged(StelLocation)), this, SLOT(updateAstroCalcData()));
@@ -2850,6 +2850,10 @@ void AstroCalcDialog::fillPhenomenaTable(const QMap<double, double> list, const 
 		if (opposition)
 		{
 			phenomenType = q_("Opposition");
+			// Added a special case - lunar eclipse
+			if (qAbs(separation) <= 0.02 && ((object1->getEnglishName() == "Moon"  && object2->getEnglishName() == "Sun") || (object1->getEnglishName() == "Sun"  && object2->getEnglishName() == "Moon")))
+				phenomenType = q_("Eclipse");
+
 			separation += M_PI;
 		}
 		else if (separation < (s2 * M_PI / 180.) || separation < (s1 * M_PI / 180.))
@@ -2861,7 +2865,7 @@ void AstroCalcDialog::fillPhenomenaTable(const QMap<double, double> list, const 
 			else
 				phenomenType = q_("Occultation");
 
-			// Added a special case - eclipse
+			// Added a special case - solar eclipse
 			if (qAbs(s1 - s2) <= 0.05 && (object1->getEnglishName() == "Sun"  || object2->getEnglishName() == "Sun")) // 5% error of difference of sizes
 				phenomenType = q_("Eclipse");
 
