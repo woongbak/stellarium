@@ -10,6 +10,7 @@ IF(ENABLE_SPOUT)
 ENDIF()
 
 SET(stellarium_lib_SRCS
+     core/healpix.c
      core/StelAudioMgr.hpp
      core/StelAudioMgr.cpp
      core/StelVideoMgr.hpp
@@ -121,6 +122,8 @@ SET(stellarium_lib_SRCS
      core/GeomMath.cpp
      core/StelOpenGLArray.hpp
      core/StelOpenGLArray.cpp
+     core/StelHips.hpp
+     core/StelHips.cpp
 
      ${spout_SRCS}
 
@@ -175,6 +178,8 @@ SET(stellarium_lib_SRCS
      core/modules/CustomObjectMgr.hpp
      core/modules/GridLinesMgr.cpp
      core/modules/GridLinesMgr.hpp
+     core/modules/HipsMgr.hpp
+     core/modules/HipsMgr.cpp
      core/modules/LabelMgr.hpp
      core/modules/LabelMgr.cpp
      core/modules/Landscape.cpp
@@ -480,8 +485,29 @@ IF(MSVC)
 ENDIF(MSVC)
 
 INSTALL(TARGETS stellarium DESTINATION bin)
-
-
+IF(WIN32)
+#     ADD_CUSTOM_COMMAND(TARGET stellarium
+#          POST_BUILD
+#          COMMAND "${WINDEPLOYQT_COMMAND}" --dir ${CMAKE_INSTALL_PREFIX}/qt5stuff --no-translations --compiler-runtime $<TARGET_FILE:stellarium>
+#          COMMENT "Running windeployqt..."
+#          VERBATIM
+#     )
+     INSTALL(CODE
+        "
+         EXECUTE_PROCESS(
+             COMMAND \"${WINDEPLOYQT_COMMAND}\"
+                     --dir \"\${CMAKE_INSTALL_PREFIX}/qt5stuff\"
+                     --no-translations
+                     --compiler-runtime
+                     \"\${CMAKE_INSTALL_PREFIX}/bin/stellarium.exe\"
+             WORKING_DIRECTORY \"\${CMAKE_INSTALL_PRERIX}/bin\"
+             OUTPUT_FILE \"\${CMAKE_CURRENT_BINARY_DIR}/windeployqt.log\"
+             ERROR_FILE \"\${CMAKE_CURRENT_BINARY_DIR}/windeployqt.err\"
+         )
+        "
+     )
+ENDIF()
+       
 #############################################################################################
 ################################## Build unit tests #########################################
 #############################################################################################

@@ -50,6 +50,8 @@
 #endif
 #include "StelJsonParser.hpp"
 #include "StelTranslator.hpp"
+#include "EphemWrapper.hpp"
+#include "ToastMgr.hpp"
 
 #include <QSettings>
 #include <QDebug>
@@ -283,13 +285,13 @@ void ConfigurationDialog::createDialogContent()
 	connect(ui->diskViewportCheckbox, SIGNAL(toggled(bool)), this, SLOT(setDiskViewport(bool)));
 	connectBoolProperty(ui->autoZoomResetsDirectionCheckbox, "StelMovementMgr.flagAutoZoomOutResetsDirection");
 
-	connectBoolProperty(ui->showFlipButtonsCheckbox,                   "StelGui.flagShowFlipButtons");
-	connectBoolProperty(ui->showNebulaBgButtonCheckbox,                "StelGui.flagShowNebulaBackgroundButton");
-	connectBoolProperty(ui->showToastSurveyButtonCheckbox,             "StelGui.flagShowToastSurveyButton");
-	connectBoolProperty(ui->showBookmarksButtonCheckBox,               "StelGui.flagShowBookmarksButton");
-	connectBoolProperty(ui->showICRSGridButtonCheckBox,                "StelGui.flagShowICRSGridButton");
-	connectBoolProperty(ui->showGalacticGridButtonCheckBox,            "StelGui.flagShowGalacticGridButton");
-	connectBoolProperty(ui->showEclipticGridButtonCheckBox,            "StelGui.flagShowEclipticGridButton");
+	connectBoolProperty(ui->showFlipButtonsCheckbox,			"StelGui.flagShowFlipButtons");
+	connectBoolProperty(ui->showNebulaBgButtonCheckbox,		"StelGui.flagShowNebulaBackgroundButton");
+	connectBoolProperty(ui->showBookmarksButtonCheckBox,		"StelGui.flagShowBookmarksButton");
+	connectBoolProperty(ui->showICRSGridButtonCheckBox,		"StelGui.flagShowICRSGridButton");
+	connectBoolProperty(ui->showGalacticGridButtonCheckBox,	"StelGui.flagShowGalacticGridButton");
+	connectBoolProperty(ui->showEclipticGridButtonCheckBox,		"StelGui.flagShowEclipticGridButton");
+	connectBoolProperty(ui->showDSSButtonCheckbox,			"StelGui.flagShowDSSButton");
 	connectBoolProperty(ui->showConstellationBoundariesButtonCheckBox, "StelGui.flagShowConstellationBoundariesButton");
 
 	//ui->decimalDegreeCheckBox->setChecked(StelApp::getInstance().getFlagShowDecimalDegrees());
@@ -308,6 +310,7 @@ void ConfigurationDialog::createDialogContent()
 	connectDoubleProperty(ui->mouseTimeoutSpinBox, "MainView.cursorTimeout");
 	connectBoolProperty(ui->useButtonsBackgroundCheckBox, "MainView.flagUseButtonsBackground");
 	connectBoolProperty(ui->indicationMountModeCheckBox, "StelMovementMgr.flagIndicationMountMode");
+
 
 	// General Option Save
 	connect(ui->saveViewDirAsDefaultPushButton, SIGNAL(clicked()), this, SLOT(saveCurrentViewDirSettings()));
@@ -616,7 +619,7 @@ void ConfigurationDialog::saveAllSettings()
 	// view dialog / sky tab settings
 	conf->setValue("stars/absolute_scale",			propMgr->getStelPropertyValue("StelSkyDrawer.absoluteStarScale").toFloat());
 	conf->setValue("stars/relative_scale",			propMgr->getStelPropertyValue("StelSkyDrawer.relativeStarScale").toFloat());
-	conf->setValue("stars/flag_star_twinkle",		propMgr->getStelPropertyValue("StelSkyDrawer.flagTwinkle").toFloat());
+	conf->setValue("stars/flag_star_twinkle",		propMgr->getStelPropertyValue("StelSkyDrawer.flagStarTwinkle").toFloat());
 	conf->setValue("stars/star_twinkle_amount",		propMgr->getStelPropertyValue("StelSkyDrawer.twinkleAmount").toFloat());
 	conf->setValue("astro/flag_star_magnitude_limit",	propMgr->getStelPropertyValue("StelSkyDrawer.flagStarMagnitudeLimit").toBool());
 	conf->setValue("astro/star_magnitude_limit",		propMgr->getStelPropertyValue("StelSkyDrawer.customStarMagLimit").toFloat());
@@ -737,42 +740,43 @@ void ConfigurationDialog::saveAllSettings()
 	const Nebula::CatalogGroup& cflags = nmgr->getCatalogFilters();
 
 	conf->beginGroup("dso_catalog_filters");
-	conf->setValue("flag_show_ngc",		(bool) (cflags & Nebula::CatNGC));
+	conf->setValue("flag_show_ngc",	(bool) (cflags & Nebula::CatNGC));
 	conf->setValue("flag_show_ic",		(bool) (cflags & Nebula::CatIC));
 	conf->setValue("flag_show_m",		(bool) (cflags & Nebula::CatM));
 	conf->setValue("flag_show_c",		(bool) (cflags & Nebula::CatC));
 	conf->setValue("flag_show_b",		(bool) (cflags & Nebula::CatB));
-	conf->setValue("flag_show_vdb",		(bool) (cflags & Nebula::CatVdB));
-	conf->setValue("flag_show_sh2",		(bool) (cflags & Nebula::CatSh2));
-	conf->setValue("flag_show_rcw",		(bool) (cflags & Nebula::CatRCW));
+	conf->setValue("flag_show_vdb",	(bool) (cflags & Nebula::CatVdB));
+	conf->setValue("flag_show_sh2",	(bool) (cflags & Nebula::CatSh2));
+	conf->setValue("flag_show_rcw",	(bool) (cflags & Nebula::CatRCW));
 	conf->setValue("flag_show_lbn",		(bool) (cflags & Nebula::CatLBN));
 	conf->setValue("flag_show_ldn",		(bool) (cflags & Nebula::CatLDN));
 	conf->setValue("flag_show_cr",		(bool) (cflags & Nebula::CatCr));
-	conf->setValue("flag_show_mel",		(bool) (cflags & Nebula::CatMel));
-	conf->setValue("flag_show_ced",		(bool) (cflags & Nebula::CatCed));
-	conf->setValue("flag_show_pgc",		(bool) (cflags & Nebula::CatPGC));
-	conf->setValue("flag_show_ugc",		(bool) (cflags & Nebula::CatUGC));
-	conf->setValue("flag_show_arp",		(bool) (cflags & Nebula::CatArp));
+	conf->setValue("flag_show_mel",	(bool) (cflags & Nebula::CatMel));
+	conf->setValue("flag_show_ced",	(bool) (cflags & Nebula::CatCed));
+	conf->setValue("flag_show_pgc",	(bool) (cflags & Nebula::CatPGC));
+	conf->setValue("flag_show_ugc",	(bool) (cflags & Nebula::CatUGC));
+	conf->setValue("flag_show_arp",	(bool) (cflags & Nebula::CatArp));
 	conf->setValue("flag_show_vv",		(bool) (cflags & Nebula::CatVV));
 	conf->setValue("flag_show_pk",		(bool) (cflags & Nebula::CatPK));
-	conf->setValue("flag_show_png",		(bool) (cflags & Nebula::CatPNG));
+	conf->setValue("flag_show_png",	(bool) (cflags & Nebula::CatPNG));
 	conf->setValue("flag_show_snrg",	(bool) (cflags & Nebula::CatSNRG));
-	conf->setValue("flag_show_aco",		(bool) (cflags & Nebula::CatACO));
+	conf->setValue("flag_show_aco",	(bool) (cflags & Nebula::CatACO));
+	conf->setValue("flag_show_hcg",	(bool) (cflags & Nebula::CatHCG));
 	conf->endGroup();
 
 	const Nebula::TypeGroup& tflags = nmgr->getTypeFilters();
 	conf->beginGroup("dso_type_filters");
-	conf->setValue("flag_show_galaxies", 		 (bool) (tflags & Nebula::TypeGalaxies));
-	conf->setValue("flag_show_active_galaxies",	 (bool) (tflags & Nebula::TypeActiveGalaxies));
-	conf->setValue("flag_show_interacting_galaxies", (bool) (tflags & Nebula::TypeInteractingGalaxies));
-	conf->setValue("flag_show_clusters",		 (bool) (tflags & Nebula::TypeStarClusters));
-	conf->setValue("flag_show_bright_nebulae",	 (bool) (tflags & Nebula::TypeBrightNebulae));
-	conf->setValue("flag_show_dark_nebulae",	 (bool) (tflags & Nebula::TypeDarkNebulae));
-	conf->setValue("flag_show_planetary_nebulae",	 (bool) (tflags & Nebula::TypePlanetaryNebulae));
-	conf->setValue("flag_show_hydrogen_regions",	 (bool) (tflags & Nebula::TypeHydrogenRegions));
-	conf->setValue("flag_show_supernova_remnants",	 (bool) (tflags & Nebula::TypeSupernovaRemnants));
-	conf->setValue("flag_show_galaxy_clusters",	 (bool) (tflags & Nebula::TypeGalaxyClusters));
-	conf->setValue("flag_show_other",		 (bool) (tflags & Nebula::TypeOther));
+	conf->setValue("flag_show_galaxies",				(bool) (tflags & Nebula::TypeGalaxies));
+	conf->setValue("flag_show_active_galaxies",		(bool) (tflags & Nebula::TypeActiveGalaxies));
+	conf->setValue("flag_show_interacting_galaxies",	(bool) (tflags & Nebula::TypeInteractingGalaxies));
+	conf->setValue("flag_show_clusters",				(bool) (tflags & Nebula::TypeStarClusters));
+	conf->setValue("flag_show_bright_nebulae",		(bool) (tflags & Nebula::TypeBrightNebulae));
+	conf->setValue("flag_show_dark_nebulae",			(bool) (tflags & Nebula::TypeDarkNebulae));
+	conf->setValue("flag_show_planetary_nebulae",		(bool) (tflags & Nebula::TypePlanetaryNebulae));
+	conf->setValue("flag_show_hydrogen_regions",		(bool) (tflags & Nebula::TypeHydrogenRegions));
+	conf->setValue("flag_show_supernova_remnants",	(bool) (tflags & Nebula::TypeSupernovaRemnants));
+	conf->setValue("flag_show_galaxy_clusters",		(bool) (tflags & Nebula::TypeGalaxyClusters));
+	conf->setValue("flag_show_other",				(bool) (tflags & Nebula::TypeOther));
 	conf->endGroup();
 
 	// view dialog / landscape tab settings
@@ -863,7 +867,7 @@ void ConfigurationDialog::saveAllSettings()
 	conf->setValue("gui/auto_hide_horizontal_toolbar", gui->getAutoHideHorizontalButtonBar());
 	conf->setValue("gui/auto_hide_vertical_toolbar", gui->getAutoHideVerticalButtonBar());
 	conf->setValue("gui/flag_show_nebulae_background_button", gui->getFlagShowNebulaBackgroundButton());
-	conf->setValue("gui/flag_show_toast_survey_button", gui->getFlagShowToastSurveyButton());
+	conf->setValue("gui/flag_show_dss_button", gui->getFlagShowDSSButton());
 	conf->setValue("gui/flag_show_bookmarks_button", gui->getFlagShowBookmarksButton());
 	conf->setValue("gui/flag_show_icrs_grid_button", gui->getFlagShowICRSGridButton());
 	conf->setValue("gui/flag_show_galactic_grid_button", gui->getFlagShowGalacticGridButton());

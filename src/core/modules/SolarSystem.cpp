@@ -241,6 +241,9 @@ void SolarSystem::init()
 	addAction("actionShow_Planets_Hints", displayGroup, N_("Planet markers"), "flagHints", "Ctrl+P");
 	addAction("actionShow_Planets_Pointers", displayGroup, N_("Planet selection marker"), "flagPointer", "Ctrl+Shift+P");
 	addAction("actionShow_Skyculture_NativePlanetNames", displayGroup, N_("Native planet names (from starlore)"), "flagNativePlanetNames", "Ctrl+Shift+N");
+
+	connect(StelApp::getInstance().getModule("HipsMgr"), SIGNAL(gotNewSurvey(HipsSurveyP)),
+			this, SLOT(onNewSurvey(HipsSurveyP)));
 }
 
 void SolarSystem::deinit()
@@ -1357,7 +1360,7 @@ PlanetP SolarSystem::searchByEnglishName(QString planetEnglishName) const
 {
 	foreach (const PlanetP& p, systemPlanets)
 	{
-		if (p->getEnglishName() == planetEnglishName)
+		if (p->getEnglishName().toUpper() == planetEnglishName.toUpper() || p->getCommonEnglishName().toUpper() == planetEnglishName.toUpper())
 			return p;
 	}
 	return PlanetP();
@@ -1367,7 +1370,7 @@ PlanetP SolarSystem::searchMinorPlanetByEnglishName(QString planetEnglishName) c
 {
 	foreach (const PlanetP& p, systemMinorBodies)
 	{
-		if (p->getCommonEnglishName() == planetEnglishName)
+		if (p->getCommonEnglishName().toUpper() == planetEnglishName.toUpper() || p->getEnglishName().toUpper() == planetEnglishName.toUpper())
 			return p;
 	}
 	return PlanetP();
@@ -1378,7 +1381,7 @@ StelObjectP SolarSystem::searchByNameI18n(const QString& planetNameI18) const
 {
 	foreach (const PlanetP& p, systemPlanets)
 	{
-		if (p->getNameI18n() == planetNameI18)
+		if (p->getNameI18n().toUpper() == planetNameI18.toUpper())
 			return qSharedPointerCast<StelObject>(p);
 	}
 	return StelObjectP();
@@ -1389,7 +1392,7 @@ StelObjectP SolarSystem::searchByName(const QString& name) const
 {
 	foreach (const PlanetP& p, systemPlanets)
 	{
-		if (p->getEnglishName() == name || p->getCommonEnglishName() == name)
+		if (p->getEnglishName().toUpper() == name.toUpper() || p->getCommonEnglishName().toUpper() == name.toUpper())
 			return qSharedPointerCast<StelObject>(p);
 	}
 	return StelObjectP();
@@ -2519,3 +2522,17 @@ bool SolarSystem::removeMinorPlanet(QString name)
 	return true;
 }
 
+void SolarSystem::onNewSurvey(HipsSurveyP survey)
+{
+	// For the moment we only consider the survey url to decide if we
+	// assign it to a planet.  It would be better to use some property
+	// for that.
+	QString planetName = QUrl(survey->getUrl()).fileName();
+	PlanetP pl = searchByEnglishName(planetName);
+	if (!pl || pl->survey)
+		return;
+	pl->survey = survey;
+	survey->setProperty("planet", pl->getCommonEnglishName());
+	// Not visible by default for the moment.
+	survey->setProperty("visible", false);
+}

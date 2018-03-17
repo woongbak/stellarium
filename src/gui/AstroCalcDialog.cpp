@@ -513,6 +513,8 @@ void AstroCalcDialog::populateCelestialCategoryList()
 		category->addItem(q_("A catalogue of Galactic supernova remnants"), "119");
 	if (catalogFilters & Nebula::CatACO)
 		category->addItem(q_("A Catalog of Rich Clusters of Galaxies"), "120");
+	if (catalogFilters & Nebula::CatHCG)
+		category->addItem(q_("Hickson Compact Group"), "121");
 	category->addItem(q_("Dwarf galaxies"), "150");
 	category->addItem(q_("Herschel 400 Catalogue"), "151");
 	category->addItem(q_("Bright double stars"), "170");
@@ -1680,8 +1682,8 @@ void AstroCalcDialog::drawAltVsTimeDiagram()
 	if (!selectedObjects.isEmpty())
 	{
 		// X axis - time; Y axis - altitude
-		QList<double> aX, aY, sX, sY, sYn, sYa, mX, mY;
-		QVector<double> xs, ys, ysn, ysa, xm, ym;
+		QList<double> aX, aY, sX, sY, sYn, sYa, sYc, mX, mY;
+		QVector<double> xs, ys, ysn, ysa, ysc, xm, ym;
 
 		StelObjectP selectedObject = selectedObjects[0];
 		bool onEarth = core->getCurrentPlanet()==solarSystem->getEarth();
@@ -1744,6 +1746,7 @@ void AstroCalcDialog::drawAltVsTimeDiagram()
 				StelUtils::radToDecDeg(alt, sign, deg);
 				if (!sign) deg *= -1;
 				sY.append(deg);
+				sYc.append(deg + 6);
 				sYn.append(deg + 12);
 				sYa.append(deg + 18);
 			}
@@ -1786,6 +1789,7 @@ void AstroCalcDialog::drawAltVsTimeDiagram()
 		{
 			xs = sX.toVector();
 			ys = sY.toVector();
+			ysc = sYc.toVector();
 			ysn = sYn.toVector();
 			ysa = sYa.toVector();
 			double minYs = sY.first();
@@ -1798,7 +1802,7 @@ void AstroCalcDialog::drawAltVsTimeDiagram()
 			}
 
 			minY =  (minY < minYs - 2.0) ? minY : minYs - 2.f;
-			maxY = (maxY > maxYs + 2.0) ? maxY : maxYs + 2.0;
+			maxY = (maxY > maxYs + 20.0) ? maxY : maxYs + 20.0;
 		}
 
 		// additional data: Moon
@@ -1836,11 +1840,12 @@ void AstroCalcDialog::drawAltVsTimeDiagram()
 		if (plotAltVsTimeSun)
 		{
 			ui->altVsTimePlot->graph(3)->setData(xs, ys);
-			ui->altVsTimePlot->graph(4)->setData(xs, ysn);
-			ui->altVsTimePlot->graph(5)->setData(xs, ysa);
+			ui->altVsTimePlot->graph(4)->setData(xs, ysc);
+			ui->altVsTimePlot->graph(5)->setData(xs, ysn);
+			ui->altVsTimePlot->graph(6)->setData(xs, ysa);
 		}
 		if (plotAltVsTimeMoon && onEarth)
-			ui->altVsTimePlot->graph(6)->setData(xm, ym);
+			ui->altVsTimePlot->graph(7)->setData(xm, ym);
 
 		ui->altVsTimePlot->replot();
 	}
@@ -1851,9 +1856,10 @@ void AstroCalcDialog::drawAltVsTimeDiagram()
 		ui->altVsTimePlot->graph(0)->data()->clear(); // main data: Altitude vs. Time graph
 		ui->altVsTimePlot->graph(2)->data()->clear(); // additional data: Transit Time Diagram
 		ui->altVsTimePlot->graph(3)->data()->clear(); // additional data: Sun
-		ui->altVsTimePlot->graph(4)->data()->clear(); // additional data: Nautical Twilight
-		ui->altVsTimePlot->graph(5)->data()->clear(); // additional data: Astronomical Twilight
-		ui->altVsTimePlot->graph(6)->data()->clear(); // additional data: Moon
+		ui->altVsTimePlot->graph(4)->data()->clear(); // additional data: Civil Twilight
+		ui->altVsTimePlot->graph(5)->data()->clear(); // additional data: Nautical Twilight
+		ui->altVsTimePlot->graph(6)->data()->clear(); // additional data: Astronomical Twilight
+		ui->altVsTimePlot->graph(7)->data()->clear(); // additional data: Moon
 		ui->altVsTimePlot->replot();
 	}
 }
@@ -1930,26 +1936,29 @@ void AstroCalcDialog::prepareAxesAndGraph()
 	ui->altVsTimePlot->graph(3)->setPen(QPen(Qt::darkBlue, 1));
 	ui->altVsTimePlot->graph(3)->setLineStyle(QCPGraph::lsLine);
 	ui->altVsTimePlot->graph(3)->setName("[Sun]");
-	// additional data: Nautical Twilight
+	// additional data: Civil Twilight
 	QPen pen;
 	pen.setStyle(Qt::DotLine);
 	pen.setWidth(1);
-	pen.setColor(Qt::darkBlue);
-	ui->altVsTimePlot->addGraph();
-	ui->altVsTimePlot->graph(4)->setPen(pen);
-	ui->altVsTimePlot->graph(4)->setName("[Nautical Twilight]");
-	// additional data: Astronomical Twilight
 	pen.setColor(Qt::blue);
 	ui->altVsTimePlot->addGraph();
+	ui->altVsTimePlot->graph(4)->setPen(pen);
+	ui->altVsTimePlot->graph(4)->setName("[Civil Twilight]");
+	// additional data: Nautical Twilight
+	ui->altVsTimePlot->addGraph();
 	ui->altVsTimePlot->graph(5)->setPen(pen);
-	ui->altVsTimePlot->graph(5)->setName("[Astronomical Twilight]");
+	ui->altVsTimePlot->graph(5)->setName("[Nautical Twilight]");
+	// additional data: Astronomical Twilight	
+	ui->altVsTimePlot->addGraph();
+	ui->altVsTimePlot->graph(6)->setPen(pen);
+	ui->altVsTimePlot->graph(6)->setName("[Astronomical Twilight]");
 
 	// additional data: Moon Elevation
 	pen.setStyle(Qt::DashLine);
 	pen.setColor(Qt::darkBlue);
 	ui->altVsTimePlot->addGraph();
-	ui->altVsTimePlot->graph(6)->setPen(pen);
-	ui->altVsTimePlot->graph(6)->setName("[Moon]");
+	ui->altVsTimePlot->graph(7)->setPen(pen);
+	ui->altVsTimePlot->graph(7)->setName("[Moon]");
 
 	ui->altVsTimePlot->xAxis->setLabel(xAxisStr);
 	ui->altVsTimePlot->yAxis->setLabel(yAxisStr);
@@ -2515,6 +2524,8 @@ void AstroCalcDialog::mouseOverLine(QMouseEvent* event)
 				info = solarSystem->getSun()->getNameI18n();
 			else if (graph->name() == "[Moon]")
 				info = solarSystem->getMoon()->getNameI18n();
+			else if (graph->name() == "[Civil Twilight]")
+				info = q_("Line of civil twilight");
 			else if (graph->name() == "[Nautical Twilight]")
 				info = q_("Line of nautical twilight");
 			else if (graph->name() == "[Astronomical Twilight]")

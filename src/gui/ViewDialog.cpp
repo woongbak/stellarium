@@ -46,6 +46,7 @@
 #include "StelActionMgr.hpp"
 #include "StelMovementMgr.hpp"
 #include "StelUtils.hpp"
+#include "StelHips.hpp"
 
 #include <QDebug>
 #include <QFrame>
@@ -56,6 +57,7 @@
 #include <QDialog>
 #include <QStringList>
 #include <QColorDialog>
+#include <QJsonArray>
 
 ViewDialog::ViewDialog(QObject* parent) : StelDialog("View", parent)
 	, addRemoveLandscapesDialog(Q_NULLPTR)
@@ -162,7 +164,7 @@ void ViewDialog::createDialogContent()
 	connectGroupBox(ui->starGroupBox, "actionShow_Stars");
 	connectDoubleProperty(ui->starScaleRadiusDoubleSpinBox,"StelSkyDrawer.absoluteStarScale");
 	connectDoubleProperty(ui->starRelativeScaleDoubleSpinBox, "StelSkyDrawer.relativeStarScale");
-	connectBoolProperty(ui->starTwinkleCheckBox, "StelSkyDrawer.flagTwinkle");
+	connectBoolProperty(ui->starTwinkleCheckBox, "StelSkyDrawer.flagStarTwinkle");
 	connectDoubleProperty(ui->starTwinkleAmountDoubleSpinBox, "StelSkyDrawer.twinkleAmount");
 	connectBoolProperty(ui->starLimitMagnitudeCheckBox,"StelSkyDrawer.flagStarMagnitudeLimit");
 	connectDoubleProperty(ui->starLimitMagnitudeDoubleSpinBox, "StelSkyDrawer.customStarMagLimit");
@@ -227,6 +229,13 @@ void ViewDialog::createDialogContent()
 	connectCheckBox(ui->planetNomenclatureCheckBox, "actionShow_Planets_Nomenclature");
 	colorButton(ui->planetNomenclatureColor, "NomenclatureMgr.nomenclatureColor");
 	connect(ui->planetNomenclatureColor, SIGNAL(released()), this, SLOT(askPlanetNomenclatureColor()));
+	colorButton(ui->planetLabelColor, "SolarSystem.labelsColor");
+	connect(ui->planetLabelColor, SIGNAL(released()), this, SLOT(askPlanetLabelsColor()));
+	colorButton(ui->planetTrailsColor, "SolarSystem.trailsColor");
+	connect(ui->planetTrailsColor, SIGNAL(released()), this, SLOT(askPlanetTrailsColor()));
+	connectBoolProperty(ui->planetTrailsCheckBox, "SolarSystem.trailsDisplayed");
+	ui->planetIsolatedTrailsCheckBox->setEnabled(ssmgr->getFlagIsolatedTrails());
+	connect(ssmgr,SIGNAL(flagIsolatedTrailsChanged(bool)),ui->planetIsolatedTrailsCheckBox, SLOT(setEnabled(bool)));
 	connectBoolProperty(ui->hidePlanetNomenclatureCheckBox, "NomenclatureMgr.localNomenclatureHided");
 
 	StelModule* mnmgr = StelApp::getInstance().getModule("NomenclatureMgr");
@@ -316,105 +325,105 @@ void ViewDialog::createDialogContent()
 	connect(ui->pushButtonAddRemoveLandscapes, SIGNAL(clicked()), this, SLOT(showAddRemoveLandscapesDialog()));
 
 	// Grid and lines
-	connectGroupBox(ui->celestialSphereGroupBox,            "actionShow_Gridlines");
-	connectCheckBox(ui->showEquatorLineCheckBox,		"actionShow_Equator_Line");
-	connectCheckBox(ui->showEquatorJ2000LineCheckBox,	"actionShow_Equator_J2000_Line");
-	connectCheckBox(ui->showEclipticLineJ2000CheckBox,	"actionShow_Ecliptic_J2000_Line");
-	connectCheckBox(ui->showEclipticLineOfDateCheckBox,	"actionShow_Ecliptic_Line");
-	connectCheckBox(ui->showMeridianLineCheckBox,		"actionShow_Meridian_Line");
-	connectCheckBox(ui->showLongitudeLineCheckBox,		"actionShow_Longitude_Line");
-	connectCheckBox(ui->showHorizonLineCheckBox,		"actionShow_Horizon_Line");
-	connectCheckBox(ui->showEquatorialGridCheckBox,		"actionShow_Equatorial_Grid");
-	connectCheckBox(ui->showGalacticGridCheckBox,		"actionShow_Galactic_Grid");
-	connectCheckBox(ui->showGalacticEquatorLineCheckBox,	"actionShow_Galactic_Equator_Line");
-	connectCheckBox(ui->showSupergalacticGridCheckBox,	"actionShow_Supergalactic_Grid");
-	connectCheckBox(ui->showSupergalacticEquatorLineCheckBox, "actionShow_Supergalactic_Equator_Line");
-	connectCheckBox(ui->showAzimuthalGridCheckBox,		"actionShow_Azimuthal_Grid");
-	connectCheckBox(ui->showEquatorialJ2000GridCheckBox,	"actionShow_Equatorial_J2000_Grid");
-	connectCheckBox(ui->showEclipticGridJ2000CheckBox,	"actionShow_Ecliptic_J2000_Grid");
-	connectCheckBox(ui->showEclipticGridOfDateCheckBox,	"actionShow_Ecliptic_Grid");
-	connectCheckBox(ui->showCardinalPointsCheckBox,		"actionShow_Cardinal_Points");
-	connectCheckBox(ui->showPrecessionCirclesCheckBox,	"actionShow_Precession_Circles");
-	connectCheckBox(ui->showPrimeVerticalLineCheckBox,	"actionShow_Prime_Vertical_Line");
-	connectCheckBox(ui->showColuresLineCheckBox,		"actionShow_Colure_Lines");
-	connectCheckBox(ui->showCircumpolarCirclesCheckBox,	"actionShow_Circumpolar_Circles");
-	connectCheckBox(ui->showCelestialJ2000PolesCheckBox,	"actionShow_Celestial_J2000_Poles");
-	connectCheckBox(ui->showCelestialPolesCheckBox,		"actionShow_Celestial_Poles");
-	connectCheckBox(ui->showZenithNadirCheckBox,		"actionShow_Zenith_Nadir");
-	connectCheckBox(ui->showEclipticJ2000PolesCheckBox,	"actionShow_Ecliptic_J2000_Poles");
-	connectCheckBox(ui->showEclipticPolesCheckBox,		"actionShow_Ecliptic_Poles");
-	connectCheckBox(ui->showGalacticPolesCheckBox,		"actionShow_Galactic_Poles");
-	connectCheckBox(ui->showSupergalacticPolesCheckBox,	"actionShow_Supergalactic_Poles");
-	connectCheckBox(ui->showEquinoxJ2000PointsCheckBox,	"actionShow_Equinox_J2000_Points");
-	connectCheckBox(ui->showEquinoxPointsCheckBox,		"actionShow_Equinox_Points");
-	connectCheckBox(ui->showSolsticeJ2000PointsCheckBox,	"actionShow_Solstice_J2000_Points");
-	connectCheckBox(ui->showSolsticePointsCheckBox,		"actionShow_Solstice_Points");
+	connectGroupBox(ui->celestialSphereGroupBox,				"actionShow_Gridlines");
+	connectCheckBox(ui->showEquatorLineCheckBox,			"actionShow_Equator_Line");
+	connectCheckBox(ui->showEquatorJ2000LineCheckBox,		"actionShow_Equator_J2000_Line");
+	connectCheckBox(ui->showEclipticLineJ2000CheckBox,		"actionShow_Ecliptic_J2000_Line");
+	connectCheckBox(ui->showEclipticLineOfDateCheckBox,		"actionShow_Ecliptic_Line");
+	connectCheckBox(ui->showMeridianLineCheckBox,			"actionShow_Meridian_Line");
+	connectCheckBox(ui->showLongitudeLineCheckBox,			"actionShow_Longitude_Line");
+	connectCheckBox(ui->showHorizonLineCheckBox,			"actionShow_Horizon_Line");
+	connectCheckBox(ui->showEquatorialGridCheckBox,			"actionShow_Equatorial_Grid");
+	connectCheckBox(ui->showGalacticGridCheckBox,			"actionShow_Galactic_Grid");
+	connectCheckBox(ui->showGalacticEquatorLineCheckBox,		"actionShow_Galactic_Equator_Line");
+	connectCheckBox(ui->showSupergalacticGridCheckBox,		"actionShow_Supergalactic_Grid");
+	connectCheckBox(ui->showSupergalacticEquatorLineCheckBox,	"actionShow_Supergalactic_Equator_Line");
+	connectCheckBox(ui->showAzimuthalGridCheckBox,			"actionShow_Azimuthal_Grid");
+	connectCheckBox(ui->showEquatorialJ2000GridCheckBox,		"actionShow_Equatorial_J2000_Grid");
+	connectCheckBox(ui->showEclipticGridJ2000CheckBox,		"actionShow_Ecliptic_J2000_Grid");
+	connectCheckBox(ui->showEclipticGridOfDateCheckBox,		"actionShow_Ecliptic_Grid");
+	connectCheckBox(ui->showCardinalPointsCheckBox,			"actionShow_Cardinal_Points");
+	connectCheckBox(ui->showPrecessionCirclesCheckBox,		"actionShow_Precession_Circles");
+	connectCheckBox(ui->showPrimeVerticalLineCheckBox,		"actionShow_Prime_Vertical_Line");
+	connectCheckBox(ui->showColuresLineCheckBox,			"actionShow_Colure_Lines");
+	connectCheckBox(ui->showCircumpolarCirclesCheckBox,		"actionShow_Circumpolar_Circles");
+	connectCheckBox(ui->showCelestialJ2000PolesCheckBox,		"actionShow_Celestial_J2000_Poles");
+	connectCheckBox(ui->showCelestialPolesCheckBox,			"actionShow_Celestial_Poles");
+	connectCheckBox(ui->showZenithNadirCheckBox,			"actionShow_Zenith_Nadir");
+	connectCheckBox(ui->showEclipticJ2000PolesCheckBox,		"actionShow_Ecliptic_J2000_Poles");
+	connectCheckBox(ui->showEclipticPolesCheckBox,			"actionShow_Ecliptic_Poles");
+	connectCheckBox(ui->showGalacticPolesCheckBox,			"actionShow_Galactic_Poles");
+	connectCheckBox(ui->showSupergalacticPolesCheckBox,		"actionShow_Supergalactic_Poles");
+	connectCheckBox(ui->showEquinoxJ2000PointsCheckBox,		"actionShow_Equinox_J2000_Points");
+	connectCheckBox(ui->showEquinoxPointsCheckBox,			"actionShow_Equinox_Points");
+	connectCheckBox(ui->showSolsticeJ2000PointsCheckBox,		"actionShow_Solstice_J2000_Points");
+	connectCheckBox(ui->showSolsticePointsCheckBox,			"actionShow_Solstice_Points");
 
-	colorButton(ui->colorEclipticGridJ2000,		"GridLinesMgr.eclipticJ2000GridColor");
-	colorButton(ui->colorEclipticGridOfDate,	"GridLinesMgr.eclipticGridColor");
-	colorButton(ui->colorEquatorialJ2000Grid,	"GridLinesMgr.equatorJ2000GridColor");
-	colorButton(ui->colorEquatorialGrid,		"GridLinesMgr.equatorGridColor");
-	colorButton(ui->colorGalacticGrid,		"GridLinesMgr.galacticGridColor");
-	colorButton(ui->colorSupergalacticGrid,		"GridLinesMgr.supergalacticGridColor");
-	colorButton(ui->colorAzimuthalGrid,		"GridLinesMgr.azimuthalGridColor");
-	colorButton(ui->colorEclipticLineJ2000,		"GridLinesMgr.eclipticJ2000LineColor");
-	colorButton(ui->colorEclipticLineOfDate,	"GridLinesMgr.eclipticLineColor");
-	colorButton(ui->colorEquatorJ2000Line,		"GridLinesMgr.equatorJ2000LineColor");
-	colorButton(ui->colorEquatorLine,		"GridLinesMgr.equatorLineColor");
-	colorButton(ui->colorGalacticEquatorLine,	"GridLinesMgr.galacticEquatorLineColor");
+	colorButton(ui->colorEclipticGridJ2000,			"GridLinesMgr.eclipticJ2000GridColor");
+	colorButton(ui->colorEclipticGridOfDate,			"GridLinesMgr.eclipticGridColor");
+	colorButton(ui->colorEquatorialJ2000Grid,		"GridLinesMgr.equatorJ2000GridColor");
+	colorButton(ui->colorEquatorialGrid,				"GridLinesMgr.equatorGridColor");
+	colorButton(ui->colorGalacticGrid,				"GridLinesMgr.galacticGridColor");
+	colorButton(ui->colorSupergalacticGrid,			"GridLinesMgr.supergalacticGridColor");
+	colorButton(ui->colorAzimuthalGrid,				"GridLinesMgr.azimuthalGridColor");
+	colorButton(ui->colorEclipticLineJ2000,			"GridLinesMgr.eclipticJ2000LineColor");
+	colorButton(ui->colorEclipticLineOfDate,			"GridLinesMgr.eclipticLineColor");
+	colorButton(ui->colorEquatorJ2000Line,			"GridLinesMgr.equatorJ2000LineColor");
+	colorButton(ui->colorEquatorLine,				"GridLinesMgr.equatorLineColor");
+	colorButton(ui->colorGalacticEquatorLine,		"GridLinesMgr.galacticEquatorLineColor");
 	colorButton(ui->colorSupergalacticEquatorLine,	"GridLinesMgr.supergalacticEquatorLineColor");
-	colorButton(ui->colorHorizonLine,		"GridLinesMgr.horizonLineColor");
-	colorButton(ui->colorLongitudeLine,		"GridLinesMgr.longitudeLineColor");
-	colorButton(ui->colorColuresLine,		"GridLinesMgr.colureLinesColor");
-	colorButton(ui->colorCircumpolarCircles,	"GridLinesMgr.circumpolarCirclesColor");
-	colorButton(ui->colorPrecessionCircles,		"GridLinesMgr.precessionCirclesColor");
-	colorButton(ui->colorPrimeVerticalLine,		"GridLinesMgr.primeVerticalLineColor");
-	colorButton(ui->colorMeridianLine,		"GridLinesMgr.meridianLineColor");
-	colorButton(ui->colorCelestialJ2000Poles,	"GridLinesMgr.celestialJ2000PolesColor");
-	colorButton(ui->colorCelestialPoles,		"GridLinesMgr.celestialPolesColor");
-	colorButton(ui->colorZenithNadir,		"GridLinesMgr.zenithNadirColor");
-	colorButton(ui->colorEclipticJ2000Poles,	"GridLinesMgr.eclipticJ2000PolesColor");
-	colorButton(ui->colorEclipticPoles,		"GridLinesMgr.eclipticPolesColor");
-	colorButton(ui->colorGalacticPoles,		"GridLinesMgr.galacticPolesColor");
-	colorButton(ui->colorSupergalacticPoles,	"GridLinesMgr.supergalacticPolesColor");
-	colorButton(ui->colorEquinoxJ2000Points,	"GridLinesMgr.equinoxJ2000PointsColor");
-	colorButton(ui->colorEquinoxPoints,		"GridLinesMgr.equinoxPointsColor");
-	colorButton(ui->colorSolsticeJ2000Points,	"GridLinesMgr.solsticeJ2000PointsColor");
-	colorButton(ui->colorSolsticePoints,		"GridLinesMgr.solsticePointsColor");
-	colorButton(ui->colorCardinalPoints,		"LandscapeMgr.cardinalsPointsColor");
+	colorButton(ui->colorHorizonLine,				"GridLinesMgr.horizonLineColor");
+	colorButton(ui->colorLongitudeLine,				"GridLinesMgr.longitudeLineColor");
+	colorButton(ui->colorColuresLine,				"GridLinesMgr.colureLinesColor");
+	colorButton(ui->colorCircumpolarCircles,			"GridLinesMgr.circumpolarCirclesColor");
+	colorButton(ui->colorPrecessionCircles,			"GridLinesMgr.precessionCirclesColor");
+	colorButton(ui->colorPrimeVerticalLine,			"GridLinesMgr.primeVerticalLineColor");
+	colorButton(ui->colorMeridianLine,				"GridLinesMgr.meridianLineColor");
+	colorButton(ui->colorCelestialJ2000Poles,		"GridLinesMgr.celestialJ2000PolesColor");
+	colorButton(ui->colorCelestialPoles,				"GridLinesMgr.celestialPolesColor");
+	colorButton(ui->colorZenithNadir,				"GridLinesMgr.zenithNadirColor");
+	colorButton(ui->colorEclipticJ2000Poles,			"GridLinesMgr.eclipticJ2000PolesColor");
+	colorButton(ui->colorEclipticPoles,				"GridLinesMgr.eclipticPolesColor");
+	colorButton(ui->colorGalacticPoles,				"GridLinesMgr.galacticPolesColor");
+	colorButton(ui->colorSupergalacticPoles,			"GridLinesMgr.supergalacticPolesColor");
+	colorButton(ui->colorEquinoxJ2000Points,		"GridLinesMgr.equinoxJ2000PointsColor");
+	colorButton(ui->colorEquinoxPoints,				"GridLinesMgr.equinoxPointsColor");
+	colorButton(ui->colorSolsticeJ2000Points,		"GridLinesMgr.solsticeJ2000PointsColor");
+	colorButton(ui->colorSolsticePoints,				"GridLinesMgr.solsticePointsColor");
+	colorButton(ui->colorCardinalPoints,				"LandscapeMgr.cardinalsPointsColor");
 
-	connect(ui->colorEclipticGridJ2000,		SIGNAL(released()), this, SLOT(askEclipticJ2000GridColor()));
-	connect(ui->colorEclipticGridOfDate,		SIGNAL(released()), this, SLOT(askEclipticGridColor()));
-	connect(ui->colorEquatorialJ2000Grid,		SIGNAL(released()), this, SLOT(askEquatorJ2000GridColor()));
-	connect(ui->colorEquatorialGrid,		SIGNAL(released()), this, SLOT(askEquatorGridColor()));
-	connect(ui->colorGalacticGrid,			SIGNAL(released()), this, SLOT(askGalacticGridColor()));
-	connect(ui->colorSupergalacticGrid,		SIGNAL(released()), this, SLOT(askSupergalacticGridColor()));
-	connect(ui->colorAzimuthalGrid,			SIGNAL(released()), this, SLOT(askAzimuthalGridColor()));
-	connect(ui->colorEclipticLineJ2000,		SIGNAL(released()), this, SLOT(askEclipticLineJ2000Color()));
-	connect(ui->colorEclipticLineOfDate,		SIGNAL(released()), this, SLOT(askEclipticLineColor()));
-	connect(ui->colorEquatorJ2000Line,		SIGNAL(released()), this, SLOT(askEquatorLineJ2000Color()));
-	connect(ui->colorEquatorLine,			SIGNAL(released()), this, SLOT(askEquatorLineColor()));
-	connect(ui->colorGalacticEquatorLine,		SIGNAL(released()), this, SLOT(askGalacticEquatorLineColor()));
-	connect(ui->colorSupergalacticEquatorLine,	SIGNAL(released()), this, SLOT(askSupergalacticEquatorLineColor()));
-	connect(ui->colorHorizonLine,			SIGNAL(released()), this, SLOT(askHorizonLineColor()));
-	connect(ui->colorLongitudeLine,			SIGNAL(released()), this, SLOT(askLongitudeLineColor()));
-	connect(ui->colorColuresLine,			SIGNAL(released()), this, SLOT(askColureLinesColor()));
-	connect(ui->colorCircumpolarCircles,		SIGNAL(released()), this, SLOT(askCircumpolarCirclesColor()));
-	connect(ui->colorPrecessionCircles,		SIGNAL(released()), this, SLOT(askPrecessionCirclesColor()));
-	connect(ui->colorPrimeVerticalLine,		SIGNAL(released()), this, SLOT(askPrimeVerticalLineColor()));
-	connect(ui->colorMeridianLine,			SIGNAL(released()), this, SLOT(askMeridianLineColor()));
-	connect(ui->colorCelestialJ2000Poles,		SIGNAL(released()), this, SLOT(askCelestialJ2000PolesColor()));
-	connect(ui->colorCelestialPoles,		SIGNAL(released()), this, SLOT(askCelestialPolesColor()));
-	connect(ui->colorZenithNadir,			SIGNAL(released()), this, SLOT(askZenithNadirColor()));
-	connect(ui->colorEclipticJ2000Poles,		SIGNAL(released()), this, SLOT(askEclipticJ2000PolesColor()));
-	connect(ui->colorEclipticPoles,			SIGNAL(released()), this, SLOT(askEclipticPolesColor()));
-	connect(ui->colorGalacticPoles,			SIGNAL(released()), this, SLOT(askGalacticPolesColor()));
-	connect(ui->colorSupergalacticPoles,		SIGNAL(released()), this, SLOT(askSupergalacticPolesColor()));
-	connect(ui->colorEquinoxJ2000Points,		SIGNAL(released()), this, SLOT(askEquinoxJ2000PointsColor()));
-	connect(ui->colorEquinoxPoints,			SIGNAL(released()), this, SLOT(askEquinoxPointsColor()));
-	connect(ui->colorSolsticeJ2000Points,		SIGNAL(released()), this, SLOT(askSolsticeJ2000PointsColor()));
-	connect(ui->colorSolsticePoints,		SIGNAL(released()), this, SLOT(askSolsticePointsColor()));
-	connect(ui->colorCardinalPoints,		SIGNAL(released()), this, SLOT(askCardinalPointsColor()));
+	connect(ui->colorEclipticGridJ2000,				SIGNAL(released()), this, SLOT(askEclipticJ2000GridColor()));
+	connect(ui->colorEclipticGridOfDate,				SIGNAL(released()), this, SLOT(askEclipticGridColor()));
+	connect(ui->colorEquatorialJ2000Grid,			SIGNAL(released()), this, SLOT(askEquatorJ2000GridColor()));
+	connect(ui->colorEquatorialGrid,				SIGNAL(released()), this, SLOT(askEquatorGridColor()));
+	connect(ui->colorGalacticGrid,					SIGNAL(released()), this, SLOT(askGalacticGridColor()));
+	connect(ui->colorSupergalacticGrid,				SIGNAL(released()), this, SLOT(askSupergalacticGridColor()));
+	connect(ui->colorAzimuthalGrid,				SIGNAL(released()), this, SLOT(askAzimuthalGridColor()));
+	connect(ui->colorEclipticLineJ2000,				SIGNAL(released()), this, SLOT(askEclipticLineJ2000Color()));
+	connect(ui->colorEclipticLineOfDate,				SIGNAL(released()), this, SLOT(askEclipticLineColor()));
+	connect(ui->colorEquatorJ2000Line,				SIGNAL(released()), this, SLOT(askEquatorLineJ2000Color()));
+	connect(ui->colorEquatorLine,					SIGNAL(released()), this, SLOT(askEquatorLineColor()));
+	connect(ui->colorGalacticEquatorLine,			SIGNAL(released()), this, SLOT(askGalacticEquatorLineColor()));
+	connect(ui->colorSupergalacticEquatorLine,		SIGNAL(released()), this, SLOT(askSupergalacticEquatorLineColor()));
+	connect(ui->colorHorizonLine,					SIGNAL(released()), this, SLOT(askHorizonLineColor()));
+	connect(ui->colorLongitudeLine,				SIGNAL(released()), this, SLOT(askLongitudeLineColor()));
+	connect(ui->colorColuresLine,					SIGNAL(released()), this, SLOT(askColureLinesColor()));
+	connect(ui->colorCircumpolarCircles,			SIGNAL(released()), this, SLOT(askCircumpolarCirclesColor()));
+	connect(ui->colorPrecessionCircles,				SIGNAL(released()), this, SLOT(askPrecessionCirclesColor()));
+	connect(ui->colorPrimeVerticalLine,				SIGNAL(released()), this, SLOT(askPrimeVerticalLineColor()));
+	connect(ui->colorMeridianLine,					SIGNAL(released()), this, SLOT(askMeridianLineColor()));
+	connect(ui->colorCelestialJ2000Poles,			SIGNAL(released()), this, SLOT(askCelestialJ2000PolesColor()));
+	connect(ui->colorCelestialPoles,				SIGNAL(released()), this, SLOT(askCelestialPolesColor()));
+	connect(ui->colorZenithNadir,					SIGNAL(released()), this, SLOT(askZenithNadirColor()));
+	connect(ui->colorEclipticJ2000Poles,				SIGNAL(released()), this, SLOT(askEclipticJ2000PolesColor()));
+	connect(ui->colorEclipticPoles,					SIGNAL(released()), this, SLOT(askEclipticPolesColor()));
+	connect(ui->colorGalacticPoles,					SIGNAL(released()), this, SLOT(askGalacticPolesColor()));
+	connect(ui->colorSupergalacticPoles,			SIGNAL(released()), this, SLOT(askSupergalacticPolesColor()));
+	connect(ui->colorEquinoxJ2000Points,			SIGNAL(released()), this, SLOT(askEquinoxJ2000PointsColor()));
+	connect(ui->colorEquinoxPoints,				SIGNAL(released()), this, SLOT(askEquinoxPointsColor()));
+	connect(ui->colorSolsticeJ2000Points,			SIGNAL(released()), this, SLOT(askSolsticeJ2000PointsColor()));
+	connect(ui->colorSolsticePoints,				SIGNAL(released()), this, SLOT(askSolsticePointsColor()));
+	connect(ui->colorCardinalPoints,				SIGNAL(released()), this, SLOT(askCardinalPointsColor()));
 
 	// Projection
 	connect(ui->projectionListWidget, SIGNAL(currentTextChanged(const QString&)), this, SLOT(changeProjection(const QString&)));
@@ -427,36 +436,36 @@ void ViewDialog::createDialogContent()
 	updateDefaultSkyCulture();
 
 	// allow to display short names and inhibit translation.
-	connectIntProperty(ui->skyCultureNamesStyleComboBox,"ConstellationMgr.constellationDisplayStyle");
-	connectCheckBox(ui->nativePlanetNamesCheckBox,"actionShow_Skyculture_NativePlanetNames");
+	connectIntProperty(ui->skyCultureNamesStyleComboBox,		"ConstellationMgr.constellationDisplayStyle");
+	connectCheckBox(ui->nativePlanetNamesCheckBox,			"actionShow_Skyculture_NativePlanetNames");
 
-	connectCheckBox(ui->showConstellationLinesCheckBox, "actionShow_Constellation_Lines");
-	connectIntProperty(ui->constellationLineThicknessSpinBox,"ConstellationMgr.constellationLineThickness");
-	connectCheckBox(ui->showConstellationLabelsCheckBox, "actionShow_Constellation_Labels");
-	connectCheckBox(ui->showConstellationBoundariesCheckBox, "actionShow_Constellation_Boundaries");
-	connectCheckBox(ui->showConstellationArtCheckBox, "actionShow_Constellation_Art");
-	connectDoubleProperty(ui->constellationArtBrightnessSpinBox,"ConstellationMgr.artIntensity");
+	connectCheckBox(ui->showConstellationLinesCheckBox,		"actionShow_Constellation_Lines");
+	connectIntProperty(ui->constellationLineThicknessSpinBox,		"ConstellationMgr.constellationLineThickness");
+	connectCheckBox(ui->showConstellationLabelsCheckBox,		"actionShow_Constellation_Labels");
+	connectCheckBox(ui->showConstellationBoundariesCheckBox,	"actionShow_Constellation_Boundaries");
+	connectCheckBox(ui->showConstellationArtCheckBox,			"actionShow_Constellation_Art");
+	connectDoubleProperty(ui->constellationArtBrightnessSpinBox,	"ConstellationMgr.artIntensity");
 
 	colorButton(ui->colorConstellationBoundaries,	"ConstellationMgr.boundariesColor");
-	colorButton(ui->colorConstellationLabels,	"ConstellationMgr.namesColor");
-	colorButton(ui->colorConstellationLines,	"ConstellationMgr.linesColor");
-	connect(ui->colorConstellationBoundaries,	SIGNAL(released()), this, SLOT(askConstellationBoundariesColor()));
-	connect(ui->colorConstellationLabels,		SIGNAL(released()), this, SLOT(askConstellationLabelsColor()));
-	connect(ui->colorConstellationLines,		SIGNAL(released()), this, SLOT(askConstellationLinesColor()));
+	colorButton(ui->colorConstellationLabels,			"ConstellationMgr.namesColor");
+	colorButton(ui->colorConstellationLines,			"ConstellationMgr.linesColor");
+	connect(ui->colorConstellationBoundaries,		SIGNAL(released()), this, SLOT(askConstellationBoundariesColor()));
+	connect(ui->colorConstellationLabels,			SIGNAL(released()), this, SLOT(askConstellationLabelsColor()));
+	connect(ui->colorConstellationLines,				SIGNAL(released()), this, SLOT(askConstellationLinesColor()));
 
-	connectCheckBox(ui->showAsterismLinesCheckBox, "actionShow_Asterism_Lines");
-	connectIntProperty(ui->asterismLineThicknessSpinBox, "AsterismMgr.asterismLineThickness");
-	connectCheckBox(ui->showAsterismLabelsCheckBox, "actionShow_Asterism_Labels");
+	connectCheckBox(ui->showAsterismLinesCheckBox,		"actionShow_Asterism_Lines");
+	connectIntProperty(ui->asterismLineThicknessSpinBox,	"AsterismMgr.asterismLineThickness");
+	connectCheckBox(ui->showAsterismLabelsCheckBox,		"actionShow_Asterism_Labels");
 
-	connectCheckBox(ui->showRayHelpersCheckBox, "actionShow_Ray_Helpers");
-	connectIntProperty(ui->rayHelperThicknessSpinBox, "AsterismMgr.rayHelperThickness");
+	connectCheckBox(ui->showRayHelpersCheckBox,			"actionShow_Ray_Helpers");
+	connectIntProperty(ui->rayHelperThicknessSpinBox,		"AsterismMgr.rayHelperThickness");
 
 	colorButton(ui->colorAsterismLabels,	"AsterismMgr.namesColor");
-	colorButton(ui->colorAsterismLines,	"AsterismMgr.linesColor");
-	colorButton(ui->colorRayHelpers,	"AsterismMgr.rayHelpersColor");
-	connect(ui->colorAsterismLabels,	SIGNAL(released()), this, SLOT(askAsterismLabelsColor()));
+	colorButton(ui->colorAsterismLines,		"AsterismMgr.linesColor");
+	colorButton(ui->colorRayHelpers,		"AsterismMgr.rayHelpersColor");
+	connect(ui->colorAsterismLabels,		SIGNAL(released()), this, SLOT(askAsterismLabelsColor()));
 	connect(ui->colorAsterismLines,		SIGNAL(released()), this, SLOT(askAsterismLinesColor()));
-	connect(ui->colorRayHelpers,		SIGNAL(released()), this, SLOT(askRayHelpersColor()));
+	connect(ui->colorRayHelpers,			SIGNAL(released()), this, SLOT(askRayHelpersColor()));
 
 	// Sky layers. This not yet finished and not visible in releases.
 	// TODO: These 4 lines are commented away in trunk.
@@ -465,7 +474,122 @@ void ViewDialog::createDialogContent()
 	connect(ui->skyLayerListWidget, SIGNAL(currentTextChanged(const QString&)), this, SLOT(skyLayersSelectionChanged(const QString&)));
 	connect(ui->skyLayerEnableCheckBox, SIGNAL(stateChanged(int)), this, SLOT(skyLayersEnabledChanged(int)));
 
+	// Hips mgr.
+	StelModule *hipsmgr = StelApp::getInstance().getModule("HipsMgr");
+	connect(hipsmgr, SIGNAL(surveysChanged()), this, SLOT(updateHips()));
+	connect(ui->surveysListWidget, SIGNAL(currentRowChanged(int)), this, SLOT(updateHips()), Qt::QueuedConnection);
+	connect(ui->surveysListWidget, SIGNAL(itemChanged(QListWidgetItem*)), this, SLOT(hipsListItemChanged(QListWidgetItem*)));
+	updateHips();
+
 	updateTabBarListWidgetWidth();
+}
+
+// Heuristic function to decide in which group to put a survey.
+static QString getHipsType(const HipsSurveyP hips)
+{
+	QJsonObject properties = hips->property("properties").toJsonObject();
+	if (!properties.contains("type") && !properties["client_category"].toString().contains("solar system", Qt::CaseInsensitive))
+		return "dss";
+	if (properties["type"].toString() == "planet") // || properties["client_category"].toString().contains("solar system", Qt::CaseInsensitive))
+		return "sol";
+	return "other";
+}
+
+void ViewDialog::updateHips()
+{
+
+	// Update the groups combobox.
+	QComboBox* typeComboBox = ui->surveyTypeComboBox;
+	disconnect(typeComboBox, 0, 0, 0);
+	int index = typeComboBox->currentIndex();
+	QVariant selectedType = typeComboBox->itemData(index);
+	if (selectedType.isNull())
+		selectedType = "dss";
+	typeComboBox->clear();
+	typeComboBox->addItem(q_("Deep Sky"), "dss");
+	typeComboBox->addItem(q_("Solar System"), "sol");
+	index = typeComboBox->findData(selectedType, Qt::UserRole, Qt::MatchCaseSensitive);
+	typeComboBox->setCurrentIndex(index);
+	connect(typeComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(updateHips()));
+
+	// Update survey list.
+	StelModule *hipsmgr = StelApp::getInstance().getModule("HipsMgr");
+	QListWidget* l = ui->surveysListWidget;
+	QJsonObject currentInfo;
+	QString currentSurvey = l->currentItem() ? l->currentItem()->data(Qt::UserRole).toString() : "";
+	QListWidgetItem* currentItem = NULL;
+	HipsSurveyP currentHips;
+
+	l->blockSignals(true);
+	l->clear();
+	QList<HipsSurveyP> hipslist = hipsmgr->property("surveys").value<QList<HipsSurveyP>>();
+
+	for (auto hips: hipslist)
+	{
+		if (getHipsType(hips) != selectedType)
+			continue;
+		QString url = hips->property("url").toString();
+		QJsonObject properties = hips->property("properties").toJsonObject();
+		QString title = properties["obs_title"].toString();
+		if (title.isEmpty())
+			continue;
+		QListWidgetItem* item = new QListWidgetItem(title, l);
+		item->setFlags(item->flags() | Qt::ItemIsUserCheckable);
+		item->setCheckState(hips->property("visible").toBool() ? Qt::Checked : Qt::Unchecked);
+		item->setData(Qt::UserRole, url);
+		if (url == currentSurvey)
+		{
+			currentItem = item;
+			currentHips = hips;
+		}
+		disconnect(hips.data(), 0, this, 0);
+		connect(hips.data(), SIGNAL(statusChanged()), this, SLOT(updateHips()));
+	}
+	l->setCurrentItem(currentItem);
+	l->blockSignals(false);
+
+	if (!currentHips)
+	{
+		ui->surveysTextBrowser->setText("");
+	}
+	else
+	{
+		QJsonObject props = currentHips->property("properties").toJsonObject();
+		QString html = QString("<h1>%1</h1>\n").arg(props["obs_title"].toString());
+
+		html += QString("<p>%1</p>\n").arg(props["obs_description"].toString());
+
+		html += "<h2>" + q_("properties") + "</h2>\n<ul>\n";
+		for (auto iter = props.constBegin(); iter != props.constEnd(); iter++)
+		{
+			html += QString("<li><b>%1</b> %2</li>\n").arg(iter.key()).arg(iter.value().toString());
+		}
+		html += "</ul>\n";
+		ui->surveysTextBrowser->setHtml(html);
+	}
+
+}
+
+void ViewDialog::hipsListItemChanged(QListWidgetItem* item)
+{
+	QListWidget* l = item->listWidget();
+	l->blockSignals(true);
+	StelModule *hipsmgr = StelApp::getInstance().getModule("HipsMgr");
+	QString url = item->data(Qt::UserRole).toString();
+	HipsSurveyP hips;
+	QMetaObject::invokeMethod(hipsmgr, "getSurveyByUrl", Qt::DirectConnection,
+			Q_RETURN_ARG(HipsSurveyP, hips), Q_ARG(QString, url));
+	Q_ASSERT(hips);
+	if (item->checkState() == Qt::Checked)
+	{
+		l->setCurrentItem(item);
+		hips->setProperty("visible", true);
+	}
+	else
+	{
+		hips->setProperty("visible", false);
+	}
+	l->blockSignals(false);
 }
 
 void ViewDialog::colorButton(QToolButton* toolButton, QString propName)
@@ -1064,6 +1188,36 @@ void ViewDialog::askPlanetNomenclatureColor()
 	}
 }
 
+void ViewDialog::askPlanetLabelsColor()
+{
+	Vec3f vColor = StelApp::getInstance().getStelPropertyManager()->getProperty("SolarSystem.labelsColor")->getValue().value<Vec3f>();
+	QColor color(0,0,0);
+	color.setRgbF(vColor.v[0], vColor.v[1], vColor.v[2]);
+	QColor c = QColorDialog::getColor(color, Q_NULLPTR, q_(ui->planetLabelColor->toolTip()));
+	if (c.isValid())
+	{
+		vColor = Vec3f(c.redF(), c.greenF(), c.blueF());
+		StelApp::getInstance().getModule("SolarSystem")->setProperty("labelsColor", QVariant::fromValue(vColor));
+		StelApp::getInstance().getSettings()->setValue("color/planet_names_color", StelUtils::vec3fToStr(vColor));
+		ui->planetLabelColor->setStyleSheet("QToolButton { background-color:" + c.name() + "; }");
+	}
+}
+
+void ViewDialog::askPlanetTrailsColor()
+{
+	Vec3f vColor = StelApp::getInstance().getStelPropertyManager()->getProperty("SolarSystem.trailsColor")->getValue().value<Vec3f>();
+	QColor color(0,0,0);
+	color.setRgbF(vColor.v[0], vColor.v[1], vColor.v[2]);
+	QColor c = QColorDialog::getColor(color, Q_NULLPTR, q_(ui->planetTrailsColor->toolTip()));
+	if (c.isValid())
+	{
+		vColor = Vec3f(c.redF(), c.greenF(), c.blueF());
+		StelApp::getInstance().getModule("SolarSystem")->setProperty("trailsColor", QVariant::fromValue(vColor));
+		StelApp::getInstance().getSettings()->setValue("color/object_trails_color", StelUtils::vec3fToStr(vColor));
+		ui->planetTrailsColor->setStyleSheet("QToolButton { background-color:" + c.name() + "; }");
+	}
+}
+
 void ViewDialog::updateTabBarListWidgetWidth()
 {
 	ui->stackListWidget->setWrapping(false);
@@ -1144,6 +1298,8 @@ void ViewDialog::setSelectedCatalogsFromCheckBoxes()
 		flags |= Nebula::CatSNRG;
 	if (ui->checkBoxACO->isChecked())
 		flags |= Nebula::CatACO;
+	if (ui->checkBoxHCG->isChecked())
+		flags |= Nebula::CatHCG;
 
 	GETSTELMODULE(NebulaMgr)->setCatalogFilters(flags);
 }
@@ -1204,6 +1360,7 @@ void ViewDialog::updateSelectedCatalogsCheckBoxes()
 	ui->checkBoxPNG->setChecked(flags & Nebula::CatPNG);
 	ui->checkBoxSNRG->setChecked(flags & Nebula::CatSNRG);
 	ui->checkBoxACO->setChecked(flags & Nebula::CatACO);
+	ui->checkBoxHCG->setChecked(flags & Nebula::CatHCG);
 }
 
 void ViewDialog::updateSelectedTypesCheckBoxes()

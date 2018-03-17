@@ -97,6 +97,9 @@ private slots:
 	void updateSelectedCatalogsCheckBoxes();
 	void updateSelectedTypesCheckBoxes();
 
+	void updateHips();
+	void hipsListItemChanged(QListWidgetItem* item);
+
 	void askEclipticJ2000GridColor();
 	void askEclipticGridColor();
 	void askEquatorJ2000GridColor();
@@ -138,7 +141,9 @@ private slots:
 	void askAsterismLinesColor();
 	void askRayHelpersColor();
 	// nomenclature color
-	void askPlanetNomenclatureColor();
+	void askPlanetNomenclatureColor();	
+	void askPlanetLabelsColor();
+	void askPlanetTrailsColor();
 
 private:
 	void connectGroupBox(class QGroupBox* groupBox, const QString& actionId);

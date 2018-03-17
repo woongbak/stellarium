@@ -8,9 +8,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-01-19 20:28+0700\n"
+"POT-Creation-Date: 2018-03-07 23:21+0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: hongming chu <hongming@gmail.com>, 2017\n"
+"Last-Translator: StarryNight268 <hhhh268@163.com>, 2018\n"
 "Language-Team: Chinese (China) (https://www.transifex.com/stellarium/teams/80998/zh_CN/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -3518,7 +3518,7 @@ msgstr "武仙座大球状星团"
 msgid "Great Hercules Cluster"
 msgstr "武仙座大星团"
 
-#: nebulae/default/names.dat:505 nebulae/default/names.dat:1047
+#: nebulae/default/names.dat:505 nebulae/default/names.dat:1051
 msgid "Hercules Cluster"
 msgstr "武仙座星系团"
 
@@ -4676,7 +4676,7 @@ msgstr "衣架星团"
 
 #: nebulae/default/names.dat:831
 msgid "Al Sufi's Cluster"
-msgstr "阿尔苏菲星团"
+msgstr "苏菲星团"
 
 #: nebulae/default/names.dat:832
 msgid "Brocchi's Cluster"
@@ -5035,7 +5035,7 @@ msgstr "霍姆伯格III"
 msgid "Grasshopper A"
 msgstr "蝗虫A"
 
-#: nebulae/default/names.dat:933 nebulae/default/names.dat:1040
+#: nebulae/default/names.dat:933 nebulae/default/names.dat:1044
 msgid "Hydra A"
 msgstr "长蛇座A"
 
@@ -5410,134 +5410,150 @@ msgid "M2-9"
 msgstr "M2-9"
 
 #: nebulae/default/names.dat:1034
+msgid "Headphone Nebula"
+msgstr "耳罩星云"
+
+#: nebulae/default/names.dat:1035
+msgid "Jones-Emberson 1"
+msgstr ""
+
+#: nebulae/default/names.dat:1036
 msgid "Westbrook Nebula"
 msgstr "威斯布鲁克星云"
 
-#: nebulae/default/names.dat:1035
+#: nebulae/default/names.dat:1037
+msgid "Southern Owl Nebula"
+msgstr "南夜枭星云"
+
+#: nebulae/default/names.dat:1038
+msgid "Stingray Nebula"
+msgstr "刺魟星云"
+
+#: nebulae/default/names.dat:1039
 msgid "Water Lily Nebula"
 msgstr "睡莲花星云"
 
-#: nebulae/default/names.dat:1036
+#: nebulae/default/names.dat:1040
 msgid "Haufen A"
 msgstr "哈芬A星系群"
 
-#: nebulae/default/names.dat:1037
+#: nebulae/default/names.dat:1041
 msgid "Cetus Cluster"
 msgstr "鲸鱼座星系团"
 
-#: nebulae/default/names.dat:1038
+#: nebulae/default/names.dat:1042
 msgid "Perseus Cluster"
 msgstr "英仙座星系团"
 
-#: nebulae/default/names.dat:1039
+#: nebulae/default/names.dat:1043
 msgid "Train Wreck Cluster"
 msgstr "火车残骸星系团"
 
-#: nebulae/default/names.dat:1041
+#: nebulae/default/names.dat:1045
 msgid "Hydra Cluster"
 msgstr "长蛇座星系团"
 
-#: nebulae/default/names.dat:1042
+#: nebulae/default/names.dat:1046
 msgid "Hydra I"
 msgstr "长蛇座1"
 
-#: nebulae/default/names.dat:1043
+#: nebulae/default/names.dat:1047
 msgid "Leo Cluster"
 msgstr "狮子座星系团"
 
-#: nebulae/default/names.dat:1044
+#: nebulae/default/names.dat:1048
 msgid "Ursa Major I"
 msgstr "大熊座1星系群"
 
-#: nebulae/default/names.dat:1045
+#: nebulae/default/names.dat:1049
 msgid "Coma Cluster"
 msgstr "后发座星系团"
 
-#: nebulae/default/names.dat:1046
+#: nebulae/default/names.dat:1050
 msgid "Corona Borealis Cluster"
 msgstr "北冕座星系团"
 
-#: nebulae/default/names.dat:1048
+#: nebulae/default/names.dat:1052
 msgid "Pandora’s Cluster"
 msgstr "潘多拉星系团"
 
-#: nebulae/default/names.dat:1049
+#: nebulae/default/names.dat:1053
 msgid "Centaurus Cluster"
 msgstr "半人马座星系团"
 
-#: nebulae/default/names.dat:1050
+#: nebulae/default/names.dat:1054
 msgid "Shapley 8 Cluster"
 msgstr "夏普利8星系团"
 
-#: nebulae/default/names.dat:1051
+#: nebulae/default/names.dat:1055
 msgid "Norma Cluster"
 msgstr "诺马星系团"
 
-#: nebulae/default/names.dat:1052
+#: nebulae/default/names.dat:1056
 msgid "Great Attractor"
 msgstr "巨引源"
 
-#: nebulae/default/names.dat:1053
+#: nebulae/default/names.dat:1057
 msgid "Fornax Cluster"
 msgstr "天炉座星系团"
 
-#: nebulae/default/names.dat:1054
+#: nebulae/default/names.dat:1058
 msgid "Fornax Group"
 msgstr "天炉座星系群"
 
-#: nebulae/default/names.dat:1055
+#: nebulae/default/names.dat:1059
 msgid "NGC 1399 Group"
 msgstr "NGC1399星系群"
 
-#: nebulae/default/names.dat:1056
+#: nebulae/default/names.dat:1060
 msgid "Antlia Cluster"
 msgstr "唧筒座星系团"
 
-#: nebulae/default/names.dat:1057
+#: nebulae/default/names.dat:1061
 msgid "Calabash Nebula"
 msgstr "葫芦星云"
 
-#: nebulae/default/names.dat:1058
+#: nebulae/default/names.dat:1062
 msgid "Rotten Egg Nebula"
 msgstr "臭蛋星云"
 
-#: nebulae/default/names.dat:1059
+#: nebulae/default/names.dat:1063
 msgid "Frosty Leo Nebula"
 msgstr "霜狮星云"
 
-#: nebulae/default/names.dat:1060
+#: nebulae/default/names.dat:1064
 msgid "Gomez's Hamburger"
 msgstr "戈麦斯汉堡"
 
-#: nebulae/default/names.dat:1061
+#: nebulae/default/names.dat:1065
 msgid "Cotton Candy Nebula"
 msgstr "棉花糖星云"
 
-#: nebulae/default/names.dat:1062
+#: nebulae/default/names.dat:1066
 msgid "Footprint Nebula"
 msgstr "脚印星云"
 
-#: nebulae/default/names.dat:1063
+#: nebulae/default/names.dat:1067
 msgid "Minkowski's Footprint"
 msgstr "闵可夫斯基的足迹"
 
-#: nebulae/default/names.dat:1064
+#: nebulae/default/names.dat:1068
 msgid "M1-92"
 msgstr "M1-92"
 
-#: nebulae/default/names.dat:1065
+#: nebulae/default/names.dat:1069
 msgid "Sagittarius A East"
 msgstr "人马座A东星"
 
-#: nebulae/default/names.dat:1066
+#: nebulae/default/names.dat:1070
 msgid "Sagittarius A West"
 msgstr "人马座A西星"
 
-#: nebulae/default/names.dat:1067
+#: nebulae/default/names.dat:1071
 msgid "Minispiral in Gal Center"
 msgstr "银心微形螺旋结构"
 
-#: nebulae/default/names.dat:1068
+#: nebulae/default/names.dat:1072
 msgid "Dark Doodad Nebula"
 msgstr "黑饰品星云"
 
@@ -6133,7 +6149,7 @@ msgstr "无名一号"
 
 #: skycultures/arabic/star_names.fab:98
 msgid "Al-suha"
-msgstr "阿尔苏哈"
+msgstr "苏哈"
 
 #: skycultures/arabic/star_names.fab:99
 msgid "Leader-daughter of the bier"
@@ -6159,7 +6175,7 @@ msgstr "投矛者"
 
 #: skycultures/arabic/star_names.fab:104
 msgid "One of Al-ghofer's"
-msgstr "阿尔高飞之一"
+msgstr "高飞之一"
 
 #: skycultures/arabic/star_names.fab:105
 msgid "The shepherd"
@@ -6595,11 +6611,11 @@ msgstr "第二标志"
 
 #: skycultures/arabic/star_names.fab:214
 msgid "The second Al-ghofer"
-msgstr "阿尔高飞之二"
+msgstr "高飞之二"
 
 #: skycultures/arabic/star_names.fab:215
 msgid "The third Al-ghofer"
-msgstr "阿尔高飞之三"
+msgstr "高飞之三"
 
 #: skycultures/arabic/star_names.fab:216
 msgid "Second One of swallower luck"
@@ -7407,75 +7423,75 @@ msgstr "有鬃毛的蛇"
 
 #: skycultures/boorong/star_names.fab:1
 msgid "Marpeankurrk"
-msgstr ""
+msgstr "大角 Marpeankurrk"
 
 #: skycultures/boorong/star_names.fab:2
 msgid "Djuit"
-msgstr ""
+msgstr "心宿二 Djuit"
 
 #: skycultures/boorong/star_names.fab:3
 msgid "Neilloan"
-msgstr ""
+msgstr "织女一 Neilloan"
 
 #: skycultures/boorong/star_names.fab:4
 msgid "Totyarguil"
-msgstr ""
+msgstr "河鼓二 Totyarguil"
 
 #: skycultures/boorong/star_names.fab:5
 msgid "Karik Karik"
-msgstr ""
+msgstr "尾宿八 Karik Karik"
 
 #: skycultures/boorong/star_names.fab:6 skycultures/boorong/star_names.fab:7
 msgid "Berm-berm-gle"
-msgstr ""
+msgstr "马腹一 Berm-berm-gle"
 
 #: skycultures/boorong/star_names.fab:8
 msgid "Bunya"
-msgstr ""
+msgstr "十字架一 Bunya"
 
 #: skycultures/boorong/star_names.fab:9
 msgid "Tourchingboiongerra"
-msgstr ""
+msgstr "周鼎一 Tourchingboiongerra"
 
 #: skycultures/boorong/star_names.fab:10
 msgid "Kourt-chin"
-msgstr ""
+msgstr "夹白一 Kourt-chin"
 
 #: skycultures/boorong/star_names.fab:11
 msgid "Warring"
-msgstr ""
+msgstr "箕宿二 Warring"
 
 #: skycultures/boorong/star_names.fab:12
 msgid "Kulkanbulla"
-msgstr ""
+msgstr "参宿二 Kulkanbulla"
 
 #: skycultures/boorong/star_names.fab:13
 msgid "Lamankurrk"
-msgstr ""
+msgstr "昴宿六 Lamankurrk"
 
 #: skycultures/boorong/star_names.fab:14
 msgid "Gellarlec"
-msgstr ""
+msgstr "毕宿五 Gellarlec"
 
 #: skycultures/boorong/star_names.fab:15
 msgid "Warepil"
-msgstr ""
+msgstr "天狼 Warepil"
 
 #: skycultures/boorong/star_names.fab:16
 msgid "Colowgulloric Warepil"
-msgstr ""
+msgstr "参宿七 Colowgulloric Warepil"
 
 #: skycultures/boorong/star_names.fab:17
 msgid "Won"
-msgstr ""
+msgstr "鳖六 Won"
 
 #: skycultures/boorong/star_names.fab:18
 msgid "Weetkurrk"
-msgstr ""
+msgstr "右摄提增一 Weetkurrk"
 
 #: skycultures/boorong/star_names.fab:19
 msgid "War"
-msgstr ""
+msgstr "老人 War"
 
 #: skycultures/boorong/star_names.fab:20
 msgid "Collowgulloric War"
@@ -7483,11 +7499,11 @@ msgstr ""
 
 #: skycultures/boorong/star_names.fab:21
 msgid "Yerredetkurrk"
-msgstr ""
+msgstr "水委一 Yerredetkurrk"
 
 #: skycultures/boorong/star_names.fab:22
 msgid "Otchocut"
-msgstr ""
+msgstr "瓠瓜一 Otchocut"
 
 #: skycultures/boorong/star_names.fab:23
 msgid "Collenbitchick"
@@ -7766,7 +7782,7 @@ msgstr "刍藁"
 
 #: skycultures/chinese/constellation_names.eng.fab:55
 msgid "Pestle (In Winnowing Basket Mansion)"
-msgstr " 杵(箕宿)"
+msgstr "杵(箕宿)"
 
 #: skycultures/chinese/constellation_names.eng.fab:56
 msgid "Pestle (In Rooftop Mansion)"
@@ -8749,7 +8765,7 @@ msgstr "异雀"
 
 #: skycultures/chinese/constellation_names.eng.fab:316
 msgid "Hidden Virtue"
-msgstr "异雀"
+msgstr "阴德"
 
 #: skycultures/chinese/constellation_names.eng.fab:317
 msgid "Official in Charge of Pasturing"
@@ -8827,7 +8843,7 @@ msgstr "阵车"
 
 #: skycultures/chinese/constellation_names.eng.fab:334
 msgid "Right linchpin (Vassal of Chariot)"
-msgstr " 右辖(附轸宿)"
+msgstr "右辖(附轸宿)"
 
 #: skycultures/chinese/constellation_names.eng.fab:335
 #: skycultures/chinese/star_names.fab:1631
@@ -26850,7 +26866,7 @@ msgstr "Inkalunis"
 
 #: skycultures/western/star_names.fab:108
 msgid "Clava"
-msgstr "Copy text \t Clava"
+msgstr "Clava"
 
 #: skycultures/western/star_names.fab:109
 msgid "Venabulum"
@@ -29122,7 +29138,7 @@ msgstr "容器"
 
 #: skycultures/western_rey/constellation_names.eng.fab:138
 msgid "Northern Fish"
-msgstr " 北鱼"
+msgstr "北鱼"
 
 #: skycultures/western_rey/constellation_names.eng.fab:139
 msgid "Circlet"

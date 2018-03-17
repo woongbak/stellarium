@@ -69,6 +69,7 @@ void StelObjectMgr::registerStelObjectMgr(StelObjectModule* m)
 		objModulesMap["SolarSystem:scattered disc object"] = "Scattered disc objects";
 		objModulesMap["SolarSystem:Oort cloud object"] = "Oort cloud objects";
 		objModulesMap["SolarSystem:sednoid"] = "Sednoids";
+		objModulesMap["SolarSystem:artificial"] = "Artificial objects";
 	}
 	// Deep-sky objects by type + amateur catalogues
 	if (m->objectName()=="NebulaMgr")
@@ -127,6 +128,7 @@ void StelObjectMgr::registerStelObjectMgr(StelObjectModule* m)
 		objModulesMap["NebulaMgr:118"] = "The Strasbourg-ESO Catalogue of Galactic Planetary Nebulae";
 		objModulesMap["NebulaMgr:119"] = "A catalogue of Galactic supernova remnants";
 		objModulesMap["NebulaMgr:120"] = "A Catalog of Rich Clusters of Galaxies";
+		objModulesMap["NebulaMgr:121"] = "Hickson Compact Group";
 		objModulesMap["NebulaMgr:150"] = "Dwarf galaxies";
 		objModulesMap["NebulaMgr:151"] = "Herschel 400 Catalogue";
 	}

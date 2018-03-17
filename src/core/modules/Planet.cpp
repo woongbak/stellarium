@@ -41,6 +41,7 @@
 #include "StelOpenGL.hpp"
 #include "StelOBJ.hpp"
 #include "StelOpenGLArray.hpp"
+#include "StelHips.hpp"
 
 #include <limits>
 #include <QByteArray>
@@ -208,6 +209,7 @@ Planet::Planet(const QString& englishName,
 	  axisRotation(0.),
 	  objModel(Q_NULLPTR),
 	  objModelLoader(Q_NULLPTR),
+	  survey(Q_NULLPTR),
 	  rings(Q_NULLPTR),
 	  distance(0.0),
 	  sphereScale(1.f),
@@ -279,19 +281,19 @@ void Planet::init()
 		qDebug() << "Planet::init(): Non-empty static map. This is a programming error, but we can fix that.";
 		pTypeMap.clear();
 	}
-	pTypeMap.insert(Planet::isStar,		"star");
-	pTypeMap.insert(Planet::isPlanet,	"planet");
-	pTypeMap.insert(Planet::isMoon,		"moon");
-	pTypeMap.insert(Planet::isObserver,	"observer");
-	pTypeMap.insert(Planet::isArtificial,	"artificial");
-	pTypeMap.insert(Planet::isAsteroid,	"asteroid");
-	pTypeMap.insert(Planet::isPlutino,	"plutino");
-	pTypeMap.insert(Planet::isComet,	"comet");
+	pTypeMap.insert(Planet::isStar,			"star");
+	pTypeMap.insert(Planet::isPlanet,		"planet");
+	pTypeMap.insert(Planet::isMoon,			"moon");
+	pTypeMap.insert(Planet::isObserver,		"observer");
+    pTypeMap.insert(Planet::isArtificial,	"artificial");
+	pTypeMap.insert(Planet::isAsteroid,		"asteroid");
+	pTypeMap.insert(Planet::isPlutino,		"plutino");
+	pTypeMap.insert(Planet::isComet,		"comet");
 	pTypeMap.insert(Planet::isDwarfPlanet,	"dwarf planet");
-	pTypeMap.insert(Planet::isCubewano,	"cubewano");
-	pTypeMap.insert(Planet::isSDO,		"scattered disc object");
-	pTypeMap.insert(Planet::isOCO,		"Oort cloud object");
-	pTypeMap.insert(Planet::isSednoid,	"sednoid");
+	pTypeMap.insert(Planet::isCubewano,		"cubewano");
+	pTypeMap.insert(Planet::isSDO,			"scattered disc object");
+	pTypeMap.insert(Planet::isOCO,			"Oort cloud object");
+	pTypeMap.insert(Planet::isSednoid,		"sednoid");
 	pTypeMap.insert(Planet::isUNDEFINED,	"UNDEFINED"); // something must be broken before we ever see this!
 
 	if (vMagAlgorithmMap.count() > 0)
@@ -301,10 +303,10 @@ void Planet::init()
 	}
 	vMagAlgorithmMap.insert(Planet::ExplanatorySupplement_2013,	"ExpSup2013");
 	vMagAlgorithmMap.insert(Planet::ExplanatorySupplement_1992,	"ExpSup1992");
-	vMagAlgorithmMap.insert(Planet::Mueller_1893,	"Mueller1893"); // better name	
+	vMagAlgorithmMap.insert(Planet::Mueller_1893,				"Mueller1893"); // better name
 	vMagAlgorithmMap.insert(Planet::AstronomicalAlmanac_1984,	"AstrAlm1984"); // consistent name
-	vMagAlgorithmMap.insert(Planet::Generic,	"Generic"),	
-	vMagAlgorithmMap.insert(Planet::UndefinedAlgorithm, "");
+	vMagAlgorithmMap.insert(Planet::Generic,					"Generic"),
+	vMagAlgorithmMap.insert(Planet::UndefinedAlgorithm,			"");
 }
 
 Planet::~Planet()
@@ -341,12 +343,18 @@ void Planet::setIAUMoonNumber(QString designation)
 
 QString Planet::getEnglishName() const
 {
-	return englishName;
+    if (!iauMoonNumber.isEmpty())
+        return QString("%1 (%2)").arg(englishName).arg(iauMoonNumber);
+    else
+        return englishName;
 }
 
 QString Planet::getNameI18n() const
 {
-	return nameI18;
+    if (!iauMoonNumber.isEmpty())
+        return QString("%1 (%2)").arg(nameI18).arg(iauMoonNumber);
+    else
+        return nameI18;
 }
 
 const QString Planet::getContextString() const
@@ -400,9 +408,7 @@ QString Planet::getInfoString(const StelCore* core, const InfoStringGroup& flags
 
 	if (flags&Name)
 	{
-		oss << "<h2>" << getNameI18n();  // UI translation can differ from sky translation
-		if (!iauMoonNumber.isEmpty())
-			oss << QString(" (%1)").arg(iauMoonNumber);
+		oss << "<h2>" << getNameI18n();  // UI translation can differ from sky translation		
 		oss.setRealNumberNotation(QTextStream::FixedNotation);
 		oss.setRealNumberPrecision(1);
 		if (sphereScale != 1.f)
@@ -580,7 +586,7 @@ QString Planet::getInfoString(const StelCore* core, const InfoStringGroup& flags
 			// Sidereal (orbital) period for solar system bodies in days and in Julian years (symbol: a)
 			oss << QString("%1: %2 %3 (%4 a)").arg(q_("Sidereal period"), QString::number(siderealPeriod, 'f', 2), days, QString::number(siderealPeriod/365.25, 'f', 3)) << "<br />";
 
-			if (qAbs(siderealDay)>0)
+			if (qAbs(siderealDay)>0 && getPlanetType()!=isArtificial)
 			{
 				oss << QString("%1: %2").arg(q_("Sidereal day"), StelUtils::hoursToHmsStr(qAbs(siderealDay*24))) << "<br />";
 				oss << QString("%1: %2").arg(q_("Mean solar day"), StelUtils::hoursToHmsStr(qAbs(getMeanSolarDay()*24))) << "<br />";
@@ -1832,8 +1838,9 @@ QOpenGLShaderProgram* Planet::createShader(const QString& name, PlanetShaderVars
 	return program;
 }
 
-void Planet::initShader()
+bool Planet::initShader()
 {
+	if (planetShaderProgram || shaderError) return !shaderError; // Already done.
 	qDebug() << "Initializing planets GL shaders... ";
 	shaderError = true;
 
@@ -1849,12 +1856,12 @@ void Planet::initShader()
 	if(vFileName.isEmpty())
 	{
 		qCritical()<<"Cannot find 'data/shaders/planet.vert', can't use planet rendering!";
-		return;
+		return false;
 	}
 	if(fFileName.isEmpty())
 	{
 		qCritical()<<"Cannot find 'data/shaders/planet.frag', can't use planet rendering!";
-		return;
+		return false;
 	}
 
 	QFile vFile(vFileName);
@@ -1863,7 +1870,7 @@ void Planet::initShader()
 	if(!vFile.open(QIODevice::ReadOnly | QIODevice::Text))
 	{
 		qCritical()<<"Cannot load planet vertex shader file"<<vFileName<<vFile.errorString();
-		return;
+		return false;
 	}
 	QByteArray vsrc = vFile.readAll();
 	vFile.close();
@@ -1871,7 +1878,7 @@ void Planet::initShader()
 	if(!fFile.open(QIODevice::ReadOnly | QIODevice::Text))
 	{
 		qCritical()<<"Cannot load planet fragment shader file"<<fFileName<<fFile.errorString();
-		return;
+		return false;
 	}
 	QByteArray fsrc = fFile.readAll();
 	fFile.close();
@@ -2021,6 +2028,7 @@ void Planet::initShader()
 			objShaderProgram&&
 			objShadowShaderProgram&&
 			transformShaderProgram);
+	return true;
 }
 
 void Planet::deinitShader()
@@ -2260,8 +2268,17 @@ void Planet::draw3dModel(StelCore* core, StelProjector::ModelViewTranformP trans
 				drawSphere(sPainter, screenSz, drawOnlyRing);
 			}
 		}
-		else
+		else if (!survey || survey->getInterstate() < 1.0f)
+		{
 			drawSphere(sPainter, screenSz, drawOnlyRing);
+		}
+
+		if (survey && survey->getInterstate() > 0.0f)
+		{
+			drawSurvey(core, sPainter);
+			drawSphere(sPainter, screenSz, true);
+		}
+
 
 		core->setClippingPlanes(n,f);  // Restore old clipping planes
 
@@ -2610,7 +2627,7 @@ void Planet::drawSphere(StelPainter* painter, float screenSz, bool drawOnlyRing)
 	GL(shader->setAttributeArray(shaderVars->texCoord, (const GLfloat*)model.texCoordArr.constData(), 2));
 	GL(shader->enableAttributeArray(shaderVars->texCoord));
 
-	if (rings)
+	if (rings && !drawOnlyRing)
 	{
 		painter->setDepthMask(true);
 		painter->setDepthTest(true);
@@ -2669,6 +2686,78 @@ void Planet::drawSphere(StelPainter* painter, float screenSz, bool drawOnlyRing)
 	GL(shader->release());
 	
 	painter->setCullFace(false);
+}
+
+
+// Draw the Hips survey.
+void Planet::drawSurvey(StelCore* core, StelPainter* painter)
+{
+	if (!Planet::initShader()) return;
+
+	painter->setDepthMask(true);
+	painter->setDepthTest(true);
+
+	// Backup transformation so that we can restore it later.
+	StelProjector::ModelViewTranformP transfo = painter->getProjector()->getModelViewTransform()->clone();
+	Vec4f color = painter->getColor();
+	painter->getProjector()->getModelViewTransform()->combine(Mat4d::scaling(radius * sphereScale));
+
+	QOpenGLShaderProgram* shader = planetShaderProgram;
+	const PlanetShaderVars* shaderVars = &planetShaderVars;
+	if (rings)
+	{
+		shader = ringPlanetShaderProgram;
+		shaderVars = &ringPlanetShaderVars;
+	}
+
+	GL(shader->bind());
+	RenderData rData = setCommonShaderUniforms(*painter, shader, *shaderVars);
+	QVector<Vec3f> projectedVertsArray;
+	QVector<Vec3f> vertsArray;
+	double angle = getSpheroidAngularSize(core) * M_PI / 180.;
+
+	if (rings)
+	{
+		GL(ringPlanetShaderProgram->setUniformValue(ringPlanetShaderVars.isRing, false));
+		GL(ringPlanetShaderProgram->setUniformValue(ringPlanetShaderVars.ring, true));
+		GL(ringPlanetShaderProgram->setUniformValue(ringPlanetShaderVars.outerRadius, rings->radiusMax));
+		GL(ringPlanetShaderProgram->setUniformValue(ringPlanetShaderVars.innerRadius, rings->radiusMin));
+		GL(ringPlanetShaderProgram->setUniformValue(ringPlanetShaderVars.ringS, 2));
+		rings->tex->bind(2);
+	}
+
+	// Apply a rotation otherwize the hips surveys don't get rendered at the
+	// proper position.  Not sure why...
+	painter->getProjector()->getModelViewTransform()->combine(Mat4d::zrotation(M_PI / 2.0));
+	painter->getProjector()->getModelViewTransform()->combine(Mat4d::scaling(Vec3d(1, 1, oneMinusOblateness)));
+
+	survey->draw(painter, angle, [&](const QVector<Vec3d>& verts, const QVector<Vec2f>& tex, const QVector<uint16_t>& indices) {
+		projectedVertsArray.resize(verts.size());
+		vertsArray.resize(verts.size());
+		for (int i = 0; i < verts.size(); i++)
+		{
+			Vec3d v;
+			v = verts[i];
+			painter->getProjector()->project(v, v);
+			projectedVertsArray[i] = Vec3f(v[0], v[1], v[2]);
+			v = Mat4d::scaling(radius * sphereScale) * verts[i];
+			v = Mat4d::scaling(Vec3d(1, 1, oneMinusOblateness)) * v;
+			// Undo the rotation we applied for the survey fix.
+			v = Mat4d::zrotation(M_PI / 2.0) * v;
+			vertsArray[i] = Vec3f(v[0], v[1], v[2]);
+		}
+		GL(shader->setAttributeArray(shaderVars->vertex, (const GLfloat*)projectedVertsArray.constData(), 3));
+		GL(shader->enableAttributeArray(shaderVars->vertex));
+		GL(shader->setAttributeArray(shaderVars->unprojectedVertex, (const GLfloat*)vertsArray.constData(), 3));
+		GL(shader->enableAttributeArray(shaderVars->unprojectedVertex));
+		GL(shader->setAttributeArray(shaderVars->texCoord, (const GLfloat*)tex.constData(), 2));
+		GL(shader->enableAttributeArray(shaderVars->texCoord));
+		GL(gl->glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_SHORT, indices.constData()));
+	});
+
+	// Restore painter state.
+	painter->setProjector(core->getProjection(transfo));
+	painter->setColor(color[0], color[1], color[2], color[3]);
 }
 
 Planet::PlanetOBJModel* Planet::loadObjModel() const
