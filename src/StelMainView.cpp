@@ -577,10 +577,10 @@ StelMainView::StelMainView(QSettings* settings)
 
 	StelApp::initStatic();
 
-	minFpsTimer = new QTimer(this);
-	minFpsTimer->setTimerType(Qt::PreciseTimer);
-	minFpsTimer->setInterval(1000/minfps);
-	connect(minFpsTimer,SIGNAL(timeout()),this,SLOT(minFPSUpdate()));
+	fpsTimer = new QTimer(this);
+	fpsTimer->setTimerType(Qt::PreciseTimer);
+	fpsTimer->setInterval(1000/minfps);
+	connect(fpsTimer,SIGNAL(timeout()),this,SLOT(fpsTimerUpdate()));
 
 	cursorTimeoutTimer = new QTimer(this);
 	cursorTimeoutTimer->setSingleShot(true);
@@ -1292,18 +1292,13 @@ void StelMainView::drawEnded()
 {
 	updateQueued = false;
 
-	//requeue the next draw
-	if(needsMaxFPS())
-	{
-		updateQueued = true;
-		minFpsTimer->stop();
-		glWidget->update();
-	}
-	else
-	{
-		if(!minFpsTimer->isActive())
-			minFpsTimer->start();
-	}
+	int requiredFpsInterval = needsMaxFPS()?1000/maxfps:1000/minfps;
+
+	if(fpsTimer->interval() != requiredFpsInterval)
+		fpsTimer->setInterval(requiredFpsInterval);
+
+	if(!fpsTimer->isActive())
+		fpsTimer->start();
 }
 
 void StelMainView::setFlagCursorTimeout(bool b)
@@ -1322,17 +1317,12 @@ void StelMainView::hideCursor()
 	QGuiApplication::setOverrideCursor(Qt::BlankCursor);
 }
 
-void StelMainView::minFPSUpdate()
+void StelMainView::fpsTimerUpdate()
 {
 	if(!updateQueued)
 	{
 		updateQueued = true;
-		//qDebug()<<"minFPSUpdate";
-		glWidget->update();
-	}
-	else
-	{
-		//qDebug()<<"double update";
+		QTimer::singleShot(0, glWidget, SLOT(update()));
 	}
 }
 
@@ -1409,13 +1399,17 @@ void StelMainView::doScreenshot(void)
 	QImage im = glWidget->grabFrameBuffer();
 #else
 	glWidget->makeCurrent();
+	float pixelRatio = QOpenGLContext::currentContext()->screen()->devicePixelRatio();
 	QOpenGLFramebufferObjectFormat fbFormat;
 	fbFormat.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
-	QOpenGLFramebufferObject * fbObj = new QOpenGLFramebufferObject(stelScene->width(), stelScene->height(), fbFormat);
+	fbFormat.setInternalTextureFormat(GL_RGB); // avoid transparent background!
+	QOpenGLFramebufferObject * fbObj = new QOpenGLFramebufferObject(stelScene->width() * pixelRatio, stelScene->height() * pixelRatio, fbFormat);
 	fbObj->bind();
 	QOpenGLPaintDevice fbObjPaintDev(stelScene->width(), stelScene->height());
-	QPainter painter(&fbObjPaintDev);
+	fbObjPaintDev.setDevicePixelRatio(pixelRatio);
+	QPainter painter;
 	painter.setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing);
+	painter.begin(&fbObjPaintDev);
 	stelScene->render(&painter);
 	painter.end();
 	QImage im = fbObj->toImage();

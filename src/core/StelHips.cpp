@@ -74,6 +74,8 @@ HipsSurvey::HipsSurvey(const QString& url_, double releaseDate_):
 {
 	// Immediatly download the properties.
 	QNetworkRequest req = QNetworkRequest(getUrlFor("properties"));
+	req.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache);
+	req.setRawHeader("User-Agent", StelUtils::getUserAgentString().toLatin1());
 	QNetworkReply* networkReply = StelApp::getInstance().getNetworkAccessManager()->get(req);
 	connect(networkReply, &QNetworkReply::finished, [&, networkReply] {
 		QByteArray data = networkReply->readAll();
@@ -111,6 +113,16 @@ bool HipsSurvey::isVisible() const
 	return (bool)fader;
 }
 
+bool HipsSurvey::isPlanetarySurvey() const
+{
+	QStringList DSSSurveys;
+	DSSSurveys << "equatorial" << "galactic" << "ecliptic"; // HiPS	frames for DSS surveys
+	if (DSSSurveys.contains(hipsFrame, Qt::CaseInsensitive))
+		return false;
+	else
+		return true;
+}
+
 void HipsSurvey::setVisible(bool value)
 {
 	if (value == isVisible()) return;
@@ -142,6 +154,8 @@ bool HipsSurvey::getAllsky()
 		QUrl path = getUrlFor(QString("Norder%1/Allsky.%2").arg(getPropertyInt("hips_order_min", 3)).arg(ext));
 		qDebug() << "Load allsky" << path;
 		QNetworkRequest req = QNetworkRequest(path);
+		req.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache);
+		req.setRawHeader("User-Agent", StelUtils::getUserAgentString().toLatin1());
 		networkReply = StelApp::getInstance().getNetworkAccessManager()->get(req);
 		emit statusChanged();
 

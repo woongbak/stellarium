@@ -467,13 +467,6 @@ void ViewDialog::createDialogContent()
 	connect(ui->colorAsterismLines,		SIGNAL(released()), this, SLOT(askAsterismLinesColor()));
 	connect(ui->colorRayHelpers,			SIGNAL(released()), this, SLOT(askRayHelpersColor()));
 
-	// Sky layers. This not yet finished and not visible in releases.
-	// TODO: These 4 lines are commented away in trunk.
-	populateSkyLayersList();
-	connect(this, SIGNAL(visibleChanged(bool)), this, SLOT(populateSkyLayersList()));
-	connect(ui->skyLayerListWidget, SIGNAL(currentTextChanged(const QString&)), this, SLOT(skyLayersSelectionChanged(const QString&)));
-	connect(ui->skyLayerEnableCheckBox, SIGNAL(stateChanged(int)), this, SLOT(skyLayersEnabledChanged(int)));
-
 	// Hips mgr.
 	StelModule *hipsmgr = StelApp::getInstance().getModule("HipsMgr");
 	connect(hipsmgr, SIGNAL(surveysChanged()), this, SLOT(updateHips()));
@@ -493,11 +486,24 @@ static QString getHipsType(const HipsSurveyP hips)
 	if (properties["type"].toString() == "planet") // || properties["client_category"].toString().contains("solar system", Qt::CaseInsensitive))
 		return "sol";
 	return "other";
+	/*
+	// Let's use decide in which group to put a survey as in official HiPS list aggregator
+	// http://aladin.u-strasbg.fr/hips/list#hipsplanet
+	QStringList DSSSurveys;
+	DSSSurveys << "equatorial" << "galactic" << "ecliptic"; // HiPS	frames for DSS surveys
+	QJsonObject properties = hips->property("properties").toJsonObject();
+	if (DSSSurveys.contains(properties["hips_frame"].toString(), Qt::CaseInsensitive))
+		return "dss";
+	else if (!DSSSurveys.contains(properties["hips_frame"].toString(), Qt::CaseInsensitive) && properties["client_category"].toString().contains("Solar system", Qt::CaseInsensitive))
+		return "sol";
+	else
+		return "other";
+	*/
 }
 
 void ViewDialog::updateHips()
 {
-
+	StelGui* gui = dynamic_cast<StelGui*>(StelApp::getInstance().getGui());
 	// Update the groups combobox.
 	QComboBox* typeComboBox = ui->surveyTypeComboBox;
 	disconnect(typeComboBox, 0, 0, 0);
@@ -556,15 +562,19 @@ void ViewDialog::updateHips()
 	{
 		QJsonObject props = currentHips->property("properties").toJsonObject();
 		QString html = QString("<h1>%1</h1>\n").arg(props["obs_title"].toString());
-
+		if (props.contains("obs_copyright") && props.contains("obs_copyright_url"))
+		{
+			html += QString("<p>Copyright <a href='%2'>%1</a></p>\n")
+					.arg(props["obs_copyright"].toString()).arg(props["obs_copyright_url"].toString());
+		}
 		html += QString("<p>%1</p>\n").arg(props["obs_description"].toString());
-
 		html += "<h2>" + q_("properties") + "</h2>\n<ul>\n";
 		for (auto iter = props.constBegin(); iter != props.constEnd(); iter++)
 		{
 			html += QString("<li><b>%1</b> %2</li>\n").arg(iter.key()).arg(iter.value().toString());
 		}
 		html += "</ul>\n";
+		ui->surveysTextBrowser->document()->setDefaultStyleSheet(QString(gui->getStelStyle().htmlStyleSheet));
 		ui->surveysTextBrowser->setHtml(html);
 	}
 
@@ -1540,37 +1550,6 @@ void ViewDialog::populateLists()
 	ui->landscapeTextBrowser->document()->setDefaultStyleSheet(QString(gui->getStelStyle().htmlStyleSheet));
 	ui->landscapeTextBrowser->setHtml(lmgr->property("currentLandscapeHtmlDescription").toString());
 	updateDefaultLandscape();
-}
-
-void ViewDialog::populateSkyLayersList()
-{
-	ui->skyLayerListWidget->clear();
-	StelSkyLayerMgr* skyLayerMgr = GETSTELMODULE(StelSkyLayerMgr);
-	ui->skyLayerListWidget->addItems(skyLayerMgr->getAllKeys());
-}
-
-void ViewDialog::skyLayersSelectionChanged(const QString& s)
-{
-	StelSkyLayerMgr* skyLayerMgr = GETSTELMODULE(StelSkyLayerMgr);
-	StelSkyLayerP l = skyLayerMgr->getSkyLayer(s);
-
-	if (l.isNull())
-		return;
-
-	QString html = "<html><head></head><body>";
-	html += "<h2>" + l->getShortName()+ "</h2>";
-	html += "<p>" + l->getLayerDescriptionHtml() + "</p>";
-	if (!l->getShortServerCredits().isEmpty())
-		html += "<h3>" + q_("Contact") + ": " + l->getShortServerCredits() + "</h3>";
-	html += "</body></html>";
-	ui->skyLayerTextBrowser->setHtml(html);
-	ui->skyLayerEnableCheckBox->setChecked(skyLayerMgr->getShowLayer(s));
-}
-
-void ViewDialog::skyLayersEnabledChanged(int state)
-{
-	StelSkyLayerMgr* skyLayerMgr = GETSTELMODULE(StelSkyLayerMgr);
-	skyLayerMgr->showLayer(ui->skyLayerListWidget->currentItem()->text(), state);
 }
 
 void ViewDialog::skyCultureChanged()

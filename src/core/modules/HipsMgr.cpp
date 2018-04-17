@@ -28,17 +28,36 @@
 
 #include <QNetworkReply>
 #include <QSettings>
+#include <QTimer>
 
 HipsMgr::HipsMgr()
 {
 	setObjectName("HipsMgr");
+	connect(this, SIGNAL(surveysChanged()), this, SLOT(restoreVisibleSurveys()));
 }
 
 HipsMgr::~HipsMgr()
 {
+	//store active HIPS to config.ini
+	QSettings* conf = StelApp::getInstance().getSettings();
+	conf->beginGroup("hips");
+	conf->setValue("show", getFlagShow());
+	conf->beginGroup("visible");
+	if (surveys.count()>0)
+		conf->remove(""); // Don't clear list in case of just a short offline period.
+	for (auto survey: surveys)
+	{
+		if (survey->isVisible() && survey->planet.isEmpty())
+		{
+			conf->setValue(survey->getUrl(), "true");
+		}
+	}
+	conf->endGroup();
+	conf->endGroup();
+	conf->sync();
 }
 
-void HipsMgr::init()
+void HipsMgr::loadSources()
 {
 	QSettings* conf = StelApp::getInstance().getSettings();
 	conf->beginGroup("hips");
@@ -75,8 +94,48 @@ void HipsMgr::init()
 		});
 	}
 	conf->endGroup();
+}
 
-	addAction("actionShow_DSS", N_("Display Options"), N_("Digitized Sky Survey (experimental)"), "showDSS", "Ctrl+Alt+D");
+void HipsMgr::init()
+{
+	QSettings* conf = StelApp::getInstance().getSettings();
+	conf->beginGroup("hips");
+	setFlagShow(conf->value("show", true).toBool());
+	conf->endGroup();
+
+	addAction("actionShow_Hips_Surveys", N_("Display Options"), N_("Toggle Hierarchical Progressive Surveys (experimental)"), "flagShow", "Ctrl+Alt+D");
+
+	// Start loading the sources only after stellarium has time to set up the proxy.
+	QTimer::singleShot(0, this, SLOT(loadSources()));
+}
+
+
+void HipsMgr::restoreVisibleSurveys()
+{
+	//qDebug() << "HipsMgr::restoreVisibleSurveys()";
+	QSettings* conf = StelApp::getInstance().getSettings();
+	conf->beginGroup("hips");
+
+//	// restore visible state of last run, if possible
+//	for (auto survey: surveys)
+//	{
+//		qDebug() << "Known Survey: " << survey->getUrl();
+//	}
+	conf->beginGroup("visible");
+	for (QString key : conf->allKeys())
+	{
+		if (conf->value(key).toBool()==true)
+		{
+			// We have to restore one slash after colon.
+			QString realURL=key.replace(":/", "://");
+			qDebug() << "HiPS: Restore visible survey:" << realURL;
+			HipsSurveyP survey=getSurveyByUrl(realURL);
+			if (survey)
+				survey->setVisible(true);
+		}
+	}
+	conf->endGroup();
+	conf->endGroup();
 }
 
 void HipsMgr::deinit()
@@ -85,6 +144,7 @@ void HipsMgr::deinit()
 
 void HipsMgr::draw(StelCore* core)
 {
+	if (!visible) return;
 	StelPainter sPainter(core->getProjection(StelCore::FrameJ2000));
 	for (auto survey: surveys)
 	{
@@ -119,21 +179,16 @@ HipsSurveyP HipsMgr::getSurveyByUrl(const QString &url)
 	return HipsSurveyP(NULL);
 }
 
-bool HipsMgr::getShowDSS() const
+bool HipsMgr::getFlagShow(void) const
 {
-	for (auto survey: surveys)
-	{
-		if (survey->isVisible() && survey->getUrl().endsWith("DSSColor"))
-			return true;
-	}
-	return false;
+	return visible;
 }
 
-void HipsMgr::setShowDSS(bool value)
+void HipsMgr::setFlagShow(bool b)
 {
-	for (auto survey: surveys)
+	if (visible != b)
 	{
-		survey->setVisible(value && survey->getUrl().endsWith("DSSColor"));
+		visible = b;
+		emit showChanged(b);
 	}
-	emit showDSSChanged();
 }

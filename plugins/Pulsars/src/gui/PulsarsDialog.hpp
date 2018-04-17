@@ -28,6 +28,7 @@
 class Ui_pulsarsDialog;
 class Pulsars;
 class QTimer;
+class QToolButton;
 
 //! @ingroup pulsars
 class PulsarsDialog : public StelDialog
@@ -53,17 +54,23 @@ private slots:
 	void setSeparateColorsFlag(int checkState);
 	void setDisplayAtStartupEnabled(int checkState);
 	void setDisplayShowPulsarsButton(int checkState);
+	void setFilteringEnabled(int checkState);
 	void updateStateReceiver(Pulsars::UpdateState state);
         void updateCompleteReceiver();
 	void restoreDefaults(void);
 	void saveSettings(void);
 	void updateJSON(void);
+	void setFilterValue(double v);
+
+	void askPulsarsMarkerColor();
+	void askPulsarGlitchesMarkerColor();
 
 private:
 	Ui_pulsarsDialog* ui;
 	Pulsars* psr;
 	void setAboutHtml(void);
 	void updateGuiFromSettings(void);
+	void colorButton(QToolButton *toolButton, Vec3f vColor);
 	QTimer* updateTimer;
 
 };
