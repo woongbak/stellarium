@@ -77,7 +77,7 @@ public:
 	//         surveys.  Should be set to 2 pi for sky surveys.
 	//! @param callback if set this will be called for each visible tile, and the callback should do it rendering
 	//         itself.  If set to NULL, the function will draw the tiles using the default shader.
-	void draw(StelPainter* sPainter, double angle = 2 * M_PI, DrawCallback callback = NULL);
+	void draw(StelPainter* sPainter, double angle = 2 * M_PI, DrawCallback callback = nullptr);
 
 	//! Return the source URL of the survey.
 	const QString& getUrl() const {return url;}
@@ -107,7 +107,7 @@ private:
 	QCache<long int, HipsTile> tiles;
 	// reply to the initial download of the properties file and to the
 	// allsky texture.
-	QNetworkReply *networkReply = NULL;
+	QNetworkReply *networkReply = nullptr;
 
 	QImage allsky = QImage();
 	bool noAllsky = false;
@@ -116,7 +116,7 @@ private:
 	QJsonObject properties;
 
 	// Used to show the loading progress.
-	StelProgressController* progressBar = NULL;
+	StelProgressController* progressBar = nullptr;
 	int nbVisibleTiles;
 	int nbLoadedTiles;
 
