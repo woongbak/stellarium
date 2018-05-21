@@ -323,7 +323,7 @@ QString MinorPlanet::getInfoString(const StelCore *core, const InfoStringGroup &
 	}
 
 	double angularSize = 2.*getAngularSize(core)*M_PI/180.;
-	if (flags&Size && angularSize>=4.8e-7)
+	if (flags&Size && angularSize>=4.8e-8)
 	{
 		QString sizeStr = "";
 		if (sphereScale!=1.f) // We must give correct diameters even if upscaling (e.g. Moon)
@@ -331,13 +331,13 @@ QString MinorPlanet::getInfoString(const StelCore *core, const InfoStringGroup &
 			QString sizeOrig, sizeScaled;
 			if (withDecimalDegree)
 			{
-				sizeOrig   = StelUtils::radToDecDegStr(angularSize / sphereScale,5,false,true);
-				sizeScaled = StelUtils::radToDecDegStr(angularSize,5,false,true);
+				sizeOrig   = StelUtils::radToDecDegStr(angularSize / sphereScale, 5, false, true);
+				sizeScaled = StelUtils::radToDecDegStr(angularSize, 5, false, true);
 			}
 			else
 			{
-				sizeOrig   = StelUtils::radToDmsStr(angularSize / sphereScale, true);
-				sizeScaled = StelUtils::radToDmsStr(angularSize, true);
+				sizeOrig   = StelUtils::radToDmsPStr(angularSize / sphereScale, 2);
+				sizeScaled = StelUtils::radToDmsPStr(angularSize, 2);
 			}
 
 			sizeStr = QString("%1, %2: %3").arg(sizeOrig, q_("scaled up to"), sizeScaled);
@@ -345,9 +345,9 @@ QString MinorPlanet::getInfoString(const StelCore *core, const InfoStringGroup &
 		else
 		{
 			if (withDecimalDegree)
-				sizeStr = StelUtils::radToDecDegStr(angularSize,5,false,true);
+				sizeStr = StelUtils::radToDecDegStr(angularSize, 5, false, true);
 			else
-				sizeStr = StelUtils::radToDmsStr(angularSize, true);
+				sizeStr = StelUtils::radToDmsPStr(angularSize, 2);
 		}
 
 		oss << QString("%1: %2").arg(q_("Apparent diameter"), sizeStr) << "<br />";

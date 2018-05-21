@@ -150,13 +150,22 @@ NebulaMgr::NebulaMgr(void)
 NebulaMgr::~NebulaMgr()
 {
 	Nebula::texCircle = StelTextureSP();
+	Nebula::texCircleLarge = StelTextureSP();
 	Nebula::texGalaxy = StelTextureSP();
+	Nebula::texGalaxyLarge = StelTextureSP();
 	Nebula::texOpenCluster = StelTextureSP();
+	Nebula::texOpenClusterLarge = StelTextureSP();
+	Nebula::texOpenClusterXLarge = StelTextureSP();
 	Nebula::texGlobularCluster = StelTextureSP();
+	Nebula::texGlobularClusterLarge = StelTextureSP();
 	Nebula::texPlanetaryNebula = StelTextureSP();
 	Nebula::texDiffuseNebula = StelTextureSP();
+	Nebula::texDiffuseNebulaLarge = StelTextureSP();
+	Nebula::texDiffuseNebulaXLarge = StelTextureSP();
 	Nebula::texDarkNebula = StelTextureSP();
+	Nebula::texDarkNebulaLarge = StelTextureSP();
 	Nebula::texOpenClusterWithNebulosity = StelTextureSP();
+	Nebula::texOpenClusterWithNebulosityLarge = StelTextureSP();
 }
 
 /*************************************************************************
@@ -178,20 +187,38 @@ void NebulaMgr::init()
 	nebulaFont.setPixelSize(StelApp::getInstance().getBaseFontSize());
 	// Load circle texture
 	Nebula::texCircle			= StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb.png");
+	// Load circle texture for large DSO
+	Nebula::texCircleLarge			= StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb_lrg.png");
 	// Load ellipse texture
 	Nebula::texGalaxy			= StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb_gal.png");
+	// Load ellipse texture for large galaxies
+	Nebula::texGalaxyLarge			= StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb_gal_lrg.png");
 	// Load open cluster marker texture
 	Nebula::texOpenCluster		= StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb_ocl.png");
+	// Load open cluster marker texture for large objects
+	Nebula::texOpenClusterLarge		= StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb_ocl_lrg.png");
+	// Load open cluster marker texture for extra large objects
+	Nebula::texOpenClusterXLarge		= StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb_ocl_xlrg.png");
 	// Load globular cluster marker texture
 	Nebula::texGlobularCluster		= StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb_gcl.png");
+	// Load globular cluster marker texture for large GCls
+	Nebula::texGlobularClusterLarge		= StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb_gcl_lrg.png");
 	// Load planetary nebula marker texture
 	Nebula::texPlanetaryNebula	= StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb_pnb.png");
 	// Load diffuse nebula marker texture
 	Nebula::texDiffuseNebula		= StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb_dif.png");
+	// Load diffuse nebula marker texture for large DSO
+	Nebula::texDiffuseNebulaLarge		= StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb_dif_lrg.png");
+	// Load diffuse nebula marker texture for extra large DSO
+	Nebula::texDiffuseNebulaXLarge		= StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb_dif_xlrg.png");
 	// Load dark nebula marker texture
 	Nebula::texDarkNebula		= StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb_drk.png");
+	// Load dark nebula marker texture for large DSO
+	Nebula::texDarkNebulaLarge	= StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb_drk_lrg.png");
 	// Load Ocl/Nebula marker texture
 	Nebula::texOpenClusterWithNebulosity = StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb_ocln.png");
+	// Load Ocl/Nebula marker texture for large objects
+	Nebula::texOpenClusterWithNebulosityLarge = StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb_ocln_lrg.png");
 	// Load pointer texture
 	texPointer = StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/pointeur5.png");
 
@@ -1544,11 +1571,11 @@ bool NebulaMgr::loadDSOOutlines(const QString &filename)
 		return false;
 	}
 
-	float RA, DE;
+	double RA, DE;
 	int i, readOk = 0;
-	Vec3f XYZ;
-	std::vector<Vec3f> *points = Q_NULLPTR;
-	typedef QPair<float, float> coords;
+	Vec3d XYZ;
+	std::vector<Vec3d> *points = Q_NULLPTR;
+	typedef QPair<double, double> coords;
 	coords point, fpoint;
 	QList<coords> outline;
 	QString record, command, dso;
@@ -1562,9 +1589,9 @@ bool NebulaMgr::loadDSOOutlines(const QString &filename)
 			continue;
 
 		// bytes 1 - 8, RA
-		RA = record.left(8).toFloat();
+		RA = record.left(8).toDouble();
 		// bytes 9 -18, DE
-		DE = record.mid(9, 10).toFloat();
+		DE = record.mid(9, 10).toDouble();
 		// bytes 19-25, command
 		command = record.mid(19, 7).trimmed();
 		// bytes 26, designation of DSO
@@ -1600,7 +1627,7 @@ bool NebulaMgr::loadDSOOutlines(const QString &filename)
 
 			if (!e.isNull())
 			{
-				points = new std::vector<Vec3f>;
+				points = new std::vector<Vec3d>;
 				for (i = 0; i < outline.size(); i++)
 				{
 					// Calc the Cartesian coord with RA and DE
@@ -1616,7 +1643,7 @@ bool NebulaMgr::loadDSOOutlines(const QString &filename)
 
 	}
 	dsoOutlineFile.close();
-	qDebug() << "Loaded" << readOk << "DSO outline records successfully";
+	qDebug() << "Loaded" << readOk << "DSO outline records successfully";	
 	return true;
 }
 

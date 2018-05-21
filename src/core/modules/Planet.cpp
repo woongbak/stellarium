@@ -28,6 +28,7 @@
 #include "Planet.hpp"
 #include "Orbit.hpp"
 #include "planetsephems/precession.h"
+#include "planetsephems/EphemWrapper.hpp"
 #include "StelObserver.hpp"
 #include "StelProjector.hpp"
 #include "sidereal_time.h"
@@ -281,19 +282,19 @@ void Planet::init()
 		qDebug() << "Planet::init(): Non-empty static map. This is a programming error, but we can fix that.";
 		pTypeMap.clear();
 	}
-	pTypeMap.insert(Planet::isStar,			"star");
-	pTypeMap.insert(Planet::isPlanet,		"planet");
-	pTypeMap.insert(Planet::isMoon,			"moon");
-	pTypeMap.insert(Planet::isObserver,		"observer");
-    pTypeMap.insert(Planet::isArtificial,	"artificial");
-	pTypeMap.insert(Planet::isAsteroid,		"asteroid");
-	pTypeMap.insert(Planet::isPlutino,		"plutino");
-	pTypeMap.insert(Planet::isComet,		"comet");
+	pTypeMap.insert(Planet::isStar,		"star");
+	pTypeMap.insert(Planet::isPlanet,	"planet");
+	pTypeMap.insert(Planet::isMoon,		"moon");
+	pTypeMap.insert(Planet::isObserver,	"observer");
+	pTypeMap.insert(Planet::isArtificial,	"artificial");
+	pTypeMap.insert(Planet::isAsteroid,	"asteroid");
+	pTypeMap.insert(Planet::isPlutino,	"plutino");
+	pTypeMap.insert(Planet::isComet,	"comet");
 	pTypeMap.insert(Planet::isDwarfPlanet,	"dwarf planet");
-	pTypeMap.insert(Planet::isCubewano,		"cubewano");
-	pTypeMap.insert(Planet::isSDO,			"scattered disc object");
-	pTypeMap.insert(Planet::isOCO,			"Oort cloud object");
-	pTypeMap.insert(Planet::isSednoid,		"sednoid");
+	pTypeMap.insert(Planet::isCubewano,	"cubewano");
+	pTypeMap.insert(Planet::isSDO,		"scattered disc object");
+	pTypeMap.insert(Planet::isOCO,		"Oort cloud object");
+	pTypeMap.insert(Planet::isSednoid,	"sednoid");
 	pTypeMap.insert(Planet::isUNDEFINED,	"UNDEFINED"); // something must be broken before we ever see this!
 
 	if (vMagAlgorithmMap.count() > 0)
@@ -303,10 +304,10 @@ void Planet::init()
 	}
 	vMagAlgorithmMap.insert(Planet::ExplanatorySupplement_2013,	"ExpSup2013");
 	vMagAlgorithmMap.insert(Planet::ExplanatorySupplement_1992,	"ExpSup1992");
-	vMagAlgorithmMap.insert(Planet::Mueller_1893,				"Mueller1893"); // better name
+	vMagAlgorithmMap.insert(Planet::Mueller_1893,			"Mueller1893"); // better name
 	vMagAlgorithmMap.insert(Planet::AstronomicalAlmanac_1984,	"AstrAlm1984"); // consistent name
-	vMagAlgorithmMap.insert(Planet::Generic,					"Generic"),
-	vMagAlgorithmMap.insert(Planet::UndefinedAlgorithm,			"");
+	vMagAlgorithmMap.insert(Planet::Generic,			"Generic"),
+	vMagAlgorithmMap.insert(Planet::UndefinedAlgorithm,		"");
 }
 
 Planet::~Planet()
@@ -442,16 +443,20 @@ QString Planet::getInfoString(const StelCore* core, const InfoStringGroup& flags
 	// Debug help.
 	//oss << "Apparent Magnitude Algorithm: " << getApparentMagnitudeAlgorithmString() << " " << vMagAlgorithm << "<br>";
 
+#ifndef NDEBUG
 	// GZ This is mostly for debugging. Maybe also useful for letting people use our results to cross-check theirs, but we should not act as reference, currently...
 	// TODO: maybe separate this out into:
 	//if (flags&EclipticCoordXYZ)
 	// For now: add to EclipticCoordJ2000 group
-	//if (flags&EclipticCoordJ2000)
-	//{
-	//	Vec3d eclPos=(englishName=="Sun" ? GETSTELMODULE(SolarSystem)->getLightTimeSunPosition() : eclipticPos);
-	//	oss << q_("Ecliptical XYZ (VSOP87A): %1/%2/%3").arg(QString::number(eclPos[0], 'f', 7), QString::number(eclPos[1], 'f', 7), QString::number(eclPos[2], 'f', 7)) << "<br>";
-	//}
-
+	if (flags&EclipticCoordJ2000)
+	{
+		Vec3d eclPos=(englishName=="Sun" ? GETSTELMODULE(SolarSystem)->getLightTimeSunPosition() : eclipticPos);
+		QString algoName("VSOP87");
+		if (EphemWrapper::use_de431(core->getJDE())) algoName="DE431";
+		if (EphemWrapper::use_de430(core->getJDE())) algoName="DE430";
+		oss << q_("Ecliptical XYZ (%1): %2/%3/%4").arg(algoName).arg(QString::number(eclPos[0], 'f', 7), QString::number(eclPos[1], 'f', 7), QString::number(eclPos[2], 'f', 7)) << "<br>";
+	}
+#endif
 	if (flags&Distance)
 	{
 		double hdistanceAu = getHeliocentricEclipticPos().length();
@@ -518,7 +523,7 @@ QString Planet::getInfoString(const StelCore* core, const InfoStringGroup& flags
 
 
 	double angularSize = 2.*getAngularSize(core)*M_PI/180.;
-	if (flags&Size && angularSize>=4.8e-7)
+	if (flags&Size && angularSize>=4.8e-8)
 	{
 		QString s1, s2, sizeStr = "";
 		if (rings)
@@ -526,13 +531,13 @@ QString Planet::getInfoString(const StelCore* core, const InfoStringGroup& flags
 			double withoutRings = 2.*getSpheroidAngularSize(core)*M_PI/180.;
 			if (withDecimalDegree)
 			{
-				s1 = StelUtils::radToDecDegStr(withoutRings,4,false,true);
-				s2 = StelUtils::radToDecDegStr(angularSize,4,false,true);
+				s1 = StelUtils::radToDecDegStr(withoutRings, 5, false, true);
+				s2 = StelUtils::radToDecDegStr(angularSize, 5, false, true);
 			}
 			else
 			{
-				s1 = StelUtils::radToDmsStr(withoutRings, true);
-				s2 = StelUtils::radToDmsStr(angularSize, true);
+				s1 = StelUtils::radToDmsPStr(withoutRings, 2);
+				s2 = StelUtils::radToDmsPStr(angularSize, 2);
 			}
 
 			sizeStr = QString("%1, %2: %3").arg(s1, q_("with rings"), s2);
@@ -543,13 +548,13 @@ QString Planet::getInfoString(const StelCore* core, const InfoStringGroup& flags
 			{
 				if (withDecimalDegree)
 				{
-					s1 = StelUtils::radToDecDegStr(angularSize / sphereScale,5,false,true);
-					s2 = StelUtils::radToDecDegStr(angularSize,5,false,true);
+					s1 = StelUtils::radToDecDegStr(angularSize / sphereScale, 5, false, true);
+					s2 = StelUtils::radToDecDegStr(angularSize, 5, false, true);
 				}
 				else
 				{
-					s1 = StelUtils::radToDmsStr(angularSize / sphereScale, true);
-					s2 = StelUtils::radToDmsStr(angularSize, true);
+					s1 = StelUtils::radToDmsPStr(angularSize / sphereScale, 2);
+					s2 = StelUtils::radToDmsPStr(angularSize, 2);
 				}
 
 				sizeStr = QString("%1, %2: %3").arg(s1, q_("scaled up to"), s2);
@@ -557,9 +562,9 @@ QString Planet::getInfoString(const StelCore* core, const InfoStringGroup& flags
 			else
 			{
 				if (withDecimalDegree)
-					sizeStr = StelUtils::radToDecDegStr(angularSize,5,false,true);
+					sizeStr = StelUtils::radToDecDegStr(angularSize, 5, false, true);
 				else
-					sizeStr = StelUtils::radToDmsStr(angularSize, true);
+					sizeStr = StelUtils::radToDmsPStr(angularSize, 2);
 			}
 		}
 		oss << QString("%1: %2").arg(q_("Apparent diameter"), sizeStr) << "<br />";

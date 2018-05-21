@@ -55,7 +55,7 @@
 #define CATALOG_FORMAT_VERSION 1 /* Version of format of catalog */
 
 /*
- This method is the one called automatically by the StelModuleMgr just 
+ This method is the one called automatically by the StelModuleMgr just
  after loading the dynamic library
 */
 StelModule* QuasarsStelPluginInterface::getStelModule() const
@@ -72,7 +72,7 @@ StelPluginInfo QuasarsStelPluginInterface::getPluginInfo() const
 	info.displayedName = N_("Quasars");
 	info.authors = "Alexander Wolf";
 	info.contact = "alex.v.wolf@gmail.com";
-	info.description = N_("A plugin that shows some quasars brighter than 16 visual magnitude. A catalogue of quasars compiled from 'Quasars and Active Galactic Nuclei' (13th Ed.) (Veron+ 2010) =2010A&A...518A..10V");
+	info.description = N_("A plugin that shows some quasars brighter than visual magnitude 18. The catalogue of quasars was compiled from 'Quasars and Active Galactic Nuclei' (13th Ed.) (Veron+ 2010)");
 	info.version = QUASARS_PLUGIN_VERSION;
 	info.license = QUASARS_PLUGIN_LICENSE;
 	return info;
@@ -224,7 +224,7 @@ void Quasars::draw(StelCore* core)
 	StelProjectorP prj = core->getProjection(StelCore::FrameJ2000);
 	StelPainter painter(prj);
 	painter.setFont(font);
-	
+
 	foreach (const QuasarP& quasar, QSO)
 	{
 		if (quasar && quasar->initialized)
@@ -545,7 +545,7 @@ void Quasars::restoreDefaultConfigIni(void)
 
 	conf->setValue("distribution_enabled", false);
 	conf->setValue("enable_at_startup", false);
-	conf->setValue("updates_enabled", true);	
+	conf->setValue("updates_enabled", true);
 	conf->setValue("url", "http://stellarium.org/json/quasars.json");
 	conf->setValue("update_frequency_days", 100);
 	conf->setValue("flag_show_quasars_button", true);
@@ -562,6 +562,7 @@ void Quasars::readSettingsFromConfig(void)
 	lastUpdate = QDateTime::fromString(conf->value("last_update", "2012-05-24T12:00:00").toString(), Qt::ISODate);
 	updatesEnabled = conf->value("updates_enabled", true).toBool();
 	setDisplayMode(conf->value("distribution_enabled", false).toBool());
+	setFlagUseQuasarMarkers(conf->value("flag_use_markers", false).toBool());
 	setMarkerColor(StelUtils::strToVec3f(conf->value("marker_color", "1.0,0.5,0.4").toString()));
 	enableAtStartup = conf->value("enable_at_startup", false).toBool();
 	flagShowQuasarsButton = conf->value("flag_show_quasars_button", true).toBool();
@@ -578,7 +579,8 @@ void Quasars::saveSettingsToConfig(void)
 	conf->setValue("updates_enabled", updatesEnabled );
 	conf->setValue("distribution_enabled", getDisplayMode());
 	conf->setValue("enable_at_startup", enableAtStartup);
-	conf->setValue("flag_show_quasars_button", flagShowQuasarsButton);
+	conf->setValue("flag_show_quasars_button", getFlagShowQuasarsButton());
+	conf->setValue("flag_use_markers", getFlagUseQuasarMarkers());
 	conf->setValue("marker_color", StelUtils::vec3fToStr(getMarkerColor()));
 
 	conf->endGroup();
@@ -612,7 +614,7 @@ void Quasars::updateJSON(void)
 	conf->setValue("Quasars/last_update", lastUpdate.toString(Qt::ISODate));
 
 	updateState = Quasars::Updating;
-	emit(updateStateChanged(updateState));	
+	emit(updateStateChanged(updateState));
 
 	if (progressBar==Q_NULLPTR)
 		progressBar = StelApp::getInstance().addProgressBar();
@@ -708,6 +710,16 @@ bool Quasars::getDisplayMode()
 void Quasars::setDisplayMode(bool b)
 {
 	Quasar::distributionMode=b;
+}
+
+bool Quasars::getFlagUseQuasarMarkers()
+{
+	return Quasar::useMarkers;
+}
+
+void Quasars::setFlagUseQuasarMarkers(bool b)
+{
+	Quasar::useMarkers = b;
 }
 
 Vec3f Quasars::getMarkerColor()

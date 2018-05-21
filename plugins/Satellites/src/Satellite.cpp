@@ -61,6 +61,7 @@ int Satellite::orbitLineFadeSegments = 4;
 int Satellite::orbitLineSegmentDuration = 20;
 bool Satellite::orbitLinesFlag = true;
 bool Satellite::realisticModeFlag = false;
+bool Satellite::hideInvisibleSatellitesFlag = false;
 Vec3f Satellite::invisibleSatelliteColor = Vec3f(0.2f,0.2f,0.2f);
 
 double Satellite::timeRateLimit = 1.0; // one JD per second by default
@@ -888,16 +889,14 @@ void Satellite::draw(StelCore* core, StelPainter& painter)
 		return;
 
 	XYZ = getJ2000EquatorialPos(core);
-	StelSkyDrawer* sd = core->getSkyDrawer();
-	Vec3f drawColor = (visibility == gSatWrapper::VISIBLE) ? hintColor : invisibleSatelliteColor; // Use hintColor for visible satellites only
-	painter.setColor(drawColor[0], drawColor[1], drawColor[2], hintBrightness);
 
 	Vec3d win;
 	if (painter.getProjector()->projectCheck(XYZ, win))
 	{
 		if (realisticModeFlag)
 		{
-			double mag = getVMagnitude(core);
+			float mag = getVMagnitude(core);
+			StelSkyDrawer* sd = core->getSkyDrawer();
 
 			RCMag rcMag;
 			Vec3f color = Vec3f(1.f,1.f,1.f);
@@ -924,19 +923,29 @@ void Satellite::draw(StelCore* core, StelPainter& painter)
 				painter.setColor(color[0], color[1], color[2], 1.f);
 
 			// Draw the label of the satellite when it enabled
-			if (txtMag <= sd->getLimitMagnitude() && Satellite::showLabels)
+			if (txtMag <= sd->getLimitMagnitude() && showLabels)
 				painter.drawText(XYZ, name, 0, 10, 10, false);
 
 		}
 		else
 		{
-			if (Satellite::showLabels)
-				painter.drawText(XYZ, name, 0, 10, 10, false);
+			bool visible = true;
+			if (hideInvisibleSatellitesFlag && visibility != gSatWrapper::VISIBLE)
+				visible = false;
 
-			painter.setBlending(true, GL_ONE, GL_ONE);
+			if (visible)
+			{
+				Vec3f drawColor = (visibility == gSatWrapper::VISIBLE) ? hintColor : invisibleSatelliteColor; // Use hintColor for visible satellites only
+				painter.setColor(drawColor[0], drawColor[1], drawColor[2], hintBrightness);
 
-			Satellite::hintTexture->bind();
-			painter.drawSprite2dMode(XYZ, 11);
+				if (showLabels)
+					painter.drawText(XYZ, name, 0, 10, 10, false);
+
+				painter.setBlending(true, GL_ONE, GL_ONE);
+
+				hintTexture->bind();
+				painter.drawSprite2dMode(XYZ, 11);
+			}
 		}
 	}
 
