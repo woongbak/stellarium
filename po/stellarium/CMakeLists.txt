@@ -28,6 +28,7 @@ IF(${XGETTEXT_FOUND})
                --output-dir=${CMAKE_BINARY_DIR}
                --files-from=${CMAKE_CURRENT_SOURCE_DIR}/POTFILES.in
                --copyright-holder=Stellarium's\ team
+               --msgid-bugs-address=stellarium@googlegroups.com
                --from-code=utf-8
           WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
           COMMENT "Generating stellarium.pot"
@@ -38,7 +39,9 @@ IF(${XGETTEXT_FOUND})
      #ADD_DEPENDENCIES(generate-pot-stellarium UiHeaders)
      #ADD_DEPENDENCIES(generate-pot-stellarium stellarium_UIS_H)
      # Make sure the UI headers are created first.
-     ADD_DEPENDENCIES(generate-pot-stellarium StelGuiLib)
+     # NOTE: StelGuiLib was removed in series 0.13
+     #ADD_DEPENDENCIES(generate-pot-stellarium StelGuiLib)
+     ADD_DEPENDENCIES(generate-pot-stellarium stelMain)
 
      # Generate this POT file when building the "generate-pot" target.
      ADD_DEPENDENCIES(generate-pot generate-pot-stellarium)

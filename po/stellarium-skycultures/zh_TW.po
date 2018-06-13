@@ -7,8 +7,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-05-16 16:50+0700\n"
+"Report-Msgid-Bugs-To: stellarium@googlegroups.com\n"
+"POT-Creation-Date: 2018-06-03 17:28+0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Willy Wu <df910105@yahoo.com.tw>, 2018\n"
 "Language-Team: Chinese (Taiwan) (https://www.transifex.com/stellarium/teams/80998/zh_TW/)\n"
@@ -22272,7 +22272,7 @@ msgstr "七仙人（北斗七星）"
 #. TRANSLATORS: Horse headed twin son of The Sun
 #: skycultures/indian/constellation_names.eng.fab:28
 msgid "Twin physicians of Gods"
-msgstr ""
+msgstr "阿說你（婁宿）"
 
 #. TRANSLATORS: Bearer of life
 #: skycultures/indian/constellation_names.eng.fab:30
@@ -22345,7 +22345,7 @@ msgstr "毗釋珂（氐宿）"
 #. TRANSLATORS: Radha - companion of Lord Krishna
 #: skycultures/indian/constellation_names.eng.fab:53
 msgid "Followers of Radha"
-msgstr ""
+msgstr "阿奴羅陀（房宿）"
 
 #: skycultures/indian/constellation_names.eng.fab:54
 msgid "The eldest one"
@@ -23653,36 +23653,36 @@ msgid "Threading Coins"
 msgstr "天錢"
 
 #: skycultures/korean/star_names.fab:1
-msgid "SaangSaang"
+msgid "SangSang"
 msgstr "想像"
 
 #: skycultures/korean/star_names.fab:2 skycultures/korean/star_names.fab:4
-msgid "ChaSaang"
-msgstr "次上"
+msgid "ChaSang"
+msgstr "次"
 
 #: skycultures/korean/star_names.fab:3 skycultures/korean/star_names.fab:50
-msgid "ChaJaang"
+msgid "ChaJang"
 msgstr "次長"
 
-#: skycultures/korean/star_names.fab:5
-msgid "UJangGuun"
-msgstr " 右將軍"
+#: skycultures/korean/star_names.fab:5 skycultures/korean/star_names.fab:21
+msgid "UJangGun"
+msgstr "吳將軍"
 
 #: skycultures/korean/star_names.fab:6
-msgid "DaeJangGuun"
+msgid "DaeJangGun"
 msgstr "大將軍"
 
-#: skycultures/korean/star_names.fab:7
-msgid "JwaJangGuun"
+#: skycultures/korean/star_names.fab:7 skycultures/korean/star_names.fab:19
+msgid "JwaJangGun"
 msgstr "左將軍"
 
 #: skycultures/korean/star_names.fab:8
-msgid "WaangRaang"
+msgid "WangRang"
 msgstr "王郎"
 
 #: skycultures/korean/star_names.fab:9 skycultures/korean/star_names.fab:10
 #: skycultures/korean/star_names.fab:11 skycultures/korean/star_names.fab:12
-msgid "CheonSaa"
+msgid "CheonSa"
 msgstr "天使"
 
 #: skycultures/korean/star_names.fab:13 skycultures/korean/star_names.fab:17
@@ -23690,51 +23690,43 @@ msgid "CheonGou"
 msgstr "千古"
 
 #: skycultures/korean/star_names.fab:14
-msgid "SaaGong"
+msgid "SaGong"
 msgstr "司空"
 
 #: skycultures/korean/star_names.fab:15
-msgid "CheonOok"
-msgstr "千玉"
+msgid "CheonOk"
+msgstr "天險"
 
 #: skycultures/korean/star_names.fab:16
-msgid "CheonChaang"
+msgid "CheonChang"
 msgstr "天井"
 
 #: skycultures/korean/star_names.fab:18
 msgid "Gyeong"
 msgstr "經"
 
-#: skycultures/korean/star_names.fab:19
-msgid "JwaJaangGuun"
-msgstr "左將軍"
-
 #: skycultures/korean/star_names.fab:20
-msgid "HuuJaangGuun"
+msgid "HuJangGun"
 msgstr "後將軍"
 
-#: skycultures/korean/star_names.fab:21
-msgid "UuJaangGuun"
-msgstr "右將軍"
-
 #: skycultures/korean/star_names.fab:22
-msgid "PyeonJaangGuun"
+msgid "PyeonJangGun"
 msgstr "偏將軍"
 
 #: skycultures/korean/star_names.fab:23
-msgid "SaamJaangGuun"
+msgid "SamJangGun"
 msgstr "叄將軍"
 
 #: skycultures/korean/star_names.fab:24
-msgid "TaeSaa"
+msgid "TaeSa"
 msgstr "太師"
 
 #: skycultures/korean/star_names.fab:25 skycultures/korean/star_names.fab:39
-msgid "BaakSaa"
-msgstr "白蛇"
+msgid "BakSa"
+msgstr "博士"
 
 #: skycultures/korean/star_names.fab:26
-msgid "SaamGong"
+msgid "SamGong"
 msgstr "三公"
 
 #: skycultures/korean/star_names.fab:27
@@ -23742,11 +23734,11 @@ msgid "JaeUu"
 msgstr "載宇"
 
 #: skycultures/korean/star_names.fab:28
-msgid "JaeSaa"
-msgstr "財師"
+msgid "JaeSa"
+msgstr "能人"
 
 #: skycultures/korean/star_names.fab:29
-msgid "YeoJuu"
+msgid "YeoJu"
 msgstr "驪州"
 
 #: skycultures/korean/star_names.fab:30
@@ -23763,15 +23755,15 @@ msgstr "小民"
 
 #: skycultures/korean/star_names.fab:33 skycultures/korean/star_names.fab:64
 #: skycultures/korean/star_names.fab:65 skycultures/korean/star_names.fab:66
-msgid "Buuiin"
+msgid "Buin"
 msgstr "夫人"
 
 #: skycultures/korean/star_names.fab:34
-msgid "WaangBii"
+msgid "WangBi"
 msgstr "王妃"
 
 #: skycultures/korean/star_names.fab:35 skycultures/korean/star_names.fab:47
-msgid "HuuGuung"
+msgid "HuGung"
 msgstr "後宮"
 
 #: skycultures/korean/star_names.fab:36
@@ -23779,56 +23771,56 @@ msgid "HwangJae"
 msgstr "皇帝"
 
 #: skycultures/korean/star_names.fab:37
-msgid "CheoSaa"
+msgid "CheoSa"
 msgstr "處事"
 
 #: skycultures/korean/star_names.fab:38
-msgid "EuiSaa"
+msgid "EuiSa"
 msgstr "醫生"
 
 #: skycultures/korean/star_names.fab:40
-msgid "DaeBuu"
+msgid "DaeBu"
 msgstr "教父"
 
 #: skycultures/korean/star_names.fab:41
-msgid "SaangTae"
+msgid "SangTae"
 msgstr "狀態"
 
 #: skycultures/korean/star_names.fab:42
-msgid "JuungTae"
+msgid "JungTae"
 msgstr "病危"
 
 #: skycultures/korean/star_names.fab:43
-msgid "HaaTae"
+msgid "HaTae"
 msgstr "哈泰"
 
 #: skycultures/korean/star_names.fab:44 skycultures/korean/star_names.fab:62
-msgid "TaeJaa"
+msgid "TaeJa"
 msgstr "太子"
 
 #: skycultures/korean/star_names.fab:45
-msgid "JaeWaang"
-msgstr "帝王"
+msgid "JaeWang"
+msgstr "再王"
 
 #: skycultures/korean/star_names.fab:46 skycultures/korean/star_names.fab:61
-msgid "SeoJaa"
+msgid "SeoJa"
 msgstr "庶子"
 
 #: skycultures/korean/star_names.fab:48
-msgid "CheonChuu"
+msgid "CheonChu"
 msgstr "千秋"
 
 #: skycultures/korean/star_names.fab:49
-msgid "SaangJaang"
+msgid "SangJang"
 msgstr "上市"
 
 #: skycultures/korean/star_names.fab:51
-msgid "TaeSaang"
+msgid "TaeSang"
 msgstr "太上"
 
 #: skycultures/korean/star_names.fab:52
-msgid "SaaJuu.DaeRii"
-msgstr "四周代表"
+msgid "SaJu.DaeRi"
+msgstr "沙洲代理"
 
 #: skycultures/korean/star_names.fab:53
 msgid "Jeong"
@@ -23847,31 +23839,31 @@ msgid "Beol"
 msgstr "罰"
 
 #: skycultures/korean/star_names.fab:57
-msgid "Saal"
-msgstr "歲"
+msgid "Sal"
+msgstr "肉"
 
 #: skycultures/korean/star_names.fab:58
-msgid "Wii"
-msgstr "位"
+msgid "Wi"
+msgstr "地方"
 
 #: skycultures/korean/star_names.fab:59
 msgid "Eung"
 msgstr "應"
 
 #: skycultures/korean/star_names.fab:60
-msgid "MyeongDaang"
+msgid "MyeongDang"
 msgstr "明堂"
 
 #: skycultures/korean/star_names.fab:63
-msgid "Huu"
-msgstr "后"
+msgid "Hu"
+msgstr "後"
 
 #: skycultures/korean/star_names.fab:67
-msgid "Biin"
-msgstr "仁"
+msgid "Bin"
+msgstr "空"
 
 #: skycultures/korean/star_names.fab:68 skycultures/korean/star_names.fab:69
-msgid "DaeJaang"
+msgid "DaeJang"
 msgstr "大將"
 
 #: skycultures/macedonian/constellation_names.eng.fab:1

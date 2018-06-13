@@ -7,10 +7,10 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-05-16 16:50+0700\n"
+"Report-Msgid-Bugs-To: stellarium@googlegroups.com\n"
+"POT-Creation-Date: 2018-06-03 17:28+0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: 6D- Photographer, 2018\n"
+"Last-Translator: SangJun Park <psj8252@naver.com>, 2018\n"
 "Language-Team: Korean (https://www.transifex.com/stellarium/teams/80998/ko/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -5687,7 +5687,7 @@ msgstr "토끼"
 
 #: skycultures/arabic/constellation_names.eng.fab:31
 msgid "The Balance"
-msgstr "균형"
+msgstr "저울"
 
 #: skycultures/arabic/constellation_names.eng.fab:32
 msgid "The Turtle"
@@ -5863,11 +5863,11 @@ msgstr "플레이아데스"
 
 #: skycultures/arabic/star_names.fab:26
 msgid "One of the eggs"
-msgstr "알 중 하나"
+msgstr "첫째 알"
 
 #: skycultures/arabic/star_names.fab:27
 msgid "One of the eggs shells"
-msgstr "알 껍질 중 하나"
+msgstr "첫째 알 껍질"
 
 #: skycultures/arabic/star_names.fab:28
 msgid "Eye of the Bull"
@@ -6021,7 +6021,7 @@ msgstr "스워른 수하일"
 
 #: skycultures/arabic/star_names.fab:66
 msgid "One of the antelopes"
-msgstr "영양 중 하나"
+msgstr "첫째 영양"
 
 #: skycultures/arabic/star_names.fab:67
 msgid "Northern donkey"
@@ -6085,7 +6085,7 @@ msgstr "곰"
 
 #: skycultures/arabic/star_names.fab:82
 msgid "One of Al-zubarah"
-msgstr "알-주바라흐 중 하나"
+msgstr "첫째 알-주바라흐"
 
 #: skycultures/arabic/star_names.fab:83
 msgid "Second Al-zubarah"
@@ -6157,7 +6157,7 @@ msgstr "군인의 딸"
 
 #: skycultures/arabic/star_names.fab:100
 msgid "Single one of the lance-bearer"
-msgstr "창병 중 하나"
+msgstr "첫째 창병"
 
 #: skycultures/arabic/star_names.fab:101
 #: skycultures/romanian/star_names.fab:132
@@ -6175,7 +6175,7 @@ msgstr "창병"
 
 #: skycultures/arabic/star_names.fab:104
 msgid "One of Al-ghofer's"
-msgstr "알-고퍼 중 하나"
+msgstr "첫째 알-고퍼"
 
 #: skycultures/arabic/star_names.fab:105
 msgid "The shepherd"
@@ -6279,7 +6279,7 @@ msgstr "무릎 꿇은 이의 손목"
 
 #: skycultures/arabic/star_names.fab:130
 msgid "The sting"
-msgstr "찌름"
+msgstr "쐐기"
 
 #: skycultures/arabic/star_names.fab:131
 msgid "Second one of the bier daughters"
@@ -6347,19 +6347,19 @@ msgstr "나가는 타조"
 
 #: skycultures/arabic/star_names.fab:147
 msgid "One of the andiron's"
-msgstr "앤다이론 중 하나"
+msgstr "첫째 앤다이론"
 
 #: skycultures/arabic/star_names.fab:148
 msgid "The heel-tendon"
-msgstr ""
+msgstr "발뒤꿈치의 힘줄"
 
 #: skycultures/arabic/star_names.fab:149
 msgid "The archer knee"
-msgstr ""
+msgstr "궁수의 무릎"
 
 #: skycultures/arabic/star_names.fab:150
 msgid "The hen-bill"
-msgstr ""
+msgstr "암탉의 부리"
 
 #: skycultures/arabic/star_names.fab:151
 msgid "The arrow"
@@ -6367,7 +6367,7 @@ msgstr "화살"
 
 #: skycultures/arabic/star_names.fab:152 skycultures/arabic/star_names.fab:154
 msgid "One of the balance's"
-msgstr ""
+msgstr "첫째 저울"
 
 #: skycultures/arabic/star_names.fab:153
 msgid "The flying eagle"
@@ -6375,55 +6375,55 @@ msgstr "나는 독수리"
 
 #: skycultures/arabic/star_names.fab:155
 msgid "First lucky star of the slaughterer"
-msgstr ""
+msgstr "도살자의 첫째 행운의 별"
 
 #: skycultures/arabic/star_names.fab:156
 msgid "Second lucky star of the slaughterer"
-msgstr ""
+msgstr "도살자의 둘째 행운의 별"
 
 #: skycultures/arabic/star_names.fab:157
 msgid "The breast - one of the cavalry's"
-msgstr ""
+msgstr "유방 - 첫째 기병"
 
 #: skycultures/arabic/star_names.fab:158
 msgid "One of the sitting's"
-msgstr ""
+msgstr "첫째 자리"
 
 #: skycultures/arabic/star_names.fab:159
 msgid "Second one of the sitting's"
-msgstr ""
+msgstr "둘째 자리"
 
 #: skycultures/arabic/star_names.fab:160
 msgid "Tail of the hen"
-msgstr ""
+msgstr "암탉의 꼬리"
 
 #: skycultures/arabic/star_names.fab:161
 msgid "The wing- one of the cavalry's"
-msgstr ""
+msgstr "날개 - 둘째 기병"
 
 #: skycultures/arabic/star_names.fab:162
 msgid "One of swallower luck"
-msgstr ""
+msgstr "첫째 삼키는 이"
 
 #: skycultures/arabic/star_names.fab:163
 msgid "Part of the horse"
-msgstr ""
+msgstr "말의 일부"
 
 #: skycultures/arabic/star_names.fab:164
 msgid "The right forearm"
-msgstr ""
+msgstr "오른팔뚝"
 
 #: skycultures/arabic/star_names.fab:165
 msgid "Second of the Alfirk's"
-msgstr ""
+msgstr "둘째 알피르크"
 
 #: skycultures/arabic/star_names.fab:166
 msgid "One of the Luck of lucks"
-msgstr ""
+msgstr "첫째 행운"
 
 #: skycultures/arabic/star_names.fab:167
 msgid "One of the Nashira luck"
-msgstr ""
+msgstr "첫째 나시라흐의 행운"
 
 #: skycultures/arabic/star_names.fab:168
 msgid "The horse nose"
@@ -6431,7 +6431,7 @@ msgstr "말의 코"
 
 #: skycultures/arabic/star_names.fab:169
 msgid "Tail of the goat - Second Nashira luck"
-msgstr ""
+msgstr "염소의 꼬리 - 둘째 나시라흐의 행운"
 
 #: skycultures/arabic/star_names.fab:170
 msgid "The blaze on a horse's brow"
@@ -6439,15 +6439,15 @@ msgstr ""
 
 #: skycultures/arabic/star_names.fab:171
 msgid "First lucky star of the king"
-msgstr ""
+msgstr "왕의 첫째 행운의 별"
 
 #: skycultures/arabic/star_names.fab:172
 msgid "Second lucky star of the livestock"
-msgstr ""
+msgstr "가축의 둘째 행운의 별"
 
 #: skycultures/arabic/star_names.fab:173
 msgid "First lucky star of the livestock"
-msgstr ""
+msgstr "가축의 첫째 행운의 별"
 
 #: skycultures/arabic/star_names.fab:174
 msgid "The hip"
@@ -6455,7 +6455,7 @@ msgstr "엉덩이"
 
 #: skycultures/arabic/star_names.fab:175
 msgid "First lucky star of the tents"
-msgstr ""
+msgstr "천막의 첫째 행운의 별"
 
 #: skycultures/arabic/star_names.fab:176
 msgid "First lucky star of the high-minded man"
@@ -6463,11 +6463,11 @@ msgstr ""
 
 #: skycultures/arabic/star_names.fab:177
 msgid "First lucky star of the rain"
-msgstr ""
+msgstr "비의 첫째 행운의 별"
 
 #: skycultures/arabic/star_names.fab:178
 msgid "First lucky star of the excellent one"
-msgstr ""
+msgstr "우수의 첫째 행운의 별"
 
 #: skycultures/arabic/star_names.fab:179
 msgid "The shin"
@@ -6479,35 +6479,35 @@ msgstr "물고기의 입"
 
 #: skycultures/arabic/star_names.fab:181
 msgid "The great horse shoulder"
-msgstr ""
+msgstr "커다란 말의 어깨"
 
 #: skycultures/arabic/star_names.fab:182
 msgid "The great horse back"
-msgstr ""
+msgstr "커다란 말의 등"
 
 #: skycultures/arabic/star_names.fab:183
 msgid "Fourth one of Alkalaes"
-msgstr ""
+msgstr "넷째 알칼라에스"
 
 #: skycultures/arabic/star_names.fab:184
 msgid "Third one of Alkalaes"
-msgstr ""
+msgstr "셋째 알칼라에스"
 
 #: skycultures/arabic/star_names.fab:185
 msgid "Second one of Alkalaes"
-msgstr ""
+msgstr "둘째 알칼라에스"
 
 #: skycultures/arabic/star_names.fab:186
 msgid "One of Alkalaes"
-msgstr ""
+msgstr "첫째 알칼라에스"
 
 #: skycultures/arabic/star_names.fab:187
 msgid "The Scattered stars"
-msgstr ""
+msgstr "흩어진 별들"
 
 #: skycultures/arabic/star_names.fab:188
 msgid "The quarter"
-msgstr ""
+msgstr "반달"
 
 #: skycultures/arabic/star_names.fab:189
 msgid "The wronged"
@@ -6515,7 +6515,7 @@ msgstr ""
 
 #: skycultures/arabic/star_names.fab:190
 msgid "Incoming ostriches"
-msgstr ""
+msgstr "들어오는 타조"
 
 #: skycultures/arabic/star_names.fab:191
 msgid "First outgoing ostriches"
@@ -6527,27 +6527,27 @@ msgstr "셋째 나가는 타조"
 
 #: skycultures/arabic/star_names.fab:193
 msgid "Fourth one of the cavalry's"
-msgstr ""
+msgstr "넷째 기병"
 
 #: skycultures/arabic/star_names.fab:194
 msgid "First shrike"
-msgstr ""
+msgstr "첫째 때까치"
 
 #: skycultures/arabic/star_names.fab:195
 msgid "Second shrike"
-msgstr ""
+msgstr "둘째 때까치"
 
 #: skycultures/arabic/star_names.fab:196
 msgid "Fourth one of the sitting's"
-msgstr ""
+msgstr "넷째 자리"
 
 #: skycultures/arabic/star_names.fab:197
 msgid "Third one of the sitting's"
-msgstr ""
+msgstr "셋째 자리"
 
 #: skycultures/arabic/star_names.fab:198
 msgid "Second one of the cavalry's"
-msgstr ""
+msgstr "셋째 기병"
 
 #: skycultures/arabic/star_names.fab:199
 msgid "The shining"
@@ -6555,11 +6555,11 @@ msgstr ""
 
 #: skycultures/arabic/star_names.fab:200
 msgid "Second lucky star of the rain"
-msgstr ""
+msgstr "비의 둘째 행운의 별"
 
 #: skycultures/arabic/star_names.fab:201
 msgid "Lucky star of the excellent one"
-msgstr ""
+msgstr "우수의 행운의 별"
 
 #: skycultures/arabic/star_names.fab:202
 msgid "Second lucky star of the high-minded man"
@@ -6611,43 +6611,43 @@ msgstr ""
 
 #: skycultures/arabic/star_names.fab:214
 msgid "The second Al-ghofer"
-msgstr ""
+msgstr "둘째 알-고퍼"
 
 #: skycultures/arabic/star_names.fab:215
 msgid "The third Al-ghofer"
-msgstr ""
+msgstr "셋째 알-고퍼"
 
 #: skycultures/arabic/star_names.fab:216
 msgid "Second One of swallower luck"
-msgstr ""
+msgstr "둘째 삼키는 이"
 
 #: skycultures/arabic/star_names.fab:217
 msgid "Third One of swallower luck"
-msgstr ""
+msgstr "셋째 삼키는 이"
 
 #: skycultures/arabic/star_names.fab:218
 msgid "Second one of the Luck of lucks"
-msgstr ""
+msgstr "둘째 행운"
 
 #: skycultures/arabic/star_names.fab:219
 msgid "Third one of the Luck of lucks"
-msgstr ""
+msgstr "셋째 행운"
 
 #: skycultures/arabic/star_names.fab:220
 msgid "Second lucky star of the king"
-msgstr ""
+msgstr "왕의 둘째 행운의 별"
 
 #: skycultures/arabic/star_names.fab:221
 msgid "Second lucky star of the tents"
-msgstr ""
+msgstr "천막의 둘째 행운의 별"
 
 #: skycultures/arabic/star_names.fab:222
 msgid "Third lucky star of the tents"
-msgstr ""
+msgstr "천막의 셋째 행운의 별"
 
 #: skycultures/arabic/star_names.fab:223
 msgid "Fourth lucky star of the tents"
-msgstr ""
+msgstr "천막의 넷째 행운의 별"
 
 #: skycultures/arabic/star_names.fab:224
 msgid "Third one of the bier daughters"
@@ -6655,11 +6655,11 @@ msgstr ""
 
 #: skycultures/arabic_moon_stations/constellation_names.eng.fab:1
 msgid "The Two signs"
-msgstr ""
+msgstr "두 표지판"
 
 #: skycultures/arabic_moon_stations/constellation_names.eng.fab:2
 msgid "The Little belly"
-msgstr ""
+msgstr "작은 배"
 
 #: skycultures/arabic_moon_stations/constellation_names.eng.fab:3
 msgid "Al-Thurayya"
@@ -6668,7 +6668,7 @@ msgstr ""
 #: skycultures/arabic_moon_stations/constellation_names.eng.fab:4
 #: skycultures/arabic_moon_stations/star_names.fab:14
 msgid "The Follower"
-msgstr ""
+msgstr "추종자"
 
 #: skycultures/arabic_moon_stations/constellation_names.eng.fab:5
 msgid "The Side Mark"
@@ -6676,7 +6676,7 @@ msgstr ""
 
 #: skycultures/arabic_moon_stations/constellation_names.eng.fab:6
 msgid "The Neck bend"
-msgstr ""
+msgstr "목 띠"
 
 #: skycultures/arabic_moon_stations/constellation_names.eng.fab:7
 msgid "The Arm"
@@ -6713,57 +6713,57 @@ msgstr "높은 자"
 
 #: skycultures/arabic_moon_stations/constellation_names.eng.fab:15
 msgid "The tail tuft"
-msgstr ""
+msgstr "꼬리 다발"
 
 #: skycultures/arabic_moon_stations/constellation_names.eng.fab:16
 msgid "The Scorpion Claws"
-msgstr ""
+msgstr "전갈의 집게발"
 
 #: skycultures/arabic_moon_stations/constellation_names.eng.fab:17
 msgid "The ornamented headband"
-msgstr ""
+msgstr "화려한 머리띠"
 
 #: skycultures/arabic_moon_stations/constellation_names.eng.fab:18
 #: skycultures/arabic_moon_stations/star_names.fab:71
 msgid "The Heart"
-msgstr ""
+msgstr "심장"
 
 #: skycultures/arabic_moon_stations/constellation_names.eng.fab:19
 #: skycultures/arabic_moon_stations/star_names.fab:78
 msgid "The Scorpion sting"
-msgstr ""
+msgstr "전갈의 쐐기"
 
 #: skycultures/arabic_moon_stations/constellation_names.eng.fab:20
 msgid "The Ostriches"
-msgstr ""
+msgstr "타조들"
 
 #: skycultures/arabic_moon_stations/constellation_names.eng.fab:21
 msgid "The Empty place"
-msgstr ""
+msgstr "빈 공간"
 
 #: skycultures/arabic_moon_stations/constellation_names.eng.fab:22
 msgid "The Lucky stars of the slaughterer"
-msgstr ""
+msgstr "도살자의 행운의 별들"
 
 #: skycultures/arabic_moon_stations/constellation_names.eng.fab:23
 msgid "The Lucky stars of the swallower"
-msgstr ""
+msgstr "삼키는 이의 행운의 별들"
 
 #: skycultures/arabic_moon_stations/constellation_names.eng.fab:24
 msgid "The Lucky stars of the Luckiest ones"
-msgstr ""
+msgstr "가장 운 좋은 이들의 행운의 별들"
 
 #: skycultures/arabic_moon_stations/constellation_names.eng.fab:25
 msgid "The Lucky stars of the tents"
-msgstr ""
+msgstr "천막의 행운의 별들"
 
 #: skycultures/arabic_moon_stations/constellation_names.eng.fab:26
 msgid "The Front mouth of the bucket"
-msgstr ""
+msgstr "양동이의 앞쪽 주둥이"
 
 #: skycultures/arabic_moon_stations/constellation_names.eng.fab:27
 msgid "The Rear mouth of the bucket"
-msgstr ""
+msgstr "양동이의 뒤쪽 주둥이"
 
 #: skycultures/arabic_moon_stations/constellation_names.eng.fab:28
 #: skycultures/arabic_moon_stations/star_names.fab:4
@@ -6788,31 +6788,31 @@ msgstr ""
 
 #: skycultures/arabic_moon_stations/star_names.fab:6
 msgid "The Caracal"
-msgstr ""
+msgstr "카라칼"
 
 #: skycultures/arabic_moon_stations/star_names.fab:7
 msgid "The Two signs 1"
-msgstr ""
+msgstr "두 표지판 1"
 
 #: skycultures/arabic_moon_stations/star_names.fab:8
 msgid "The Two signs 2"
-msgstr ""
+msgstr "두 표지판 2"
 
 #: skycultures/arabic_moon_stations/star_names.fab:9
 msgid "The Two friendly ones 1"
-msgstr ""
+msgstr "친근한 두 이 1"
 
 #: skycultures/arabic_moon_stations/star_names.fab:10
 msgid "The Two friendly ones 2"
-msgstr ""
+msgstr "친근한 두 이 2"
 
 #: skycultures/arabic_moon_stations/star_names.fab:11
 msgid "The Kid"
-msgstr ""
+msgstr "어린이"
 
 #: skycultures/arabic_moon_stations/star_names.fab:12
 msgid "The Elbow"
-msgstr ""
+msgstr "어깨"
 
 #: skycultures/arabic_moon_stations/star_names.fab:13
 msgid "The Shoulder side"
@@ -6820,63 +6820,63 @@ msgstr ""
 
 #: skycultures/arabic_moon_stations/star_names.fab:15
 msgid "The Foot of Al-Jawza"
-msgstr ""
+msgstr "알 자우자의 발"
 
 #: skycultures/arabic_moon_stations/star_names.fab:16
 msgid "The Obstructor"
-msgstr ""
+msgstr "방해자"
 
 #: skycultures/arabic_moon_stations/star_names.fab:17
 msgid "AlNajith"
-msgstr ""
+msgstr "알나지트"
 
 #: skycultures/arabic_moon_stations/star_names.fab:18
 msgid "The String of beads 1"
-msgstr ""
+msgstr "목걸이 끈 1"
 
 #: skycultures/arabic_moon_stations/star_names.fab:19
 msgid "The String of beads 2"
-msgstr ""
+msgstr "목걸이 끈 2"
 
 #: skycultures/arabic_moon_stations/star_names.fab:20
 msgid "The String of beads 3"
-msgstr ""
+msgstr "목걸이 끈 3"
 
 #: skycultures/arabic_moon_stations/star_names.fab:21
 msgid "The gazelles 1"
-msgstr ""
+msgstr "가젤 1"
 
 #: skycultures/arabic_moon_stations/star_names.fab:22
 msgid "The gazelles 2"
-msgstr ""
+msgstr "가젤 2"
 
 #: skycultures/arabic_moon_stations/star_names.fab:23
 msgid "The gazelles 3"
-msgstr ""
+msgstr "가젤 3"
 
 #: skycultures/arabic_moon_stations/star_names.fab:24
 msgid "The Shoulder side of Al-Jawza"
-msgstr ""
+msgstr "알 자우자의 어깨"
 
 #: skycultures/arabic_moon_stations/star_names.fab:25
 msgid "The Precedent of Southern Shi'ra"
-msgstr ""
+msgstr "남쪽 시라의 선례"
 
 #: skycultures/arabic_moon_stations/star_names.fab:27
 msgid "The Neck bend 1"
-msgstr ""
+msgstr "목 띠 1"
 
 #: skycultures/arabic_moon_stations/star_names.fab:28
 msgid "The Neck bend 2"
-msgstr ""
+msgstr "목 띠 2"
 
 #: skycultures/arabic_moon_stations/star_names.fab:29
 msgid "The Southern Shi'ra"
-msgstr ""
+msgstr "남쪽 시라"
 
 #: skycultures/arabic_moon_stations/star_names.fab:30
 msgid "The Precedent of the Northern Shi'ra"
-msgstr ""
+msgstr "북쪽 시라의 선례"
 
 #: skycultures/arabic_moon_stations/star_names.fab:31
 msgid "The Arm 1"
@@ -6888,7 +6888,7 @@ msgstr "팔 2"
 
 #: skycultures/arabic_moon_stations/star_names.fab:33
 msgid "The Northern Shi'ra"
-msgstr ""
+msgstr "북쪽 시라"
 
 #: skycultures/arabic_moon_stations/star_names.fab:34
 msgid "The Lone one"
@@ -6928,23 +6928,23 @@ msgstr ""
 
 #: skycultures/arabic_moon_stations/star_names.fab:44
 msgid "The Bend 1"
-msgstr ""
+msgstr "띠 1"
 
 #: skycultures/arabic_moon_stations/star_names.fab:45
 msgid "The Bend 2"
-msgstr ""
+msgstr "띠 2"
 
 #: skycultures/arabic_moon_stations/star_names.fab:46
 msgid "The Bend 3"
-msgstr ""
+msgstr "띠 3"
 
 #: skycultures/arabic_moon_stations/star_names.fab:47
 msgid "The Bend 4"
-msgstr ""
+msgstr "띠 4"
 
 #: skycultures/arabic_moon_stations/star_names.fab:48
 msgid "The Bend 5"
-msgstr ""
+msgstr "띠 5"
 
 #: skycultures/arabic_moon_stations/star_names.fab:49
 msgid "The Obscure one"
@@ -6952,15 +6952,15 @@ msgstr ""
 
 #: skycultures/arabic_moon_stations/star_names.fab:50
 msgid "The Wild donkey"
-msgstr ""
+msgstr "야생 당나귀"
 
 #: skycultures/arabic_moon_stations/star_names.fab:51
 msgid "The Lion liver"
-msgstr ""
+msgstr "사자의 간"
 
 #: skycultures/arabic_moon_stations/star_names.fab:52
 msgid "The Young she-goat"
-msgstr ""
+msgstr "어린 암염소"
 
 #: skycultures/arabic_moon_stations/star_names.fab:53
 msgid "The Unarmed high one"
@@ -6972,15 +6972,15 @@ msgstr ""
 
 #: skycultures/arabic_moon_stations/star_names.fab:55
 msgid "The Tail tuft 1"
-msgstr ""
+msgstr "꼬리 다발 1"
 
 #: skycultures/arabic_moon_stations/star_names.fab:56
 msgid "The Tail tuft 2"
-msgstr ""
+msgstr "꼬리 다발 2"
 
 #: skycultures/arabic_moon_stations/star_names.fab:57
 msgid "The Tail tuft 3"
-msgstr ""
+msgstr "꼬리 다발 3"
 
 #: skycultures/arabic_moon_stations/star_names.fab:58
 msgid "The Bright one of the fractured bowl"
@@ -6988,11 +6988,11 @@ msgstr ""
 
 #: skycultures/arabic_moon_stations/star_names.fab:59
 msgid "The Leader"
-msgstr ""
+msgstr "지도자"
 
 #: skycultures/arabic_moon_stations/star_names.fab:60
 msgid "The Spear"
-msgstr ""
+msgstr "창"
 
 #: skycultures/arabic_moon_stations/star_names.fab:61
 msgid "The Armed High one"
@@ -22272,7 +22272,7 @@ msgstr "삽타르시"
 #. TRANSLATORS: Horse headed twin son of The Sun
 #: skycultures/indian/constellation_names.eng.fab:28
 msgid "Twin physicians of Gods"
-msgstr ""
+msgstr "신의 쌍둥이 물리학자"
 
 #. TRANSLATORS: Bearer of life
 #: skycultures/indian/constellation_names.eng.fab:30
@@ -23653,36 +23653,36 @@ msgid "Threading Coins"
 msgstr "천전(天錢)"
 
 #: skycultures/korean/star_names.fab:1
-msgid "SaangSaang"
+msgid "SangSang"
 msgstr "상상"
 
 #: skycultures/korean/star_names.fab:2 skycultures/korean/star_names.fab:4
-msgid "ChaSaang"
+msgid "ChaSang"
 msgstr "차상"
 
 #: skycultures/korean/star_names.fab:3 skycultures/korean/star_names.fab:50
-msgid "ChaJaang"
+msgid "ChaJang"
 msgstr "차장"
 
-#: skycultures/korean/star_names.fab:5
-msgid "UJangGuun"
+#: skycultures/korean/star_names.fab:5 skycultures/korean/star_names.fab:21
+msgid "UJangGun"
 msgstr "우장군"
 
 #: skycultures/korean/star_names.fab:6
-msgid "DaeJangGuun"
+msgid "DaeJangGun"
 msgstr "대장군"
 
-#: skycultures/korean/star_names.fab:7
-msgid "JwaJangGuun"
+#: skycultures/korean/star_names.fab:7 skycultures/korean/star_names.fab:19
+msgid "JwaJangGun"
 msgstr "좌장군"
 
 #: skycultures/korean/star_names.fab:8
-msgid "WaangRaang"
+msgid "WangRang"
 msgstr "왕랑"
 
 #: skycultures/korean/star_names.fab:9 skycultures/korean/star_names.fab:10
 #: skycultures/korean/star_names.fab:11 skycultures/korean/star_names.fab:12
-msgid "CheonSaa"
+msgid "CheonSa"
 msgstr "천사"
 
 #: skycultures/korean/star_names.fab:13 skycultures/korean/star_names.fab:17
@@ -23690,51 +23690,43 @@ msgid "CheonGou"
 msgstr "천고"
 
 #: skycultures/korean/star_names.fab:14
-msgid "SaaGong"
+msgid "SaGong"
 msgstr "사공"
 
 #: skycultures/korean/star_names.fab:15
-msgid "CheonOok"
+msgid "CheonOk"
 msgstr "천옥"
 
 #: skycultures/korean/star_names.fab:16
-msgid "CheonChaang"
+msgid "CheonChang"
 msgstr "천창"
 
 #: skycultures/korean/star_names.fab:18
 msgid "Gyeong"
 msgstr "경"
 
-#: skycultures/korean/star_names.fab:19
-msgid "JwaJaangGuun"
-msgstr "좌장군"
-
 #: skycultures/korean/star_names.fab:20
-msgid "HuuJaangGuun"
+msgid "HuJangGun"
 msgstr "후장군"
 
-#: skycultures/korean/star_names.fab:21
-msgid "UuJaangGuun"
-msgstr "우장군"
-
 #: skycultures/korean/star_names.fab:22
-msgid "PyeonJaangGuun"
+msgid "PyeonJangGun"
 msgstr "편장군"
 
 #: skycultures/korean/star_names.fab:23
-msgid "SaamJaangGuun"
+msgid "SamJangGun"
 msgstr "삼장군"
 
 #: skycultures/korean/star_names.fab:24
-msgid "TaeSaa"
+msgid "TaeSa"
 msgstr "태사"
 
 #: skycultures/korean/star_names.fab:25 skycultures/korean/star_names.fab:39
-msgid "BaakSaa"
-msgstr "백사"
+msgid "BakSa"
+msgstr "박사"
 
 #: skycultures/korean/star_names.fab:26
-msgid "SaamGong"
+msgid "SamGong"
 msgstr "삼공"
 
 #: skycultures/korean/star_names.fab:27
@@ -23742,11 +23734,11 @@ msgid "JaeUu"
 msgstr "재우"
 
 #: skycultures/korean/star_names.fab:28
-msgid "JaeSaa"
+msgid "JaeSa"
 msgstr "재사"
 
 #: skycultures/korean/star_names.fab:29
-msgid "YeoJuu"
+msgid "YeoJu"
 msgstr "여주"
 
 #: skycultures/korean/star_names.fab:30
@@ -23763,15 +23755,15 @@ msgstr "소민"
 
 #: skycultures/korean/star_names.fab:33 skycultures/korean/star_names.fab:64
 #: skycultures/korean/star_names.fab:65 skycultures/korean/star_names.fab:66
-msgid "Buuiin"
+msgid "Buin"
 msgstr "부인"
 
 #: skycultures/korean/star_names.fab:34
-msgid "WaangBii"
+msgid "WangBi"
 msgstr "왕비"
 
 #: skycultures/korean/star_names.fab:35 skycultures/korean/star_names.fab:47
-msgid "HuuGuung"
+msgid "HuGung"
 msgstr "후궁"
 
 #: skycultures/korean/star_names.fab:36
@@ -23779,56 +23771,56 @@ msgid "HwangJae"
 msgstr "황제"
 
 #: skycultures/korean/star_names.fab:37
-msgid "CheoSaa"
+msgid "CheoSa"
 msgstr "처사"
 
 #: skycultures/korean/star_names.fab:38
-msgid "EuiSaa"
+msgid "EuiSa"
 msgstr "의사"
 
 #: skycultures/korean/star_names.fab:40
-msgid "DaeBuu"
+msgid "DaeBu"
 msgstr "대부"
 
 #: skycultures/korean/star_names.fab:41
-msgid "SaangTae"
+msgid "SangTae"
 msgstr "상태"
 
 #: skycultures/korean/star_names.fab:42
-msgid "JuungTae"
+msgid "JungTae"
 msgstr "중태"
 
 #: skycultures/korean/star_names.fab:43
-msgid "HaaTae"
+msgid "HaTae"
 msgstr "하태"
 
 #: skycultures/korean/star_names.fab:44 skycultures/korean/star_names.fab:62
-msgid "TaeJaa"
+msgid "TaeJa"
 msgstr "태자"
 
 #: skycultures/korean/star_names.fab:45
-msgid "JaeWaang"
-msgstr "제왕"
+msgid "JaeWang"
+msgstr "재왕"
 
 #: skycultures/korean/star_names.fab:46 skycultures/korean/star_names.fab:61
-msgid "SeoJaa"
+msgid "SeoJa"
 msgstr "서자"
 
 #: skycultures/korean/star_names.fab:48
-msgid "CheonChuu"
+msgid "CheonChu"
 msgstr "천추"
 
 #: skycultures/korean/star_names.fab:49
-msgid "SaangJaang"
+msgid "SangJang"
 msgstr "상장"
 
 #: skycultures/korean/star_names.fab:51
-msgid "TaeSaang"
+msgid "TaeSang"
 msgstr "태상"
 
 #: skycultures/korean/star_names.fab:52
-msgid "SaaJuu.DaeRii"
-msgstr "사주대리"
+msgid "SaJu.DaeRi"
+msgstr "사주.대리"
 
 #: skycultures/korean/star_names.fab:53
 msgid "Jeong"
@@ -23847,11 +23839,11 @@ msgid "Beol"
 msgstr "벌"
 
 #: skycultures/korean/star_names.fab:57
-msgid "Saal"
+msgid "Sal"
 msgstr "살"
 
 #: skycultures/korean/star_names.fab:58
-msgid "Wii"
+msgid "Wi"
 msgstr "위"
 
 #: skycultures/korean/star_names.fab:59
@@ -23859,19 +23851,19 @@ msgid "Eung"
 msgstr "응"
 
 #: skycultures/korean/star_names.fab:60
-msgid "MyeongDaang"
+msgid "MyeongDang"
 msgstr "명당"
 
 #: skycultures/korean/star_names.fab:63
-msgid "Huu"
+msgid "Hu"
 msgstr "후"
 
 #: skycultures/korean/star_names.fab:67
-msgid "Biin"
-msgstr "비인"
+msgid "Bin"
+msgstr "빈"
 
 #: skycultures/korean/star_names.fab:68 skycultures/korean/star_names.fab:69
-msgid "DaeJaang"
+msgid "DaeJang"
 msgstr "대장"
 
 #: skycultures/macedonian/constellation_names.eng.fab:1
@@ -25374,7 +25366,7 @@ msgstr "아셀라"
 #: skycultures/romanian/star_names.fab:187
 #: skycultures/western/star_names.fab:348
 msgid "Altais"
-msgstr "알타이"
+msgstr "알타이스"
 
 #: skycultures/romanian/star_names.fab:188
 #: skycultures/western/star_names.fab:696
@@ -25412,7 +25404,7 @@ msgstr "타라제드"
 #: skycultures/western/star_names.fab:33
 #: skycultures/western_rey/star_names.fab:44
 msgid "Altair"
-msgstr "알타이르"
+msgstr "알타이르 (견우성)"
 
 #: skycultures/romanian/star_names.fab:195
 #: skycultures/western/star_names.fab:34
@@ -27175,11 +27167,11 @@ msgstr "데네브 칼토스 셰말리"
 
 #: skycultures/western/star_names.fab:244
 msgid "Schemali"
-msgstr ""
+msgstr "셰말리"
 
 #: skycultures/western/star_names.fab:247
 msgid "Menkab"
-msgstr ""
+msgstr "멘카브"
 
 #: skycultures/western/star_names.fab:248
 msgid "Al Kaff al Jidhmah III"
@@ -27187,7 +27179,7 @@ msgstr "알 카프 알 지드마흐 III"
 
 #: skycultures/western/star_names.fab:249
 msgid "Sadr al Kaitos III"
-msgstr ""
+msgstr "사드르 알 카이토스 III"
 
 #: skycultures/western/star_names.fab:250
 msgid "Al Naymat I"
@@ -27207,15 +27199,15 @@ msgstr "알 카프 알 지드마흐 II"
 
 #: skycultures/western/star_names.fab:254
 msgid "Sadr al Kaitos IV"
-msgstr ""
+msgstr "사드르 알 카이토스 IV"
 
 #: skycultures/western/star_names.fab:255
 msgid "Sadr al Kaitos I"
-msgstr ""
+msgstr "사드르 알 카이토스 I"
 
 #: skycultures/western/star_names.fab:256
 msgid "Sadr al Kaitos II"
-msgstr ""
+msgstr "사드르 알 카이토스 II"
 
 #: skycultures/western/star_names.fab:257
 msgid "Al Naymat II"
@@ -27227,35 +27219,35 @@ msgstr "알 나이맛 III"
 
 #: skycultures/western/star_names.fab:259
 msgid "Alnitham I"
-msgstr ""
+msgstr "알니탐 I"
 
 #: skycultures/western/star_names.fab:260
 msgid "Alnitham II"
-msgstr ""
+msgstr "알니탐 II"
 
 #: skycultures/western/star_names.fab:261
 msgid "Alnitham III"
-msgstr ""
+msgstr "알니탐 III"
 
 #: skycultures/western/star_names.fab:262
 msgid "Alnitham IV"
-msgstr ""
+msgstr "알니탐 IV"
 
 #: skycultures/western/star_names.fab:265
 msgid "Phaet"
-msgstr ""
+msgstr "파에트"
 
 #: skycultures/western/star_names.fab:267
 msgid "Wezn"
-msgstr ""
+msgstr "웨즌"
 
 #: skycultures/western/star_names.fab:268
 msgid "Kurud I"
-msgstr ""
+msgstr "쿠루드 I"
 
 #: skycultures/western/star_names.fab:269
 msgid "Kurud II"
-msgstr ""
+msgstr "쿠루드 II"
 
 #: skycultures/western/star_names.fab:271
 msgid "Polaris Galacticum Borealis"
@@ -27263,68 +27255,68 @@ msgstr "북쪽 은하 폴라리스"
 
 #: skycultures/western/star_names.fab:272
 msgid "Diadem"
-msgstr ""
+msgstr "디아뎀"
 
 #: skycultures/western/star_names.fab:273
 msgid "Kissin"
-msgstr ""
+msgstr "키신"
 
 #: skycultures/western/star_names.fab:274
 msgid "Al Dafirah"
-msgstr ""
+msgstr "알 다피라흐"
 
 #: skycultures/western/star_names.fab:276
 msgid "Meridiana"
-msgstr ""
+msgstr "메리디아나"
 
 #: skycultures/western/star_names.fab:277
 msgid "Alfecca Meridiana"
-msgstr ""
+msgstr "알페카 메리디아나"
 
 #: skycultures/western/star_names.fab:279
 msgid "Alphecca"
-msgstr ""
+msgstr "알페카"
 
 #: skycultures/western/star_names.fab:280
 #: skycultures/western_rey/star_names.fab:17
 msgid "Gemma"
-msgstr ""
+msgstr "겜마"
 
 #: skycultures/western/star_names.fab:282
 msgid "Gnosia"
-msgstr ""
+msgstr "그노시아"
 
 #: skycultures/western/star_names.fab:283
 msgid "Ashtaroth"
-msgstr ""
+msgstr "아슈타로트"
 
 #: skycultures/western/star_names.fab:285
 msgid "Variabilis Coronae"
-msgstr ""
+msgstr "바리아빌리스 코로네"
 
 #: skycultures/western/star_names.fab:286
 msgid "Blaze Star"
-msgstr ""
+msgstr "블레이즈 스타"
 
 #: skycultures/western/star_names.fab:289
 msgid "Al Chiba"
-msgstr ""
+msgstr "알 치바"
 
 #: skycultures/western/star_names.fab:291
 msgid "Gienah Corvi"
-msgstr ""
+msgstr "기에나흐 코르비"
 
 #: skycultures/western/star_names.fab:292
 msgid "Gienah Ghurab"
-msgstr ""
+msgstr "기에나흐 그후라브"
 
 #: skycultures/western/star_names.fab:294
 msgid "Kraz"
-msgstr ""
+msgstr "크라즈"
 
 #: skycultures/western/star_names.fab:295
 msgid "Minkar"
-msgstr ""
+msgstr "민카르"
 
 #: skycultures/western/star_names.fab:298
 msgid "Al Sharasif"
@@ -27336,135 +27328,135 @@ msgstr "알 샤라시프 II"
 
 #: skycultures/western/star_names.fab:303
 msgid "Becrux"
-msgstr ""
+msgstr "베크룩스"
 
 #: skycultures/western/star_names.fab:305
 msgid "Ginan"
-msgstr ""
+msgstr "기난"
 
 #: skycultures/western/star_names.fab:308
 msgid "Arided"
-msgstr ""
+msgstr "아리데드"
 
 #: skycultures/western/star_names.fab:309
 msgid "Aridif"
-msgstr ""
+msgstr "아리디프"
 
 #: skycultures/western/star_names.fab:310
 msgid "Arrioph"
-msgstr ""
+msgstr "아리오프"
 
 #: skycultures/western/star_names.fab:313
 msgid "Aljanah"
-msgstr ""
+msgstr "알야나흐"
 
 #: skycultures/western/star_names.fab:314
 msgid "Gienah Cygni"
-msgstr ""
+msgstr "기에나흐 시그니"
 
 #: skycultures/western/star_names.fab:315
 msgid "Al Janah"
-msgstr ""
+msgstr "알 야나흐"
 
 #: skycultures/western/star_names.fab:317
 msgid "Azelfage"
-msgstr ""
+msgstr "아젤파게"
 
 #: skycultures/western/star_names.fab:318
 msgid "Ruchba"
-msgstr ""
+msgstr "루흐바"
 
 #: skycultures/western/star_names.fab:319
 msgid "Rucba"
-msgstr ""
+msgstr "루크바"
 
 #: skycultures/western/star_names.fab:320
 msgid "Bessel's Star"
-msgstr ""
+msgstr "베셀의 별"
 
 #: skycultures/western/star_names.fab:321
 msgid "Piazzi's Flying Star"
-msgstr ""
+msgstr "피아지의 나는 별"
 
 #: skycultures/western/star_names.fab:323
 msgid "Campbell’s Hydrogen Star"
-msgstr ""
+msgstr "캠벨의 수소별"
 
 #: skycultures/western/star_names.fab:324
 msgid "Revenant of the Swan"
-msgstr ""
+msgstr "백조의 유령"
 
 #: skycultures/western/star_names.fab:325
 msgid "Permanent nova"
-msgstr ""
+msgstr "영원한 신성"
 
 #: skycultures/western/star_names.fab:326
 msgid "Fawaris II"
-msgstr ""
+msgstr "파와리스 II"
 
 #: skycultures/western/star_names.fab:327
 msgid "Fawaris III"
-msgstr ""
+msgstr "파와리스 III"
 
 #: skycultures/western/star_names.fab:328
 msgid "Fawaris I"
-msgstr ""
+msgstr "파와리스 I"
 
 #: skycultures/western/star_names.fab:331
 msgid "Svalocin"
-msgstr ""
+msgstr "스발로신"
 
 #: skycultures/western/star_names.fab:333
 msgid "Venator"
-msgstr ""
+msgstr "베나토"
 
 #: skycultures/western/star_names.fab:335
 msgid "Aldulfin"
-msgstr ""
+msgstr "알둘핀"
 
 #: skycultures/western/star_names.fab:336
 msgid "Deneb Dulfim"
-msgstr ""
+msgstr "데네브 둘핌"
 
 #: skycultures/western/star_names.fab:337
 msgid "Al Salib"
-msgstr ""
+msgstr "알 살리브"
 
 #: skycultures/western/star_names.fab:338
 msgid "Al Ukud"
-msgstr ""
+msgstr "알 우쿠드"
 
 #: skycultures/western/star_names.fab:341
 msgid "Adib"
-msgstr ""
+msgstr "아디브"
 
 #: skycultures/western/star_names.fab:342
 msgid "Al Tinnin"
-msgstr ""
+msgstr "알 틴닌"
 
 #: skycultures/western/star_names.fab:344
 msgid "Alwaid"
-msgstr ""
+msgstr "알와이드"
 
 #: skycultures/western/star_names.fab:345
 msgid "Eltanin"
-msgstr ""
+msgstr "엘타닌"
 
 #: skycultures/western/star_names.fab:347
 msgid "Taurt"
-msgstr ""
+msgstr "타우르트"
 
 #: skycultures/western/star_names.fab:349
 msgid "Al Tais"
-msgstr ""
+msgstr "알 타이스"
 
 #: skycultures/western/star_names.fab:351
 msgid "Ed Asich"
-msgstr ""
+msgstr "에드 아시크"
 
 #: skycultures/western/star_names.fab:353
 msgid "Giansar"
-msgstr ""
+msgstr "간사르"
 
 #: skycultures/western/star_names.fab:354
 msgid "Nodus Secundus"
@@ -27472,48 +27464,48 @@ msgstr "둘째 노두스"
 
 #: skycultures/western/star_names.fab:356
 msgid "Arrakis"
-msgstr ""
+msgstr "아라키스"
 
 #: skycultures/western/star_names.fab:357
 msgid "Errakis"
-msgstr ""
+msgstr "에라키스"
 
 #: skycultures/western/star_names.fab:359
 msgid "Kuma"
-msgstr ""
+msgstr "쿠마"
 
 #: skycultures/western/star_names.fab:360
 msgid "Tyl"
-msgstr ""
+msgstr "틸"
 
 #: skycultures/western/star_names.fab:361
 msgid "Alsafi"
-msgstr ""
+msgstr "알사피"
 
 #: skycultures/western/star_names.fab:362
 msgid "Dziban"
-msgstr ""
+msgstr "드지반"
 
 #: skycultures/western/star_names.fab:363
 msgid "Dziban I"
-msgstr ""
+msgstr "드지반 I"
 
 #: skycultures/western/star_names.fab:364
 #: skycultures/western/star_names.fab:366
 msgid "Dsiban"
-msgstr ""
+msgstr "드시반"
 
 #: skycultures/western/star_names.fab:365
 msgid "Dziban II"
-msgstr ""
+msgstr "드지반 II"
 
 #: skycultures/western/star_names.fab:367
 msgid "Al Dhih"
-msgstr ""
+msgstr "알 드히흐"
 
 #: skycultures/western/star_names.fab:368
 msgid "Adfar Aldib II"
-msgstr ""
+msgstr "아드파 알디브 II"
 
 #: skycultures/western/star_names.fab:370
 msgid "Aldhibah"
@@ -27541,23 +27533,23 @@ msgstr ""
 
 #: skycultures/western/star_names.fab:376
 msgid "Adfar Aldib I"
-msgstr ""
+msgstr "아드파 알디브 I"
 
 #: skycultures/western/star_names.fab:377
 msgid "Tais I"
-msgstr ""
+msgstr "타이스 I"
 
 #: skycultures/western/star_names.fab:378
 msgid "Tais II"
-msgstr ""
+msgstr "타이스 II"
 
 #: skycultures/western/star_names.fab:379
 msgid "Athafi II"
-msgstr ""
+msgstr "아타피 II"
 
 #: skycultures/western/star_names.fab:380
 msgid "Athafi I"
-msgstr ""
+msgstr "아타피 I"
 
 #: skycultures/western/star_names.fab:381
 msgid "Aldhiba"
@@ -27569,25 +27561,25 @@ msgstr ""
 
 #: skycultures/western/star_names.fab:383
 msgid "Taiyi"
-msgstr ""
+msgstr "타이이"
 
 #: skycultures/western/star_names.fab:384
 msgid "Tianyi"
-msgstr ""
+msgstr "티앤이"
 
 #: skycultures/western/star_names.fab:390
 msgid "Dhalim"
-msgstr ""
+msgstr "드할림"
 
 #: skycultures/western/star_names.fab:395
 #: skycultures/western/star_names.fab:417
 msgid "Dalim"
-msgstr ""
+msgstr "달림"
 
 #: skycultures/western/star_names.fab:398
 #: skycultures/western/star_names.fab:401
 msgid "Theemin"
-msgstr ""
+msgstr "티에민"
 
 #: skycultures/western/star_names.fab:399
 #: skycultures/western/star_names.fab:405
@@ -27596,7 +27588,7 @@ msgstr "베밈"
 
 #: skycultures/western/star_names.fab:400
 msgid "Theemim"
-msgstr ""
+msgstr "티에밈"
 
 #: skycultures/western/star_names.fab:402
 msgid "Beemim II"
@@ -27604,11 +27596,11 @@ msgstr "베밈 II"
 
 #: skycultures/western/star_names.fab:403
 msgid "Angetenar"
-msgstr ""
+msgstr "안게테나르"
 
 #: skycultures/western/star_names.fab:404
 msgid "Anchat"
-msgstr ""
+msgstr "안챠트"
 
 #: skycultures/western/star_names.fab:406
 msgid "Beemim III"
@@ -27616,11 +27608,11 @@ msgstr "베밈 III"
 
 #: skycultures/western/star_names.fab:408
 msgid "Rana"
-msgstr ""
+msgstr "라나"
 
 #: skycultures/western/star_names.fab:409
 msgid "Sceptrum"
-msgstr ""
+msgstr "스켑트럼"
 
 #: skycultures/western/star_names.fab:410
 msgid "Kursi al Jauzah II"
@@ -27690,35 +27682,35 @@ msgstr "뒤쪽 테야트"
 
 #: skycultures/western/star_names.fab:436
 msgid "Calx"
-msgstr ""
+msgstr "칼스"
 
 #: skycultures/western/star_names.fab:437
 msgid "Alzirr"
-msgstr ""
+msgstr "알지르"
 
 #: skycultures/western/star_names.fab:438
 msgid "Al Zirr"
-msgstr ""
+msgstr "알 지르"
 
 #: skycultures/western/star_names.fab:439
 msgid "Nucatai"
-msgstr ""
+msgstr "누카타이"
 
 #: skycultures/western/star_names.fab:440
 msgid "Jishui"
-msgstr ""
+msgstr "지수이"
 
 #: skycultures/western/star_names.fab:443
 msgid "Al Na'ir"
-msgstr ""
+msgstr "알 나이르"
 
 #: skycultures/western/star_names.fab:444
 msgid "Aldhanab"
-msgstr ""
+msgstr "알드하나브"
 
 #: skycultures/western/star_names.fab:445
 msgid "Al Dhanab"
-msgstr ""
+msgstr "알 드하나브"
 
 #: skycultures/western/star_names.fab:446
 msgid "Deneb Hut"
@@ -27726,7 +27718,7 @@ msgstr "데네브 허트"
 
 #: skycultures/western/star_names.fab:447
 msgid "Tiaki"
-msgstr ""
+msgstr "티아키"
 
 #: skycultures/western/star_names.fab:448
 msgid "Deneb Alnahr"
@@ -27734,19 +27726,19 @@ msgstr "데네브 알나흐르"
 
 #: skycultures/western/star_names.fab:451
 msgid "Ras Algethi"
-msgstr ""
+msgstr "라스 알게티"
 
 #: skycultures/western/star_names.fab:453
 msgid "Rutilicus"
-msgstr ""
+msgstr "루틸리쿠스"
 
 #: skycultures/western/star_names.fab:457
 msgid "Masym"
-msgstr ""
+msgstr "마심"
 
 #: skycultures/western/star_names.fab:459
 msgid "Sarin"
-msgstr ""
+msgstr "사린"
 
 #: skycultures/western/star_names.fab:461
 msgid "Nasak Shamiya III"
@@ -27754,11 +27746,11 @@ msgstr ""
 
 #: skycultures/western/star_names.fab:464
 msgid "Kalbelaphard"
-msgstr ""
+msgstr "칼베라파르드"
 
 #: skycultures/western/star_names.fab:465
 msgid "Cor Hydrae"
-msgstr ""
+msgstr "코르 히드라에"
 
 #: skycultures/western/star_names.fab:466
 msgid "Ukdah III"
@@ -27794,15 +27786,15 @@ msgstr "미나잘 IV"
 
 #: skycultures/western/star_names.fab:474
 msgid "Minchir"
-msgstr ""
+msgstr "미니치르"
 
 #: skycultures/western/star_names.fab:475
 msgid "Minkalshuja"
-msgstr ""
+msgstr "민칼슈자"
 
 #: skycultures/western/star_names.fab:476
 msgid "Al Minliar al Shuja"
-msgstr ""
+msgstr "알 미닐라르 알 슈자"
 
 #: skycultures/western/star_names.fab:477
 msgid "Ukdah I"
@@ -27838,31 +27830,31 @@ msgstr "데네브 알레트"
 
 #: skycultures/western/star_names.fab:492
 msgid "Al Geiba"
-msgstr ""
+msgstr "알 게이바"
 
 #: skycultures/western/star_names.fab:494
 msgid "Duhr"
-msgstr ""
+msgstr "뒤르"
 
 #: skycultures/western/star_names.fab:495
 msgid "Zubra"
-msgstr ""
+msgstr "주브라"
 
 #: skycultures/western/star_names.fab:496
 msgid "Zozma"
-msgstr ""
+msgstr "조즈마"
 
 #: skycultures/western/star_names.fab:498
 msgid "Aldhafera"
-msgstr ""
+msgstr "알드하페라"
 
 #: skycultures/western/star_names.fab:500
 msgid "Al Haratan"
-msgstr ""
+msgstr "알 하라탄"
 
 #: skycultures/western/star_names.fab:501
 msgid "Coxa"
-msgstr ""
+msgstr "코사"
 
 #: skycultures/western/star_names.fab:502
 msgid "Chort"
@@ -27898,7 +27890,7 @@ msgstr ""
 
 #: skycultures/western/star_names.fab:513
 msgid "Zubrah"
-msgstr ""
+msgstr "주브라흐"
 
 #: skycultures/western/star_names.fab:514
 msgid "Al Jabhah"
@@ -27926,19 +27918,19 @@ msgstr ""
 
 #: skycultures/western/star_names.fab:525
 msgid "Zubenelgenubi I"
-msgstr ""
+msgstr "주벤엘게누비 I"
 
 #: skycultures/western/star_names.fab:527
 msgid "Zuben El Genubi"
-msgstr ""
+msgstr "주벤 엘 게누비"
 
 #: skycultures/western/star_names.fab:528
 msgid "Zubenelgenubi II"
-msgstr ""
+msgstr "주벤엘게누비 II"
 
 #: skycultures/western/star_names.fab:531
 msgid "Zuben Eschamali"
-msgstr ""
+msgstr "주벤 에샤마리"
 
 #: skycultures/western/star_names.fab:532
 msgid "Brachium"
@@ -27946,7 +27938,7 @@ msgstr ""
 
 #: skycultures/western/star_names.fab:533
 msgid "Zuben Acrabi"
-msgstr ""
+msgstr "주벤 아크라비"
 
 #: skycultures/western/star_names.fab:534
 msgid "Cornu"
@@ -27954,23 +27946,23 @@ msgstr ""
 
 #: skycultures/western/star_names.fab:535
 msgid "Zuben Elakribi"
-msgstr ""
+msgstr "주벤 엘라크리비"
 
 #: skycultures/western/star_names.fab:536
 msgid "Zubenelhakrabi"
-msgstr ""
+msgstr "주벤엘하크라비"
 
 #: skycultures/western/star_names.fab:537
 msgid "Zuben Elakrab"
-msgstr ""
+msgstr "주벤 엘라크라브"
 
 #: skycultures/western/star_names.fab:538
 msgid "Zuben Hakraki"
-msgstr ""
+msgstr "주벤 하크라키"
 
 #: skycultures/western/star_names.fab:539
 msgid "Zuben Hakrabi"
-msgstr ""
+msgstr "주벤 하크라비"
 
 #: skycultures/western/star_names.fab:541
 msgid "Alsciaukat"
@@ -27991,7 +27983,7 @@ msgstr "돌로네스 X"
 #: skycultures/western/star_names.fab:546
 #: skycultures/western_rey/star_names.fab:21
 msgid "Vega"
-msgstr "베가"
+msgstr "베가 (직녀성)"
 
 #: skycultures/western/star_names.fab:547
 msgid "Fidis"
@@ -27999,11 +27991,11 @@ msgstr ""
 
 #: skycultures/western/star_names.fab:548
 msgid "Wega"
-msgstr ""
+msgstr "웨가"
 
 #: skycultures/western/star_names.fab:551
 msgid "Jugum"
-msgstr ""
+msgstr "주굼"
 
 #: skycultures/western/star_names.fab:552
 msgid "Aladfar"
@@ -28031,15 +28023,15 @@ msgstr "더블 더블 II"
 
 #: skycultures/western/star_names.fab:558
 msgid "Nasr Alwaki I"
-msgstr ""
+msgstr "나스르 알와키 I"
 
 #: skycultures/western/star_names.fab:559
 msgid "Nasr Alwaki II"
-msgstr ""
+msgstr "나스르 알와키 II"
 
 #: skycultures/western/star_names.fab:561
 msgid "Plaskett's Star"
-msgstr ""
+msgstr "플라스켓의 별"
 
 #: skycultures/western/star_names.fab:564
 msgid "Polaris Australis"
@@ -28047,27 +28039,27 @@ msgstr "남쪽 폴라리스"
 
 #: skycultures/western/star_names.fab:569
 msgid "Yad"
-msgstr ""
+msgstr "야드"
 
 #: skycultures/western/star_names.fab:573
 msgid "Muliphen"
-msgstr ""
+msgstr "물리펜"
 
 #: skycultures/western/star_names.fab:575
 msgid "Saik"
-msgstr ""
+msgstr "사이크"
 
 #: skycultures/western/star_names.fab:576
 msgid "Garafsa"
-msgstr ""
+msgstr "가라프사"
 
 #: skycultures/western/star_names.fab:577
 msgid "Aggia"
-msgstr ""
+msgstr "아기아"
 
 #: skycultures/western/star_names.fab:580
 msgid "Al Mankib"
-msgstr ""
+msgstr "알 만키브"
 
 #: skycultures/western/star_names.fab:581
 msgid "Betelgeux"
@@ -28148,51 +28140,51 @@ msgstr "알 타즈 V"
 
 #: skycultures/western/star_names.fab:612
 msgid "Yed Alpheras"
-msgstr ""
+msgstr "예드 알페라스"
 
 #: skycultures/western/star_names.fab:613
 msgid "Marchab"
-msgstr ""
+msgstr "마르챠브"
 
 #: skycultures/western/star_names.fab:615
 msgid "Seat Alpheras"
-msgstr ""
+msgstr "시트 알페라스"
 
 #: skycultures/western/star_names.fab:618
 msgid "Os Pegasi"
-msgstr ""
+msgstr "오스 페가시"
 
 #: skycultures/western/star_names.fab:619
 msgid "Fom"
-msgstr ""
+msgstr "폼"
 
 #: skycultures/western/star_names.fab:620
 msgid "Homam"
-msgstr ""
+msgstr "호맘"
 
 #: skycultures/western/star_names.fab:624
 msgid "Sa'd al Bari'"
-msgstr ""
+msgstr "사드 알 바리ㅂ"
 
 #: skycultures/western/star_names.fab:625
 msgid "Salm"
-msgstr ""
+msgstr "살름"
 
 #: skycultures/western/star_names.fab:626
 msgid "Al Karab"
-msgstr ""
+msgstr "알 카랍"
 
 #: skycultures/western/star_names.fab:627
 msgid "Salma"
-msgstr ""
+msgstr "살마"
 
 #: skycultures/western/star_names.fab:629
 msgid "Sadalnazi"
-msgstr ""
+msgstr "사달나지"
 
 #: skycultures/western/star_names.fab:630
 msgid "Fum al Faras"
-msgstr ""
+msgstr "펌 알 파라스"
 
 #: skycultures/western/star_names.fab:631
 msgid "Suudalnujum"
@@ -28292,11 +28284,11 @@ msgstr ""
 
 #: skycultures/western/star_names.fab:668
 msgid "van Maanen's Star"
-msgstr ""
+msgstr "반 마넨의 별"
 
 #: skycultures/western/star_names.fab:669
 msgid "van Maanen 2"
-msgstr ""
+msgstr "반 마넨 2"
 
 #: skycultures/western/star_names.fab:670
 msgid "Torcular"
@@ -28320,7 +28312,7 @@ msgstr "쿠톤 I"
 
 #: skycultures/western/star_names.fab:675
 msgid "Revati"
-msgstr ""
+msgstr "레바티"
 
 #: skycultures/western/star_names.fab:676
 msgid "Kuton II"
@@ -28332,15 +28324,15 @@ msgstr "쿠톤 III"
 
 #: skycultures/western/star_names.fab:680
 msgid "Thalim"
-msgstr ""
+msgstr "탈림"
 
 #: skycultures/western/star_names.fab:681
 msgid "Os Piscis Meridiani"
-msgstr ""
+msgstr "남쪽물고기자리 중앙성"
 
 #: skycultures/western/star_names.fab:682
 msgid "Os Piscis Notii"
-msgstr ""
+msgstr "남쪽물고기자리 북성"
 
 #: skycultures/western/star_names.fab:683
 msgid "Fum al Hui"
@@ -28352,7 +28344,7 @@ msgstr ""
 
 #: skycultures/western/star_names.fab:687
 msgid "Tureis"
-msgstr ""
+msgstr "투레이스"
 
 #: skycultures/western/star_names.fab:689
 msgid "Asmidiske"
@@ -28360,7 +28352,7 @@ msgstr ""
 
 #: skycultures/western/star_names.fab:694
 msgid "Alrami"
-msgstr ""
+msgstr "알라미"
 
 #: skycultures/western/star_names.fab:695
 msgid "Arkab Prior"
@@ -28372,52 +28364,52 @@ msgstr "뒤쪽 아르카브"
 
 #: skycultures/western/star_names.fab:699
 msgid "Nushaba"
-msgstr ""
+msgstr "누샤바"
 
 #: skycultures/western/star_names.fab:700
 msgid "Al Nasl"
-msgstr ""
+msgstr "알 나슬"
 
 #: skycultures/western/star_names.fab:701
 msgid "Nash"
-msgstr ""
+msgstr "내쉬"
 
 #: skycultures/western/star_names.fab:702
 msgid "El Nasl"
-msgstr ""
+msgstr "엘 나슬"
 
 #: skycultures/western/star_names.fab:704
 msgid "Kaus Meridionalis"
-msgstr ""
+msgstr "남방 카우스"
 
 #: skycultures/western/star_names.fab:705
 msgid "Media"
-msgstr ""
+msgstr "메디아"
 
 #: skycultures/western/star_names.fab:709
 #: skycultures/western/star_names.fab:713
 msgid "Al Thalimain"
-msgstr ""
+msgstr "알 탈리마인"
 
 #: skycultures/western/star_names.fab:711
 msgid "Sadira"
-msgstr ""
+msgstr "tkelfk"
 
 #: skycultures/western/star_names.fab:712
 msgid "Polis"
-msgstr ""
+msgstr "폴리스"
 
 #: skycultures/western/star_names.fab:714
 msgid "Alnam"
-msgstr ""
+msgstr "알남"
 
 #: skycultures/western/star_names.fab:715
 msgid "Albaldah"
-msgstr ""
+msgstr "알발다흐"
 
 #: skycultures/western/star_names.fab:716
 msgid "Al Baldah"
-msgstr ""
+msgstr "알 발다흐"
 
 #: skycultures/western/star_names.fab:717
 msgid "Terebellum"
@@ -28441,107 +28433,107 @@ msgstr "잠자리조개 IV"
 
 #: skycultures/western/star_names.fab:722
 msgid "Hamalwarid"
-msgstr ""
+msgstr "하말와리드"
 
 #: skycultures/western/star_names.fab:724
 msgid "Ainalrami"
-msgstr ""
+msgstr "아인알라미"
 
 #: skycultures/western/star_names.fab:725
 msgid "Ain al Rami I"
-msgstr ""
+msgstr "아인 알 라미 I"
 
 #: skycultures/western/star_names.fab:726
 msgid "Ain al Rami II"
-msgstr ""
+msgstr "아인 알 라미 II"
 
 #: skycultures/western/star_names.fab:727
 msgid "Namalsadirah II"
-msgstr ""
+msgstr "나말사디라흐 II"
 
 #: skycultures/western/star_names.fab:728
 msgid "Namalsadirah I"
-msgstr ""
+msgstr "나말사디라흐 I"
 
 #: skycultures/western/star_names.fab:729
 msgid "Namalsadirah III"
-msgstr ""
+msgstr "나말사디라흐 III"
 
 #: skycultures/western/star_names.fab:730
 msgid "Namalsadirah IV"
-msgstr ""
+msgstr "나말사디라흐 IV"
 
 #: skycultures/western/star_names.fab:731
 msgid "Al Kiladah"
-msgstr ""
+msgstr "알 킬라다흐"
 
 #: skycultures/western/star_names.fab:734
 msgid "Cor Scorpii"
-msgstr ""
+msgstr "코르 스코피"
 
 #: skycultures/western/star_names.fab:735
 msgid "Vespertilio"
-msgstr ""
+msgstr "베스퍼틸리오"
 
 #: skycultures/western/star_names.fab:736
 msgid "Kalb al Akrab"
-msgstr ""
+msgstr "칼브 알 아크라브"
 
 #: skycultures/western/star_names.fab:738
 msgid "Graffias"
-msgstr ""
+msgstr "그라피아스"
 
 #: skycultures/western/star_names.fab:739
 msgid "Akrab"
-msgstr ""
+msgstr "아크라브"
 
 #: skycultures/western/star_names.fab:741
 msgid "Iclarkrau"
-msgstr ""
+msgstr "이클라르크라우"
 
 #: skycultures/western/star_names.fab:742
 msgid "Sargas"
-msgstr ""
+msgstr "사르가스"
 
 #: skycultures/western/star_names.fab:745
 msgid "Alniyat"
-msgstr ""
+msgstr "알니야트"
 
 #: skycultures/western/star_names.fab:746
 msgid "Alniyat I"
-msgstr ""
+msgstr "알니야트 I"
 
 #: skycultures/western/star_names.fab:748
 msgid "Alniyat II"
-msgstr ""
+msgstr "알니야트 II"
 
 #: skycultures/western/star_names.fab:751
 msgid "Lesuth"
-msgstr ""
+msgstr "레수스"
 
 #: skycultures/western/star_names.fab:752
 msgid "Jabbah"
-msgstr ""
+msgstr "야바흐"
 
 #: skycultures/western/star_names.fab:753
 msgid "Grafias"
-msgstr ""
+msgstr "그라피아스"
 
 #: skycultures/western/star_names.fab:754
 msgid "Grassias"
-msgstr ""
+msgstr "그라시아스"
 
 #: skycultures/western/star_names.fab:756
 msgid "Vanant"
-msgstr ""
+msgstr "바난트"
 
 #: skycultures/western/star_names.fab:757
 msgid "Mula"
-msgstr ""
+msgstr "물라"
 
 #: skycultures/western/star_names.fab:758
 msgid "Xamidimura"
-msgstr ""
+msgstr "사미디무라"
 
 #: skycultures/western/star_names.fab:759
 msgid "Tali al Shaulah I"
@@ -28549,7 +28541,7 @@ msgstr ""
 
 #: skycultures/western/star_names.fab:760
 msgid "Pipirima"
-msgstr ""
+msgstr "피프리마"
 
 #: skycultures/western/star_names.fab:761
 msgid "Tali al Shaulah II"
@@ -28557,19 +28549,19 @@ msgstr ""
 
 #: skycultures/western/star_names.fab:762
 msgid "Fang"
-msgstr ""
+msgstr "팡"
 
 #: skycultures/western/star_names.fab:763
 msgid "Nur"
-msgstr ""
+msgstr "누르"
 
 #: skycultures/western/star_names.fab:764
 msgid "Iklil"
-msgstr ""
+msgstr "이킬리"
 
 #: skycultures/western/star_names.fab:765
 msgid "Iolil"
-msgstr ""
+msgstr "로릴"
 
 #: skycultures/western/star_names.fab:766
 msgid "Jabhat Acrabi I"
@@ -28585,11 +28577,11 @@ msgstr "부열(傅说)"
 
 #: skycultures/western/star_names.fab:769
 msgid "Larawag"
-msgstr ""
+msgstr "라라와그"
 
 #: skycultures/western/star_names.fab:772
 msgid "Cor Serpentis"
-msgstr ""
+msgstr "코르 세르펜티스"
 
 #: skycultures/western/star_names.fab:773
 msgid "Unuk Al Hay"
@@ -28618,11 +28610,11 @@ msgstr "알데바란"
 
 #: skycultures/western/star_names.fab:781
 msgid "Cor Tauri"
-msgstr ""
+msgstr "코르 타우리"
 
 #: skycultures/western/star_names.fab:782
 msgid "Parilicium"
-msgstr ""
+msgstr "파릴리시움"
 
 #: skycultures/western/star_names.fab:783
 msgid "Elnath"

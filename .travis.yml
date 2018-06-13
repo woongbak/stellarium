@@ -15,6 +15,8 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-4.8
+          update:
+            - true
         coverity_scan:
           project:
             name: "Stellarium/stellarium"
@@ -24,6 +26,7 @@ matrix:
           branch_pattern: coverity_scan
       env:
          - MATRIX_EVAL="CC=gcc-4.8 && CXX=g++-4.8"
+         - TRANSLATE=true
 
     - os: linux
       dist: trusty
@@ -34,8 +37,11 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-4.9
+          update:
+            - true
       env:
          - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
+         - TRANSLATE=false
 
     - os: linux
       dist: trusty
@@ -46,8 +52,11 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-5
+          update:
+            - true
       env:
          - MATRIX_EVAL="CC=gcc-5 && CXX=g++-5"
+         - TRANSLATE=false
 
     - os: linux
       dist: trusty
@@ -58,8 +67,11 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-6
+          update:
+            - true
       env:
         - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
+        - TRANSLATE=false
 
     - os: linux
       dist: trusty
@@ -70,8 +82,11 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-7
+          update:
+            - true
       env:
         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+        - TRANSLATE=false
 
     - os: linux
       dist: trusty
@@ -83,8 +98,11 @@ matrix:
             - llvm-toolchain-precise-3.6
           packages:
             - clang-3.6
+          update:
+            - true
       env:
         - MATRIX_EVAL="CC=clang-3.6 && CXX=clang++-3.6"
+        - TRANSLATE=false
 
     - os: linux
       dist: trusty
@@ -96,8 +114,11 @@ matrix:
             - llvm-toolchain-precise-3.7
           packages:
             - clang-3.7
+          update:
+            - true
       env:
         - MATRIX_EVAL="CC=clang-3.7 && CXX=clang++-3.7"
+        - TRANSLATE=false
 
     - os: linux
       dist: trusty
@@ -109,8 +130,11 @@ matrix:
             - llvm-toolchain-precise-3.8
           packages:
             - clang-3.8
+          update:
+            - true
       env:
         - MATRIX_EVAL="CC=clang-3.8 && CXX=clang++-3.8"
+        - TRANSLATE=false
 
     - os: linux
       dist: trusty
@@ -121,8 +145,11 @@ matrix:
             - llvm-toolchain-trusty-3.9
           packages:
             - clang-3.9
+          update:
+            - true
       env:
         - MATRIX_EVAL="CC=clang-3.9 && CXX=clang++-3.9"
+        - TRANSLATE=false
 
     - os: linux
       dist: trusty
@@ -133,8 +160,11 @@ matrix:
             - llvm-toolchain-trusty-4.0
           packages:
             - clang-4.0
+          update:
+            - true
       env:
         - MATRIX_EVAL="CC=clang-4.0 && CXX=clang++-4.0"
+        - TRANSLATE=false
 
     - os: linux
       dist: trusty
@@ -145,28 +175,41 @@ matrix:
             - llvm-toolchain-trusty-5.0
           packages:
             - clang-5.0
+          update:
+            - true
       env:
         - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
+        - TRANSLATE=false
 
     - os: osx
       osx_image: xcode7.3
       env:
         - MATRIX_EVAL="CC=clang && CXX=clang++"
+        - TRANSLATE=false
 
     - os: osx
       osx_image: xcode8
       env:
         - MATRIX_EVAL="CC=clang && CXX=clang++"
+        - TRANSLATE=false
 
     - os: osx
       osx_image: xcode8.3
       env:
         - MATRIX_EVAL="CC=clang && CXX=clang++"
+        - TRANSLATE=false
 
     - os: osx
       osx_image: xcode9.2
       env:
         - MATRIX_EVAL="CC=clang && CXX=clang++"
+        - TRANSLATE=false
+
+    - os: osx
+      osx_image: xcode9.3
+      env:
+        - MATRIX_EVAL="CC=clang && CXX=clang++"
+        - TRANSLATE=false
 
 before_install:
   - eval "${MATRIX_EVAL}"
@@ -177,7 +220,6 @@ before_install:
       unzip -qq qt5.zip -d qt5;
       export PATH=`pwd`/qt5/bin:$PATH;
       export QT_PLUGIN_PATH=`pwd`/qt5/plugins;
-      sudo apt-get -qq update;
     fi
   # Mac OS X
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
@@ -203,7 +245,7 @@ script:
   - ctest --output-on-failure
 
 after_success:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" && "$TRAVIS_BRANCH" == "master" ]]; then
+  - if [[ "$TRANSLATE" == true && "$TRAVIS_BRANCH" == "master" && "$TRAVIS_PULL_REQUEST" == false && "$TRAVIS_REPO_SLUG" == "Stellarium/stellarium" ]]; then
       pip install virtualenv;
       virtualenv ~/env;
       source ~/env/bin/activate;

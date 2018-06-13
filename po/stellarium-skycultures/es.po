@@ -7,8 +7,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-05-16 16:50+0700\n"
+"Report-Msgid-Bugs-To: stellarium@googlegroups.com\n"
+"POT-Creation-Date: 2018-06-03 17:28+0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Víctor <vegadark@protonmail.com>, 2017\n"
 "Language-Team: Spanish (https://www.transifex.com/stellarium/teams/80998/es/)\n"
@@ -23653,101 +23653,93 @@ msgid "Threading Coins"
 msgstr "Monedas de Threading"
 
 #: skycultures/korean/star_names.fab:1
-msgid "SaangSaang"
-msgstr "SaangSaang"
+msgid "SangSang"
+msgstr "SangSang"
 
 #: skycultures/korean/star_names.fab:2 skycultures/korean/star_names.fab:4
-msgid "ChaSaang"
-msgstr "ChaSaang"
+msgid "ChaSang"
+msgstr "ChaSang"
 
 #: skycultures/korean/star_names.fab:3 skycultures/korean/star_names.fab:50
-msgid "ChaJaang"
-msgstr "ChaJaang"
+msgid "ChaJang"
+msgstr "ChaJang"
 
-#: skycultures/korean/star_names.fab:5
-msgid "UJangGuun"
-msgstr "UJangGuun"
+#: skycultures/korean/star_names.fab:5 skycultures/korean/star_names.fab:21
+msgid "UJangGun"
+msgstr "UJangGun"
 
 #: skycultures/korean/star_names.fab:6
-msgid "DaeJangGuun"
-msgstr "DaeJangGuun"
+msgid "DaeJangGun"
+msgstr "DaeJangGun"
 
-#: skycultures/korean/star_names.fab:7
-msgid "JwaJangGuun"
-msgstr "JwaJangGuun"
+#: skycultures/korean/star_names.fab:7 skycultures/korean/star_names.fab:19
+msgid "JwaJangGun"
+msgstr "JwaJangGun"
 
 #: skycultures/korean/star_names.fab:8
-msgid "WaangRaang"
-msgstr "WaangRaang"
+msgid "WangRang"
+msgstr "WangRang"
 
 #: skycultures/korean/star_names.fab:9 skycultures/korean/star_names.fab:10
 #: skycultures/korean/star_names.fab:11 skycultures/korean/star_names.fab:12
-msgid "CheonSaa"
-msgstr "CheonSaa"
+msgid "CheonSa"
+msgstr "CheonSa"
 
 #: skycultures/korean/star_names.fab:13 skycultures/korean/star_names.fab:17
 msgid "CheonGou"
 msgstr "CheonGou"
 
 #: skycultures/korean/star_names.fab:14
-msgid "SaaGong"
-msgstr "SaaGong"
+msgid "SaGong"
+msgstr "SaGong"
 
 #: skycultures/korean/star_names.fab:15
-msgid "CheonOok"
-msgstr "CheonOok"
+msgid "CheonOk"
+msgstr "CheonOk"
 
 #: skycultures/korean/star_names.fab:16
-msgid "CheonChaang"
-msgstr "CheonChaang"
+msgid "CheonChang"
+msgstr "CheonChang"
 
 #: skycultures/korean/star_names.fab:18
 msgid "Gyeong"
 msgstr "Gyeong"
 
-#: skycultures/korean/star_names.fab:19
-msgid "JwaJaangGuun"
-msgstr "JwaJaangGuun"
-
 #: skycultures/korean/star_names.fab:20
-msgid "HuuJaangGuun"
-msgstr "HuuJaangGuun"
-
-#: skycultures/korean/star_names.fab:21
-msgid "UuJaangGuun"
-msgstr "UuJaangGuun"
+msgid "HuJangGun"
+msgstr "HuJangGun"
 
 #: skycultures/korean/star_names.fab:22
-msgid "PyeonJaangGuun"
-msgstr "PyeonJaangGuun"
+msgid "PyeonJangGun"
+msgstr "PyeonJangGun"
 
 #: skycultures/korean/star_names.fab:23
-msgid "SaamJaangGuun"
-msgstr "SaamJaangGuun"
+msgid "SamJangGun"
+msgstr "SamJangGun"
 
 #: skycultures/korean/star_names.fab:24
-msgid "TaeSaa"
-msgstr "TaeSaa"
+msgid "TaeSa"
+msgstr "TaeSa"
 
 #: skycultures/korean/star_names.fab:25 skycultures/korean/star_names.fab:39
-msgid "BaakSaa"
-msgstr "BaakSaa"
+msgid "BakSa"
+msgstr "BakSa"
 
 #: skycultures/korean/star_names.fab:26
-msgid "SaamGong"
-msgstr "SaamGong"
+msgid "SamGong"
+msgstr "SamGong"
 
 #: skycultures/korean/star_names.fab:27
 msgid "JaeUu"
 msgstr "JaeUu"
 
 #: skycultures/korean/star_names.fab:28
-msgid "JaeSaa"
-msgstr "JaeSaa"
+msgid "JaeSa"
+msgstr "JaeSa"
 
 #: skycultures/korean/star_names.fab:29
-msgid "YeoJuu"
-msgstr "YeoJuu"
+msgid "YeoJu"
+msgstr "YeoJu"
 
 #: skycultures/korean/star_names.fab:30
 msgid "YeoEo"
@@ -23763,72 +23755,72 @@ msgstr "SouMin"
 
 #: skycultures/korean/star_names.fab:33 skycultures/korean/star_names.fab:64
 #: skycultures/korean/star_names.fab:65 skycultures/korean/star_names.fab:66
-msgid "Buuiin"
-msgstr "Buuiin"
+msgid "Buin"
+msgstr "Buin"
 
 #: skycultures/korean/star_names.fab:34
-msgid "WaangBii"
-msgstr "WaangBii"
+msgid "WangBi"
+msgstr "WangBi"
 
 #: skycultures/korean/star_names.fab:35 skycultures/korean/star_names.fab:47
-msgid "HuuGuung"
-msgstr "HuuGuung"
+msgid "HuGung"
+msgstr "HuGung"
 
 #: skycultures/korean/star_names.fab:36
 msgid "HwangJae"
 msgstr "HwangJae"
 
 #: skycultures/korean/star_names.fab:37
-msgid "CheoSaa"
-msgstr "CheoSaa"
+msgid "CheoSa"
+msgstr "CheoSa"
 
 #: skycultures/korean/star_names.fab:38
-msgid "EuiSaa"
-msgstr "EuiSaa"
+msgid "EuiSa"
+msgstr "EuiSa"
 
 #: skycultures/korean/star_names.fab:40
-msgid "DaeBuu"
-msgstr "DaeBuu"
+msgid "DaeBu"
+msgstr "DaeBu"
 
 #: skycultures/korean/star_names.fab:41
-msgid "SaangTae"
-msgstr "SaangTae"
+msgid "SangTae"
+msgstr "SangTae"
 
 #: skycultures/korean/star_names.fab:42
-msgid "JuungTae"
-msgstr "JuungTae"
+msgid "JungTae"
+msgstr "JungTae"
 
 #: skycultures/korean/star_names.fab:43
-msgid "HaaTae"
-msgstr "HaaTae"
+msgid "HaTae"
+msgstr "HaTae"
 
 #: skycultures/korean/star_names.fab:44 skycultures/korean/star_names.fab:62
-msgid "TaeJaa"
-msgstr "TaeJaa"
+msgid "TaeJa"
+msgstr "TaeJa"
 
 #: skycultures/korean/star_names.fab:45
-msgid "JaeWaang"
-msgstr "JaeWaang"
+msgid "JaeWang"
+msgstr "JaeWang"
 
 #: skycultures/korean/star_names.fab:46 skycultures/korean/star_names.fab:61
-msgid "SeoJaa"
-msgstr "SeoJaa"
+msgid "SeoJa"
+msgstr "SeoJa"
 
 #: skycultures/korean/star_names.fab:48
-msgid "CheonChuu"
-msgstr "CheonChuu"
+msgid "CheonChu"
+msgstr "CheonChu"
 
 #: skycultures/korean/star_names.fab:49
-msgid "SaangJaang"
-msgstr "SaangJaang"
+msgid "SangJang"
+msgstr "SangJang"
 
 #: skycultures/korean/star_names.fab:51
-msgid "TaeSaang"
-msgstr "TaeSaang"
+msgid "TaeSang"
+msgstr "TaeSang"
 
 #: skycultures/korean/star_names.fab:52
-msgid "SaaJuu.DaeRii"
-msgstr "SaaJuu.DaeRii"
+msgid "SaJu.DaeRi"
+msgstr "SaJu.DaeRi"
 
 #: skycultures/korean/star_names.fab:53
 msgid "Jeong"
@@ -23847,32 +23839,32 @@ msgid "Beol"
 msgstr "Beol"
 
 #: skycultures/korean/star_names.fab:57
-msgid "Saal"
-msgstr "Saal"
+msgid "Sal"
+msgstr "Sal"
 
 #: skycultures/korean/star_names.fab:58
-msgid "Wii"
-msgstr "Wii"
+msgid "Wi"
+msgstr "Wi"
 
 #: skycultures/korean/star_names.fab:59
 msgid "Eung"
 msgstr "Eung"
 
 #: skycultures/korean/star_names.fab:60
-msgid "MyeongDaang"
-msgstr "MyeongDaang"
+msgid "MyeongDang"
+msgstr "MyeongDang"
 
 #: skycultures/korean/star_names.fab:63
-msgid "Huu"
-msgstr "Huu"
+msgid "Hu"
+msgstr "Hu"
 
 #: skycultures/korean/star_names.fab:67
-msgid "Biin"
-msgstr "Biin"
+msgid "Bin"
+msgstr "Bin"
 
 #: skycultures/korean/star_names.fab:68 skycultures/korean/star_names.fab:69
-msgid "DaeJaang"
-msgstr "DaeJaang"
+msgid "DaeJang"
+msgstr "DaeJang"
 
 #: skycultures/macedonian/constellation_names.eng.fab:1
 msgid "'Aramii' (organized group of thieves)"
