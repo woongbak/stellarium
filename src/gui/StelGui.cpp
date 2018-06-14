@@ -364,6 +364,7 @@ void StelGui::init(QGraphicsWidget *atopLevelGraphicsWidget)
 	pxmapOn = QPixmap(":/graphicGui/btFullScreen-on.png");
 	pxmapOff = QPixmap(":/graphicGui/btFullScreen-off.png");
 	b = new StelButton(Q_NULLPTR, pxmapOn, pxmapOff, pxmapGlow32x32, "actionSet_Full_Screen_Global");
+	b->setTriggerOnRelease(true);
 	skyGui->buttonBar->addButton(b, "060-othersGroup");
 
 	pxmapOn = QPixmap(":/graphicGui/btTimeRewind-on.png");
@@ -497,7 +498,7 @@ void StelGui::setStelStyle(const QString& section)
 void StelGui::updateI18n()
 {
 	// Translate all action texts
-	foreach (QObject* obj, StelMainView::getInstance().children())
+	for (auto* obj : StelMainView::getInstance().children())
 	{
 		QAction* a = qobject_cast<QAction*>(obj);
 		if (a)

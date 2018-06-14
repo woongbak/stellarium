@@ -49,7 +49,7 @@ public:
 
 static QString getExt(const QString& format)
 {
-	foreach(QString ext, format.split(' '))
+	for (auto ext : format.split(' '))
 	{
 		if (ext == "jpeg") return "jpg";
 		if (ext == "png") return "png";
@@ -70,7 +70,9 @@ QUrl HipsSurvey::getUrlFor(const QString& path) const
 HipsSurvey::HipsSurvey(const QString& url_, double releaseDate_):
 	url(url_),
 	releaseDate(releaseDate_),
-	tiles(1000)
+	tiles(1000),
+	nbVisibleTiles(0),
+	nbLoadedTiles(0)
 {
 	// Immediatly download the properties.
 	QNetworkRequest req = QNetworkRequest(getUrlFor("properties"));
@@ -79,7 +81,7 @@ HipsSurvey::HipsSurvey(const QString& url_, double releaseDate_):
 	QNetworkReply* networkReply = StelApp::getInstance().getNetworkAccessManager()->get(req);
 	connect(networkReply, &QNetworkReply::finished, [&, networkReply] {
 		QByteArray data = networkReply->readAll();
-		foreach(QString line, data.split('\n'))
+		for (QString line : data.split('\n'))
 		{
 			if (line.startsWith("#")) continue;
 			QString key = line.section("=", 0, 0).trimmed();
@@ -462,7 +464,7 @@ QList<HipsSurveyP> HipsSurvey::parseHipslist(const QString& data)
 	QList<HipsSurveyP> ret;
 	QString url;
 	double releaseDate = 0;
-	foreach(QString line, data.split('\n'))
+	for (auto line : data.split('\n'))
 	{
 		if (line.startsWith('#')) continue;
 		QString key = line.section("=", 0, 0).trimmed();

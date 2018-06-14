@@ -177,8 +177,11 @@ void StelButton::mousePressEvent(QGraphicsSceneMouseEvent* event)
 	QGraphicsItem::mousePressEvent(event);
 	event->accept();
 	setChecked(toggleChecked(checked));
-	emit(toggled(checked));
-	emit(triggered());
+	if (!triggerOnRelease)
+	{
+		emit(toggled(checked));
+		emit(triggered());
+	}
 }
 
 void StelButton::hoverEnterEvent(QGraphicsSceneHoverEvent*)
@@ -205,6 +208,11 @@ void StelButton::mouseReleaseEvent(QGraphicsSceneMouseEvent*)
 
 	if (flagChangeFocus) // true if button is on bottom bar
 		StelMainView::getInstance().focusSky(); // Change the focus after clicking on button
+	if (triggerOnRelease)
+	{
+		emit(toggled(checked));
+		emit(triggered());
+	}
 }
 
 void StelButton::updateIcon()
@@ -295,7 +303,7 @@ QRectF LeftStelBar::boundingRectNoHelpLabel() const
 {
 	// Re-use original Qt code, just remove the help label
 	QRectF childRect;
-	foreach (QGraphicsItem *child, QGraphicsItem::childItems())
+	for (auto* child : QGraphicsItem::childItems())
 	{
 		if ((child==helpLabel) || (child==helpLabelPixmap))
 			continue;
@@ -411,7 +419,7 @@ BottomStelBar::~BottomStelBar()
 	// Remove currently hidden buttons which are not delete by a parent element
 	for (QMap<QString, ButtonGroup>::iterator iter=buttonGroups.begin();iter!=buttonGroups.end();++iter)
 	{
-		foreach (StelButton* b, iter.value().elems)
+		for (auto* b : iter.value().elems)
 		{
 			if (b->parentItem()==0)
 			{
@@ -459,7 +467,7 @@ StelButton* BottomStelBar::hideButton(const QString& actionName)
 	for (QMap<QString, ButtonGroup>::iterator iter=buttonGroups.begin();iter!=buttonGroups.end();++iter)
 	{
 		int i=0;
-		foreach (StelButton* b, iter.value().elems)
+		for (auto* b : iter.value().elems)
 		{
 			if (b->action && b->action->objectName()==actionName)
 			{
@@ -519,7 +527,7 @@ QRectF BottomStelBar::getButtonsBoundingRect() const
 	// Re-use original Qt code, just remove the help label
 	QRectF childRect;
 	bool hasBtn = false;
-	foreach (QGraphicsItem *child, QGraphicsItem::childItems())
+	for (auto* child : QGraphicsItem::childItems())
 	{
 		if (qgraphicsitem_cast<StelButton*>(child)==0)
 			continue;
@@ -547,7 +555,7 @@ void BottomStelBar::updateButtonsGroups()
 			continue;
 		x += group.leftMargin;
 		int n = 0;
-		foreach (StelButton* b, buttons)
+		for (auto* b : buttons)
 		{
 			// We check if the group has its own background if not the case
 			// We apply a default background.
@@ -865,7 +873,7 @@ QRectF BottomStelBar::boundingRectNoHelpLabel() const
 {
 	// Re-use original Qt code, just remove the help label
 	QRectF childRect;
-	foreach (QGraphicsItem *child, QGraphicsItem::childItems())
+	for (auto* child : QGraphicsItem::childItems())
 	{
 		if ((child==helpLabel) || (child==helpLabelPixmap))
 			continue;
@@ -1037,7 +1045,7 @@ void CornerButtons::setOpacity(double opacity)
 	lastOpacity = opacity;
 	if (QGraphicsItem::childItems().size()==0)
 		return;
-	foreach (QGraphicsItem *child, QGraphicsItem::childItems())
+	for (auto* child : QGraphicsItem::childItems())
 	{
 		StelButton* sb = qgraphicsitem_cast<StelButton*>(child);
 		Q_ASSERT(sb!=Q_NULLPTR);
