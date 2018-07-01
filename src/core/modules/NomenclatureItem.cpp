@@ -181,7 +181,7 @@ QString NomenclatureItem::getNomenclatureTypeString() const
 			nTypeStr = qc_("macula", "landform");
 			break;
 		case niMare:
-			// TRANSLATORS: “Sea”; on the Moon, low albedo, relatively smooth plain, generally of large extent; on Mars, dark albedo areas of no known geological significance; on Titan, large expanses of dark materials thought to be liquid hydrocarbons
+			// TRANSLATORS: "Sea"; on the Moon, low albedo, relatively smooth plain, generally of large extent; on Mars, dark albedo areas of no known geological significance; on Titan, large expanses of dark materials thought to be liquid hydrocarbons
 			nTypeStr = qc_("mare", "landform");
 			break;
 		case niMensa:
@@ -740,12 +740,18 @@ float NomenclatureItem::getSelectPriority(const StelCore* core) const
 
 QString NomenclatureItem::getNameI18n() const
 {
-	return nameI18n;
+	if (getNomenclatureType()==niCrater)
+		return QString("%1 (%2)").arg(nameI18n, getNomenclatureTypeString());
+	else
+		return nameI18n;
 }
 
 QString NomenclatureItem::getEnglishName() const
 {
-	return englishName;
+	if (getNomenclatureType()==niCrater)
+		return QString("%1 (%2)").arg(englishName, getNomenclatureTypeLatinString());
+	else
+		return englishName;
 }
 
 void NomenclatureItem::translateName(const StelTranslator& trans)
@@ -760,10 +766,10 @@ QString NomenclatureItem::getInfoString(const StelCore* core, const InfoStringGr
 
 	if (flags&Name)
 	{
-		oss << "<h2>" << getNameI18n();
+		oss << "<h2>" << nameI18n;
 		// englishName here is the original scientific term, usually latin but could be plain english like "landing site".
-		if (getNameI18n()!=getEnglishName())
-			oss << " (" << getEnglishName() << ")";
+		if (nameI18n!=englishName)
+			oss << " (" << englishName << ")";
 		oss << "</h2>";
 	}
 
@@ -878,6 +884,6 @@ void NomenclatureItem::draw(StelCore* core, StelPainter *painter)
 	{
 		painter->setColor(color[0], color[1], color[2], 1.0);
 		painter->drawCircle(srcPos[0], srcPos[1], 2.f);
-		painter->drawText(srcPos[0], srcPos[1], getNameI18n(), 0, 5.f, 5.f, false);
+		painter->drawText(srcPos[0], srcPos[1], nameI18n, 0, 5.f, 5.f, false);
 	}
 }

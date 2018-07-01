@@ -24,6 +24,7 @@
 #include <QDateTime>
 #include <QUrl>
 #include <QFileDialog>
+#include <QColorDialog>
 
 #include "StelApp.hpp"
 #include "ui_exoplanetsDialog.h"
@@ -463,12 +464,12 @@ void ExoplanetsDialog::drawDiagram()
 	minX = maxX = aX.first();
 	minY = maxY = aY.first();
 
-	foreach (double temp, aX)
+	for (auto temp : aX)
 	{
 		if(maxX < temp) maxX = temp;
 		if(minX > temp) minX = temp;
 	}
-	foreach (double temp, aY)
+	for (auto temp : aY)
 	{
 		if(maxY < temp) maxY = temp;
 		if(minY > temp) minY = temp;

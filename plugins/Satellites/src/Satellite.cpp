@@ -61,6 +61,7 @@ int Satellite::orbitLineFadeSegments = 4;
 int Satellite::orbitLineSegmentDuration = 20;
 bool Satellite::orbitLinesFlag = true;
 bool Satellite::realisticModeFlag = false;
+bool Satellite::hideInvisibleSatellitesFlag = false;
 Vec3f Satellite::invisibleSatelliteColor = Vec3f(0.2f,0.2f,0.2f);
 
 double Satellite::timeRateLimit = 1.0; // one JD per second by default
@@ -138,7 +139,7 @@ Satellite::Satellite(const QString& identifier, const QVariantMap& map)
 
 	if (map.contains("comms"))
 	{
-		foreach(const QVariant &comm, map.value("comms").toList())
+		for (const auto& comm : map.value("comms").toList())
 		{
 			QVariantMap commMap = comm.toMap();
 			CommLink c;
@@ -152,7 +153,7 @@ Satellite::Satellite(const QString& identifier, const QVariantMap& map)
 	QVariantList groupList =  map.value("groups", QVariantList()).toList();
 	if (!groupList.isEmpty())
 	{
-		foreach(const QVariant& group, groupList)
+		for (const auto& group : groupList)
 			groups.insert(group.toString());
 	}
 
@@ -215,7 +216,7 @@ QVariantMap Satellite::getMap(void)
 	map["hintColor"] = col;
 	map["orbitColor"] = orbitCol;
 	QVariantList commList;
-	foreach(const CommLink &c, comms)
+	for (const auto& c : comms)
 	{
 		QVariantMap commMap;
 		commMap["frequency"] = c.frequency;
@@ -225,7 +226,7 @@ QVariantMap Satellite::getMap(void)
 	}
 	map["comms"] = commList;
 	QVariantList groupList;
-	foreach(const QString &g, groups)
+	for (const auto& g : groups)
 	{
 		groupList << g;
 	}
@@ -264,12 +265,10 @@ QString Satellite::getInfoString(const StelCore *core, const InfoStringGroup& fl
 	{
 		QString catalogNumbers;
 		if (internationalDesignator.isEmpty())
-			catalogNumbers = QString("%1: %2")
-					 .arg(q_("Catalog #"))
+			catalogNumbers = QString("NORAD %1")
 					 .arg(id);
 		else
-			catalogNumbers = QString("%1: %2; %3: %4")
-					 .arg(q_("Catalog #"))
+			catalogNumbers = QString("NORAD %1; %2: %3")
 			                 .arg(id)
 					 .arg(q_("International Designator"))
 			                 .arg(internationalDesignator);
@@ -320,14 +319,14 @@ QString Satellite::getInfoString(const StelCore *core, const InfoStringGroup& fl
 		        .arg(position[0], 5, 'f', 2)
 		        .arg(position[1], 5, 'f', 2)
 		        .arg(position[2], 5, 'f', 2);
-		// TRANSLATORS: TEME is an Earth-centered inertial coordinate system
+		// TRANSLATORS: TEME (True Equator, Mean Equinox) is an Earth-centered inertial coordinate system
 		oss << QString("%1: %2 %3").arg(q_("TEME coordinates")).arg(temeCoords).arg(qc_("km", "distance")) << "<br/>";
 		
 		QString temeVel = QString(xyz)
 		        .arg(velocity[0], 5, 'f', 2)
 		        .arg(velocity[1], 5, 'f', 2)
 		        .arg(velocity[2], 5, 'f', 2);
-		// TRANSLATORS: TEME is an Earth-centered inertial coordinate system
+		// TRANSLATORS: TEME (True Equator, Mean Equinox) is an Earth-centered inertial coordinate system
 		oss << QString("%1: %2 %3").arg(q_("TEME velocity")).arg(temeVel).arg(qc_("km/s", "speed")) << "<br/>";
 
 		if (sunReflAngle>0)
@@ -340,7 +339,7 @@ QString Satellite::getInfoString(const StelCore *core, const InfoStringGroup& fl
 
 		// Groups of the artificial satellites
 		QStringList groupList;
-		foreach(const QString &g, groups)
+		for (const auto&g : groups)
 			groupList << q_(g);
 
 		if (!groupList.isEmpty())
@@ -353,7 +352,7 @@ QString Satellite::getInfoString(const StelCore *core, const InfoStringGroup& fl
 		}
 
 		if (status!=StatusUnknown)
-			oss << QString("%1 %2").arg(q_("Operational status")).arg(getOperationalStatus()) << "<br />";
+			oss << QString("%1: %2").arg(q_("Operational status")).arg(getOperationalStatus()) << "<br />";
 
 		//Visibility: Full text
 		//TODO: Move to a more prominent place.
@@ -377,7 +376,7 @@ QString Satellite::getInfoString(const StelCore *core, const InfoStringGroup& fl
 
 		if (comms.size() > 0)
 		{
-			foreach(const CommLink &c, comms)
+			for (const auto& c : comms)
 			{
 				double dop = getDoppler(c.frequency);
 				double ddop = dop;
@@ -466,7 +465,7 @@ QVariantMap Satellite::getInfoMap(const StelCore *core) const
 	map.insert("visibility", visibilityState);
 	if (comms.size() > 0)
 	{
-		foreach(const CommLink &c, comms)
+		for (const auto& c : comms)
 		{
 			double dop = getDoppler(c.frequency);
 			double ddop = dop;
@@ -890,16 +889,14 @@ void Satellite::draw(StelCore* core, StelPainter& painter)
 		return;
 
 	XYZ = getJ2000EquatorialPos(core);
-	StelSkyDrawer* sd = core->getSkyDrawer();
-	Vec3f drawColor = (visibility == gSatWrapper::VISIBLE) ? hintColor : invisibleSatelliteColor; // Use hintColor for visible satellites only
-	painter.setColor(drawColor[0], drawColor[1], drawColor[2], hintBrightness);
 
 	Vec3d win;
 	if (painter.getProjector()->projectCheck(XYZ, win))
 	{
 		if (realisticModeFlag)
 		{
-			double mag = getVMagnitude(core);
+			float mag = getVMagnitude(core);
+			StelSkyDrawer* sd = core->getSkyDrawer();
 
 			RCMag rcMag;
 			Vec3f color = Vec3f(1.f,1.f,1.f);
@@ -926,19 +923,29 @@ void Satellite::draw(StelCore* core, StelPainter& painter)
 				painter.setColor(color[0], color[1], color[2], 1.f);
 
 			// Draw the label of the satellite when it enabled
-			if (txtMag <= sd->getLimitMagnitude() && Satellite::showLabels)
+			if (txtMag <= sd->getLimitMagnitude() && showLabels)
 				painter.drawText(XYZ, name, 0, 10, 10, false);
 
 		}
 		else
 		{
-			if (Satellite::showLabels)
-				painter.drawText(XYZ, name, 0, 10, 10, false);
+			bool visible = true;
+			if (hideInvisibleSatellitesFlag && visibility != gSatWrapper::VISIBLE)
+				visible = false;
 
-			painter.setBlending(true, GL_ONE, GL_ONE);
+			if (visible)
+			{
+				Vec3f drawColor = (visibility == gSatWrapper::VISIBLE) ? hintColor : invisibleSatelliteColor; // Use hintColor for visible satellites only
+				painter.setColor(drawColor[0], drawColor[1], drawColor[2], hintBrightness);
 
-			Satellite::hintTexture->bind();
-			painter.drawSprite2dMode(XYZ, 11);
+				if (showLabels)
+					painter.drawText(XYZ, name, 0, 10, 10, false);
+
+				painter.setBlending(true, GL_ONE, GL_ONE);
+
+				hintTexture->bind();
+				painter.drawSprite2dMode(XYZ, 11);
+			}
 		}
 	}
 

@@ -284,7 +284,7 @@ QString MinorPlanet::getInfoString(const StelCore *core, const InfoStringGroup &
 			// TRANSLATORS: Unit of measure for distance - milliones kilometers
 			km = qc_("M km", "distance");
 		}
-		oss << QString("%1: %2%3 (%4 %5)").arg(q_("Distance from Sun"), distAU, au, distKM, km) << "<br />";
+		oss << QString("%1: %2 %3 (%4 %5)").arg(q_("Distance from Sun"), distAU, au, distKM, km) << "<br />";
 
 		double distanceAu = getJ2000EquatorialPos(core).length();
 		double distanceKm = AU * distanceAu;
@@ -302,7 +302,7 @@ QString MinorPlanet::getInfoString(const StelCore *core, const InfoStringGroup &
 			// TRANSLATORS: Unit of measure for distance - milliones kilometers
 			km = qc_("M km", "distance");
 		}
-		oss << QString("%1: %2%3 (%4 %5)").arg(q_("Distance"), distAU, au, distKM, km) << "<br />";
+		oss << QString("%1: %2 %3 (%4 %5)").arg(q_("Distance"), distAU, au, distKM, km) << "<br />";
 	}
 
 	if (flags&Velocity)
@@ -315,15 +315,20 @@ QString MinorPlanet::getInfoString(const StelCore *core, const InfoStringGroup &
 		if (orbVel>0.)
 		{ // AU/d * km/AU /24
 			double orbVelKms=orbVel* AU/86400.;
-			oss << QString("%1: %2 %3").arg(q_("Orbital Velocity")).arg(orbVelKms, 0, 'f', 3).arg(kms) << "<br />";
+			oss << QString("%1: %2 %3").arg(q_("Orbital velocity")).arg(orbVelKms, 0, 'f', 3).arg(kms) << "<br />";
 			double helioVel=getHeliocentricEclipticVelocity().length(); // just in case we have asteroid moons!
 			if (helioVel!=orbVel)
-				oss << QString("%1: %2 %3").arg(q_("Heliocentric Velocity")).arg(helioVel* AU/86400., 0, 'f', 3).arg(kms) << "<br />";
+				oss << QString("%1: %2 %3").arg(q_("Heliocentric velocity")).arg(helioVel* AU/86400., 0, 'f', 3).arg(kms) << "<br />";
+		}
+		if (qAbs(re.period)>0.f)
+		{
+			double eqRotVel = 2.0*M_PI*(AU*getRadius())/(getSiderealDay()*86400.0);
+			oss << QString("%1: %2 %3").arg(q_("Equatorial rotation velocity")).arg(qAbs(eqRotVel), 0, 'f', 3).arg(kms) << "<br />";
 		}
 	}
 
 	double angularSize = 2.*getAngularSize(core)*M_PI/180.;
-	if (flags&Size && angularSize>=4.8e-7)
+	if (flags&Size && angularSize>=4.8e-8)
 	{
 		QString sizeStr = "";
 		if (sphereScale!=1.f) // We must give correct diameters even if upscaling (e.g. Moon)
@@ -331,13 +336,13 @@ QString MinorPlanet::getInfoString(const StelCore *core, const InfoStringGroup &
 			QString sizeOrig, sizeScaled;
 			if (withDecimalDegree)
 			{
-				sizeOrig   = StelUtils::radToDecDegStr(angularSize / sphereScale,5,false,true);
-				sizeScaled = StelUtils::radToDecDegStr(angularSize,5,false,true);
+				sizeOrig   = StelUtils::radToDecDegStr(angularSize / sphereScale, 5, false, true);
+				sizeScaled = StelUtils::radToDecDegStr(angularSize, 5, false, true);
 			}
 			else
 			{
-				sizeOrig   = StelUtils::radToDmsStr(angularSize / sphereScale, true);
-				sizeScaled = StelUtils::radToDmsStr(angularSize, true);
+				sizeOrig   = StelUtils::radToDmsPStr(angularSize / sphereScale, 2);
+				sizeScaled = StelUtils::radToDmsPStr(angularSize, 2);
 			}
 
 			sizeStr = QString("%1, %2: %3").arg(sizeOrig, q_("scaled up to"), sizeScaled);
@@ -345,12 +350,18 @@ QString MinorPlanet::getInfoString(const StelCore *core, const InfoStringGroup &
 		else
 		{
 			if (withDecimalDegree)
-				sizeStr = StelUtils::radToDecDegStr(angularSize,5,false,true);
+				sizeStr = StelUtils::radToDecDegStr(angularSize, 5, false, true);
 			else
-				sizeStr = StelUtils::radToDmsStr(angularSize, true);
+				sizeStr = StelUtils::radToDmsPStr(angularSize, 2);
 		}
 
 		oss << QString("%1: %2").arg(q_("Apparent diameter"), sizeStr) << "<br />";
+	}
+
+	if (flags&Size)
+	{
+		// Many asteroides has irregular shape
+		oss << QString("%1: %2 %3").arg(q_("Diameter"), QString::number(AU * getRadius() * 2.0, 'f', 1) , qc_("km", "distance")) << "<br />";
 	}
 
 	// If semi-major axis not zero then calculate and display orbital period for asteroid in days

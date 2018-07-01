@@ -62,7 +62,6 @@ public:
 	void setFlagShow(bool b){fader = b;}
 	bool getFlagShow() const {return fader;}
 private:
-	QSettings* conf ;
 	float radius;
 	QFont fontC, fontSC;
 	Vec3f color;
@@ -306,7 +305,7 @@ void LandscapeMgr::update(double deltaTime)
 	// TBD: Reactivate and verify this code!? Source, reference?
 //	float groundLuminance = 0;
 //	const vector<Planet*>& allPlanets = ssystem->getAllPlanets();
-//	for (vector<Planet*>::const_iterator i=allPlanets.begin();i!=allPlanets.end();++i)
+//	for (auto i=allPlanets.begin();i!=allPlanets.end();++i)
 //	{
 //		Vec3d pos = (*i)->getAltAzPos(core);
 //		pos.normalize();
@@ -475,6 +474,11 @@ void LandscapeMgr::init()
 	addAction("actionShow_LandscapeIllumination", displayGroup, N_("Landscape illumination"), "illuminationDisplayed", "Shift+G");
 	addAction("actionShow_LandscapeLabels", displayGroup, N_("Landscape labels"), "labelsDisplayed", "Ctrl+Shift+G");
 	addAction("actionShow_LightPollutionFromDatabase", displayGroup, N_("Light pollution data from locations database"), "flagUseLightPollutionFromDatabase");
+	// Details: https://github.com/Stellarium/stellarium/issues/171
+	addAction("actionShow_LightPollutionIncrease", displayGroup, N_("Increase light pollution"), "increaseLightPollution()");
+	addAction("actionShow_LightPollutionReduce", displayGroup, N_("Reduce light pollution"), "reduceLightPollution()");
+	addAction("actionShow_LightPollutionCyclicChange", displayGroup, N_("Cyclic change in light pollution"), "cyclicChangeLightPollution()");
+
 }
 
 bool LandscapeMgr::setCurrentLandscapeID(const QString& id, const double changeLocationDuration)
@@ -853,7 +857,7 @@ QStringList LandscapeMgr::getAllLandscapeIDs() const
 QStringList LandscapeMgr::getUserLandscapeIDs() const
 {
 	QStringList result;
-	foreach (QString id, getNameToDirMap().values())
+	for (auto id : getNameToDirMap().values())
 	{
 		if(!packagedLandscapeIDs.contains(id))
 		{
@@ -1100,7 +1104,7 @@ QMap<QString,QString> LandscapeMgr::getNameToDirMap() const
 	QMap<QString,QString> result;
 	QSet<QString> landscapeDirs = StelFileMgr::listContents("landscapes",StelFileMgr::Directory);
 
-	foreach (const QString& dir, landscapeDirs)
+	for (const auto& dir : landscapeDirs)
 	{
 		QString fName = StelFileMgr::findFile("landscapes/" + dir + "/landscape.ini");
 		if (!fName.isEmpty())
@@ -1149,7 +1153,7 @@ QString LandscapeMgr::installLandscapeFromArchive(QString sourceFilePath, const 
 	//Detect top directory
 	QString topDir, iniPath;
 	QList<Stel::QZipReader::FileInfo> infoList = reader.fileInfoList();
-	foreach(Stel::QZipReader::FileInfo info, infoList)
+	for (const auto& info : infoList)
 	{
 		QFileInfo fileInfo(info.filePath);
 		if (fileInfo.fileName() == "landscape.ini")
@@ -1213,7 +1217,7 @@ QString LandscapeMgr::installLandscapeFromArchive(QString sourceFilePath, const 
 		return QString();
 	}
 	destinationDir.cd(landscapeID);
-	foreach(Stel::QZipReader::FileInfo info, infoList)
+	for (const auto& info : infoList)
 	{
 		QFileInfo fileInfo(info.filePath);
 		if (info.isFile && fileInfo.dir().path() == topDir)
@@ -1266,7 +1270,7 @@ bool LandscapeMgr::removeLandscape(const QString landscapeID)
 		return false;
 
 	QDir landscapeDir(landscapePath);
-	foreach (QString fileName, landscapeDir.entryList(QDir::Files | QDir::NoDotAndDotDot))
+	for (auto fileName : landscapeDir.entryList(QDir::Files | QDir::NoDotAndDotDot))
 	{
 		if(!landscapeDir.remove(fileName))
 		{
@@ -1367,7 +1371,7 @@ quint64 LandscapeMgr::loadLandscapeSize(const QString landscapeID) const
 		return landscapeSize;
 
 	QDir landscapeDir(landscapePath);
-	foreach (QFileInfo file, landscapeDir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot))
+	for (auto file : landscapeDir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot))
 	{
 		//qDebug() << "name:" << file.baseName() << "size:" << file.size();
 		landscapeSize += file.size();
@@ -1427,6 +1431,33 @@ QString LandscapeMgr::getDescription() const
 	}
 
 	return desc;
+}
+
+void LandscapeMgr::increaseLightPollution()
+{
+	StelCore* core = StelApp::getInstance().getCore();
+	int bidx = core->getSkyDrawer()->getBortleScaleIndex() + 1;
+	if (bidx>9)
+		bidx = 9;
+	core->getSkyDrawer()->setBortleScaleIndex(bidx);
+}
+
+void LandscapeMgr::reduceLightPollution()
+{
+	StelCore* core = StelApp::getInstance().getCore();
+	int bidx = core->getSkyDrawer()->getBortleScaleIndex() - 1;
+	if (bidx<1)
+		bidx = 1;
+	core->getSkyDrawer()->setBortleScaleIndex(bidx);
+}
+
+void LandscapeMgr::cyclicChangeLightPollution()
+{
+	StelCore* core = StelApp::getInstance().getCore();
+	int bidx = core->getSkyDrawer()->getBortleScaleIndex() + 1;
+	if (bidx>9)
+		bidx = 1;
+	core->getSkyDrawer()->setBortleScaleIndex(bidx);
 }
 
 /*

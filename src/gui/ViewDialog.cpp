@@ -234,8 +234,8 @@ void ViewDialog::createDialogContent()
 	colorButton(ui->planetTrailsColor, "SolarSystem.trailsColor");
 	connect(ui->planetTrailsColor, SIGNAL(released()), this, SLOT(askPlanetTrailsColor()));
 	connectBoolProperty(ui->planetTrailsCheckBox, "SolarSystem.trailsDisplayed");
-	ui->planetIsolatedTrailsCheckBox->setEnabled(ssmgr->getFlagIsolatedTrails());
-	connect(ssmgr,SIGNAL(flagIsolatedTrailsChanged(bool)),ui->planetIsolatedTrailsCheckBox, SLOT(setEnabled(bool)));
+	ui->planetIsolatedTrailsCheckBox->setEnabled(ssmgr->getFlagTrails());
+	connect(ssmgr,SIGNAL(trailsDisplayedChanged(bool)),ui->planetIsolatedTrailsCheckBox, SLOT(setEnabled(bool)));
 	connectBoolProperty(ui->hidePlanetNomenclatureCheckBox, "NomenclatureMgr.localNomenclatureHided");
 
 	StelModule* mnmgr = StelApp::getInstance().getModule("NomenclatureMgr");
@@ -467,16 +467,10 @@ void ViewDialog::createDialogContent()
 	connect(ui->colorAsterismLines,		SIGNAL(released()), this, SLOT(askAsterismLinesColor()));
 	connect(ui->colorRayHelpers,			SIGNAL(released()), this, SLOT(askRayHelpersColor()));
 
-	// Sky layers. This not yet finished and not visible in releases.
-	// TODO: These 4 lines are commented away in trunk.
-	populateSkyLayersList();
-	connect(this, SIGNAL(visibleChanged(bool)), this, SLOT(populateSkyLayersList()));
-	connect(ui->skyLayerListWidget, SIGNAL(currentTextChanged(const QString&)), this, SLOT(skyLayersSelectionChanged(const QString&)));
-	connect(ui->skyLayerEnableCheckBox, SIGNAL(stateChanged(int)), this, SLOT(skyLayersEnabledChanged(int)));
-
 	// Hips mgr.
 	StelModule *hipsmgr = StelApp::getInstance().getModule("HipsMgr");
 	connect(hipsmgr, SIGNAL(surveysChanged()), this, SLOT(updateHips()));
+	connect(ui->stackListWidget, SIGNAL(currentItemChanged(QListWidgetItem *, QListWidgetItem *)), this, SLOT(updateHips()));
 	connect(ui->surveysListWidget, SIGNAL(currentRowChanged(int)), this, SLOT(updateHips()), Qt::QueuedConnection);
 	connect(ui->surveysListWidget, SIGNAL(itemChanged(QListWidgetItem*)), this, SLOT(hipsListItemChanged(QListWidgetItem*)));
 	updateHips();
@@ -510,6 +504,10 @@ static QString getHipsType(const HipsSurveyP hips)
 
 void ViewDialog::updateHips()
 {
+	if (!ui->page_surveys->isVisible()) return;
+	StelGui* gui = dynamic_cast<StelGui*>(StelApp::getInstance().getGui());
+	StelModule *hipsmgr = StelApp::getInstance().getModule("HipsMgr");
+	QMetaObject::invokeMethod(hipsmgr, "loadSources");
 
 	// Update the groups combobox.
 	QComboBox* typeComboBox = ui->surveyTypeComboBox;
@@ -526,8 +524,15 @@ void ViewDialog::updateHips()
 	connect(typeComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(updateHips()));
 
 	// Update survey list.
-	StelModule *hipsmgr = StelApp::getInstance().getModule("HipsMgr");
 	QListWidget* l = ui->surveysListWidget;
+
+	if (!hipsmgr->property("loaded").toBool())
+	{
+		l->clear();
+		new QListWidgetItem(q_("Loading ..."), l);
+		return;
+	}
+
 	QJsonObject currentInfo;
 	QString currentSurvey = l->currentItem() ? l->currentItem()->data(Qt::UserRole).toString() : "";
 	QListWidgetItem* currentItem = NULL;
@@ -569,15 +574,19 @@ void ViewDialog::updateHips()
 	{
 		QJsonObject props = currentHips->property("properties").toJsonObject();
 		QString html = QString("<h1>%1</h1>\n").arg(props["obs_title"].toString());
-
+		if (props.contains("obs_copyright") && props.contains("obs_copyright_url"))
+		{
+			html += QString("<p>Copyright <a href='%2'>%1</a></p>\n")
+					.arg(props["obs_copyright"].toString()).arg(props["obs_copyright_url"].toString());
+		}
 		html += QString("<p>%1</p>\n").arg(props["obs_description"].toString());
-
 		html += "<h2>" + q_("properties") + "</h2>\n<ul>\n";
 		for (auto iter = props.constBegin(); iter != props.constEnd(); iter++)
 		{
 			html += QString("<li><b>%1</b> %2</li>\n").arg(iter.key()).arg(iter.value().toString());
 		}
 		html += "</ul>\n";
+		ui->surveysTextBrowser->document()->setDefaultStyleSheet(QString(gui->getStelStyle().htmlStyleSheet));
 		ui->surveysTextBrowser->setHtml(html);
 	}
 
@@ -1454,14 +1463,14 @@ void ViewDialog::setBortleScaleToolTip(int Bindex)
 	//TRANSLATORS: Short description for Class 9 of the Bortle scale
 	list.append(q_("Inner-city sky"));
 
-	nelm.append("7.6–8.0");
-	nelm.append("7.1–7.5");
-	nelm.append("6.6–7.0");
-	nelm.append("6.1–6.5");
-	nelm.append("5.6–6.0");
+	nelm.append("7.6-8.0");
+	nelm.append("7.1-7.5");
+	nelm.append("6.6-7.0");
+	nelm.append("6.1-6.5");
+	nelm.append("5.6-6.0");
 	nelm.append("5.1-5.5");
-	nelm.append("4.6–5.0");
-	nelm.append("4.1–4.5");
+	nelm.append("4.6-5.0");
+	nelm.append("4.1-4.5");
 	nelm.append("4.0");
 
 	QString tooltip = QString("%1 (%2 %3)")
@@ -1517,7 +1526,7 @@ void ViewDialog::populateLists()
 	l->blockSignals(true);
 	l->clear();	
 	const QStringList mappings = core->getAllProjectionTypeKeys();
-	foreach (QString s, mappings)
+	for (const auto& s : mappings)
 	{
 		l->addItem(core->projectionTypeKeyToNameI18n(s));
 	}
@@ -1532,7 +1541,7 @@ void ViewDialog::populateLists()
 	l->clear();
 	StelModule* lmgr = StelApp::getInstance().getModule("LandscapeMgr");
 	QStringList landscapeList = lmgr->property("allLandscapeNames").toStringList();
-	foreach (const QString landscapeName, landscapeList)
+	for (const auto& landscapeName : landscapeList)
 	{
 		QString label = q_(landscapeName);
 		QListWidgetItem* item = new QListWidgetItem(label);
@@ -1553,37 +1562,6 @@ void ViewDialog::populateLists()
 	ui->landscapeTextBrowser->document()->setDefaultStyleSheet(QString(gui->getStelStyle().htmlStyleSheet));
 	ui->landscapeTextBrowser->setHtml(lmgr->property("currentLandscapeHtmlDescription").toString());
 	updateDefaultLandscape();
-}
-
-void ViewDialog::populateSkyLayersList()
-{
-	ui->skyLayerListWidget->clear();
-	StelSkyLayerMgr* skyLayerMgr = GETSTELMODULE(StelSkyLayerMgr);
-	ui->skyLayerListWidget->addItems(skyLayerMgr->getAllKeys());
-}
-
-void ViewDialog::skyLayersSelectionChanged(const QString& s)
-{
-	StelSkyLayerMgr* skyLayerMgr = GETSTELMODULE(StelSkyLayerMgr);
-	StelSkyLayerP l = skyLayerMgr->getSkyLayer(s);
-
-	if (l.isNull())
-		return;
-
-	QString html = "<html><head></head><body>";
-	html += "<h2>" + l->getShortName()+ "</h2>";
-	html += "<p>" + l->getLayerDescriptionHtml() + "</p>";
-	if (!l->getShortServerCredits().isEmpty())
-		html += "<h3>" + q_("Contact") + ": " + l->getShortServerCredits() + "</h3>";
-	html += "</body></html>";
-	ui->skyLayerTextBrowser->setHtml(html);
-	ui->skyLayerEnableCheckBox->setChecked(skyLayerMgr->getShowLayer(s));
-}
-
-void ViewDialog::skyLayersEnabledChanged(int state)
-{
-	StelSkyLayerMgr* skyLayerMgr = GETSTELMODULE(StelSkyLayerMgr);
-	skyLayerMgr->showLayer(ui->skyLayerListWidget->currentItem()->text(), state);
 }
 
 void ViewDialog::skyCultureChanged()

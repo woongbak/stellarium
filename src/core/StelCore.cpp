@@ -83,7 +83,7 @@ StelCore::StelCore()
 	, timeSpeed(JD_SECOND)
 	, JD(0.,0.)
 	, presetSkyTime(0.)
-	, milliSecondsOfLastJDUpdate(0.)
+	, milliSecondsOfLastJDUpdate(0)
 	, jdOfLastJDUpdate(0.)
 	, flagUseDST(true)
 	, flagUseCTZ(false)
@@ -511,6 +511,14 @@ void StelCore::preDraw()
 	currentProjectorParams.zNear = 0.000001;
 	currentProjectorParams.zFar = 500.;
 
+	// Clear the render buffer.
+	// Here we can set a sky background color if really wanted (art
+	// applications. Astronomical sky should be 0/0/0/0)
+	Vec3f backColor = StelMainView::getInstance().getSkyBackgroundColor();
+	QOpenGLFunctions* gl = QOpenGLContext::currentContext()->functions();
+	gl->glClearColor(backColor[0], backColor[1], backColor[2], 0.f);
+	gl->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
 	skyDrawer->preDraw();
 }
 
@@ -593,6 +601,12 @@ void StelCore::setMaskType(StelProjector::StelProjectorMaskType m)
 void StelCore::setFlagGravityLabels(bool gravity)
 {
 	currentProjectorParams.gravityLabels = gravity;
+	emit flagGravityLabelsChanged(gravity);
+}
+
+bool StelCore::getFlagGravityLabels()
+{
+	return currentProjectorParams.gravityLabels;
 }
 
 void StelCore::setDefaultAngleForGravityText(float a)
@@ -1256,10 +1270,10 @@ float StelCore::getUTCOffset(const double JD) const
 
 	StelLocation loc = getCurrentLocation();
 	QString tzName = getCurrentTimeZone();
-	QTimeZone* tz = new QTimeZone(tzName.toUtf8());
+	QTimeZone tz(tzName.toUtf8());
 
 	int shiftInSeconds = 0;
-	if (tzName=="system_default" || (loc.planetName=="Earth" && !tz->isValid() && !QString("LMST LTST").contains(tzName)))
+	if (tzName=="system_default" || (loc.planetName=="Earth" && !tz.isValid() && !QString("LMST LTST").contains(tzName)))
 	{
 		QDateTime local = universal.toLocalTime();
 		//Both timezones should be interpreted as UTC because secsTo() converts both
@@ -1270,12 +1284,12 @@ float StelCore::getUTCOffset(const double JD) const
 	else
 	{
 		// The first adoption of a standard time was on December 1, 1847 in Great Britain
-		if (tz->isValid() && loc.planetName=="Earth" && (JD>=StelCore::TZ_ERA_BEGINNING || getUseCustomTimeZone()))
+		if (tz.isValid() && loc.planetName=="Earth" && (JD>=StelCore::TZ_ERA_BEGINNING || getUseCustomTimeZone()))
 		{
 			if (getUseDST())
-				shiftInSeconds = tz->offsetFromUtc(universal);
+				shiftInSeconds = tz.offsetFromUtc(universal);
 			else
-				shiftInSeconds = tz->standardTimeOffset(universal);
+				shiftInSeconds = tz.standardTimeOffset(universal);
 		}
 		else
 			shiftInSeconds = (loc.longitude/15.f)*3600.f; // Local Mean Solar Time
@@ -1284,9 +1298,6 @@ float StelCore::getUTCOffset(const double JD) const
 			shiftInSeconds += getSolutionEquationOfTime(JD)*60;
 
 	}
-
-	delete tz;
-	tz = Q_NULLPTR;
 
 	float shiftInHours = shiftInSeconds / 3600.0f;
 	return shiftInHours;
@@ -2274,10 +2285,10 @@ QString StelCore::getCurrentDeltaTAlgorithmDescription(void) const
 			description = q_("This solution by S. Islam, M. Sadiq and M. S. Qureshi, based on Meeus & Simons (2000), was published in article <em>Error Minimization of Polynomial Approximation of DeltaT</em> (%1) and revisited by Sana Islam in 2013.").arg("<a href='http://www.ias.ac.in/article/fulltext/joaa/029/03-04/0363-0366'>2008</a>").append(getCurrentDeltaTAlgorithmValidRangeDescription(jd, &marker));
 			break;
 		case KhalidSultanaZaidi:
-			description = q_("This polynomial approximation with 0.6 seconds of accuracy by M. Khalid, Mariam Sultana and Faheem Zaidi was published in <em>Delta T: Polynomial Approximation of Time Period 1620-2013</em> (%1).").arg("<a href='http://dx.doi.org/10.1155/2014/480964'>2014</a>").append(getCurrentDeltaTAlgorithmValidRangeDescription(jd, &marker));
+			description = q_("This polynomial approximation with 0.6 seconds of accuracy by M. Khalid, Mariam Sultana and Faheem Zaidi was published in <em>Delta T: Polynomial Approximation of Time Period 1620-2013</em> (%1).").arg("<a href='https://doi.org/10.1155/2014/480964'>2014</a>").append(getCurrentDeltaTAlgorithmValidRangeDescription(jd, &marker));
 			break;
 		case StephensonMorrisonHohenkerk2016: // PRIMARY SOURCE, SEEMS VERY IMPORTANT
-			description = q_("This solution by F. R. Stephenson, L. V. Morrison and C. Y. Hohenkerk (2016) was published in <em>Measurement of the Earth’s rotation: 720 BC to AD 2015</em> (%1). Outside of the named range (modelled with a spline fit) it provides values from an approximate parabola.").arg("<a href='http://dx.doi.org/10.1098/rspa.2016.0404'>2016</a>").append(getCurrentDeltaTAlgorithmValidRangeDescription(jd, &marker));
+			description = q_("This solution by F. R. Stephenson, L. V. Morrison and C. Y. Hohenkerk (2016) was published in <em>Measurement of the Earth’s rotation: 720 BC to AD 2015</em> (%1). Outside of the named range (modelled with a spline fit) it provides values from an approximate parabola.").arg("<a href='https://doi.org/10.1098/rspa.2016.0404'>2016</a>").append(getCurrentDeltaTAlgorithmValidRangeDescription(jd, &marker));
 			break;
 		case Custom:
 			description = q_("This is a quadratic formula for calculation of %1T with coefficients defined by the user.").arg(QChar(0x0394));
@@ -2368,16 +2379,21 @@ QString StelCore::getCurrentDeltaTAlgorithmValidRangeDescription(const double JD
 }
 
 // return if sky plus atmosphere is bright enough from sunlight so that e.g. screen labels should be rendered dark.
+// TODO: Why not simply ask the atmosphere for its displayed brightness?
 bool StelCore::isBrightDaylight() const
 {
-	bool r = false;
 	SolarSystem* ssys = GETSTELMODULE(SolarSystem);
+	if (!ssys->getFlagPlanets())
+		return false;
+
+	if (ssys->getEclipseFactor(this)<=0.01) // Total solar eclipse
+		return false;
+
 	const Vec3d& sunPos = ssys->getSun()->getAltAzPosGeometric(this);
 	if (sunPos[2] > -0.10452846326) // Nautical twilight (sin (6 deg))
-		r = true;
-	if (ssys->getEclipseFactor(this)<=0.01) // Total solar eclipse
-		r = false;
-	return r;
+		return true;
+	else
+		return false;
 }
 
 double StelCore::getCurrentEpoch() const

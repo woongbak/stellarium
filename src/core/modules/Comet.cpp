@@ -213,7 +213,7 @@ QString Comet::getInfoString(const StelCore *core, const InfoStringGroup &flags)
 			distKM = QString::number(hdistanceKm / 1.0e6, 'f', 3);
 			useKM = false;
 		}
-		oss << QString("%1: %2%3 (%4 %5)").arg(q_("Distance from Sun"), distAU, au, distKM, useKM ? km : Mkm) << "<br />";
+		oss << QString("%1: %2 %3 (%4 %5)").arg(q_("Distance from Sun"), distAU, au, distKM, useKM ? km : Mkm) << "<br />";
 
 		double distanceAu = getJ2000EquatorialPos(core).length();
 		double distanceKm = AU * distanceAu;
@@ -229,18 +229,19 @@ QString Comet::getInfoString(const StelCore *core, const InfoStringGroup &flags)
 			distKM = QString::number(distanceKm / 1.0e6, 'f', 3);
 			useKM = false;
 		}
-		oss << QString("%1: %2%3 (%4 %5)").arg(q_("Distance"), distAU, au, distKM, useKM ? km : Mkm) << "<br />";
+		oss << QString("%1: %2 %3 (%4 %5)").arg(q_("Distance"), distAU, au, distKM, useKM ? km : Mkm) << "<br />";
 	}
 
 	if (flags&Velocity)
 	{
+		// TRANSLATORS: Unit of measure for speed - kilometers per second
 		QString kms = qc_("km/s", "speed");
 
 		Vec3d orbitalVel=getEclipticVelocity();
 		double orbVel=orbitalVel.length();
 		if (orbVel>0.)
 		{ // AU/d * km/AU /24
-			oss << QString("%1: %2 %3").arg(q_("Velocity")).arg(orbVel* AU/86400., 0, 'f', 3).arg(kms) << "<br />";
+			oss << QString("%1: %2 %3").arg(q_("Orbital velocity")).arg(orbVel* AU/86400., 0, 'f', 3).arg(kms) << "<br />";
 		}
 	}
 
@@ -261,11 +262,6 @@ QString Comet::getInfoString(const StelCore *core, const InfoStringGroup &flags)
 			// Synodic period for comets in Julian years (symbol: a)
 			oss << QString("%1: %2 a").arg(q_("Synodic period"), QString::number(sp/365.25, 'f', 3)) << "<br />";
 		}
-
-//		// TRANSLATORS: Unit of measure for speed - kilometers per second
-//		QString kms = qc_("km/s", "speed");
-//		// GZ: Add speed. I don't know where else to place that bit of information.
-//		oss << QString("%1: %2 %3").arg(q_("Speed"), QString::number(((CometOrbit*)orbitPtr)->getVelocity().length()*AU/86400.0, 'f', 3), kms) << "<br />";
 
 		const Vec3d& observerHelioPos = core->getObserverHeliocentricEclipticPos();
 		const double elongation = getElongation(observerHelioPos);
@@ -290,8 +286,32 @@ QString Comet::getInfoString(const StelCore *core, const InfoStringGroup &flags)
 	if ((flags&Size) && (tailFactors[0]>0.0f))
 	{
 		// GZ: Add estimates for coma diameter and tail length.
-		oss << QString("%1: %2 %3").arg(q_("Coma diameter (estimate)"), QString::number(floor(tailFactors[0]*AU/1000.0f)*1000.0f, 'f', 0), km) << "<br />";
-		oss << QString("%1: %2 %3").arg(q_("Gas tail length (estimate)"), QString::number(tailFactors[1]*AU*1e-6, 'G', 3), Mkm) << "<br />";
+		QString comaEst = q_("Coma diameter (estimate)");
+		float coma = floor(tailFactors[0]*AU/1000.0f)*1000.0f;
+		double tail = tailFactors[1]*AU;
+		double distanceKm = AU * getJ2000EquatorialPos(core).length();
+		QString comaDeg, tailDeg;
+		if (withDecimalDegree)
+		{
+			comaDeg = StelUtils::radToDecDegStr(asin(coma/distanceKm),4,false,true);
+			tailDeg = StelUtils::radToDecDegStr(asin(tail/distanceKm),4,false,true);
+		}
+		else
+		{
+			comaDeg = StelUtils::radToDmsStr(asin(coma/distanceKm));
+			tailDeg = StelUtils::radToDmsStr(asin(tail/distanceKm));
+		}
+		if (coma>1e6)
+			oss << QString("%1: %2 %3 (%4)").arg(comaEst, QString::number(coma*1e-6, 'G', 3), Mkm, comaDeg) << "<br />";
+		else
+			oss << QString("%1: %2 %3 (%4)").arg(comaEst, QString::number(coma, 'f', 0), km, comaDeg) << "<br />";
+		oss << QString("%1: %2 %3 (%4)").arg(q_("Gas tail length (estimate)"), QString::number(tail*1e-6, 'G', 3), Mkm, tailDeg) << "<br />";
+	}
+
+	if (flags&Size)
+	{
+		// Given the very irregular shape, other terminology like "equatorial radius" do not make much sense.
+		oss << QString("%1: %2 %3").arg(q_("Core diameter"), QString::number(AU * 2.0 * getRadius(), 'f', 1) , qc_("km", "distance")) << "<br />";
 	}
 
 	postProcessInfoString(str, flags);

@@ -29,6 +29,9 @@
 #include "StelUtils.hpp"
 #include "StelMovementMgr.hpp"
 #include "StelPainter.hpp"
+#ifndef USE_OLD_QGLWIDGET
+#include "StelMainView.hpp"
+#endif
 
 #include "StelModuleMgr.hpp"
 #include "LandscapeMgr.hpp"
@@ -344,7 +347,9 @@ bool StelSkyDrawer::computeRCMag(float mag, RCMag* rcMag) const
 {
 	rcMag->radius = eye->adaptLuminanceScaledLn(pointSourceMagToLnLuminance(mag), starRelativeScale*1.40f/2.f);
 	rcMag->radius *=starLinearScale;
-
+#ifndef USE_OLD_QGLWIDGET
+	rcMag->radius *=StelMainView::getInstance().getCustomScreenshotMagnification();
+#endif
 	// Use now statically min_rmag = 0.5, because higher and too small values look bad
 	if (rcMag->radius < 0.3f)
 	{
@@ -400,12 +405,10 @@ void StelSkyDrawer::postDrawPointSource(StelPainter* sPainter)
 	const Mat4f& m = sPainter->getProjector()->getProjectionMatrix();
 	const QMatrix4x4 qMat(m[0], m[4], m[8], m[12], m[1], m[5], m[9], m[13], m[2], m[6], m[10], m[14], m[3], m[7], m[11], m[15]);
 	
-	Q_ASSERT(sizeof(StarVertex)==12);
-	
 	starShaderProgram->bind();
-	starShaderProgram->setAttributeArray(starShaderVars.pos, GL_FLOAT, (GLfloat*)vertexArray, 2, 12);
+	starShaderProgram->setAttributeArray(starShaderVars.pos, GL_FLOAT, (GLfloat*)vertexArray, 2, sizeof(StarVertex));
 	starShaderProgram->enableAttributeArray(starShaderVars.pos);
-	starShaderProgram->setAttributeArray(starShaderVars.color, GL_UNSIGNED_BYTE, (GLubyte*)&(vertexArray[0].color), 3, 12);
+	starShaderProgram->setAttributeArray(starShaderVars.color, GL_UNSIGNED_BYTE, (GLubyte*)&(vertexArray[0].color), 3, sizeof(StarVertex));
 	starShaderProgram->enableAttributeArray(starShaderVars.color);
 	starShaderProgram->setUniformValue(starShaderVars.projectionMatrix, qMat);
 	starShaderProgram->setAttributeArray(starShaderVars.texCoord, GL_UNSIGNED_BYTE, (GLubyte*)textureCoordArray, 2, 0);
@@ -689,28 +692,28 @@ float StelSkyDrawer::getNELMFromBortleScale() const
 	float nelm = 0.f;
 	switch (getBortleScaleIndex()) {
 		case 1:
-			nelm = 7.8f; // Class 1 = NELM 7.6–8.0; average NELM is 7.8
+			nelm = 7.8f; // Class 1 = NELM 7.6-8.0; average NELM is 7.8
 			break;
 		case 2:
-			nelm = 7.3f; // Class 2 = NELM 7.1–7.5; average NELM is 7.3
+			nelm = 7.3f; // Class 2 = NELM 7.1-7.5; average NELM is 7.3
 			break;
 		case 3:
-			nelm = 6.8f; // Class 3 = NELM 6.6–7.0; average NELM is 6.8
+			nelm = 6.8f; // Class 3 = NELM 6.6-7.0; average NELM is 6.8
 			break;
 		case 4:
-			nelm = 6.3f; // Class 4 = NELM 6.1–6.5; average NELM is 6.3
+			nelm = 6.3f; // Class 4 = NELM 6.1-6.5; average NELM is 6.3
 			break;
 		case 5:
-			nelm = 5.8f; // Class 5 = NELM 5.6–6.0; average NELM is 5.8
+			nelm = 5.8f; // Class 5 = NELM 5.6-6.0; average NELM is 5.8
 			break;
 		case 6:
 			nelm = 5.3f; // Class 6 = NELM 5.1-5.5; average NELM is 5.3
 			break;
 		case 7:
-			nelm = 4.8f; // Class 7 = NELM 4.6–5.0; average NELM is 4.8
+			nelm = 4.8f; // Class 7 = NELM 4.6-5.0; average NELM is 4.8
 			break;
 		case 8:
-			nelm = 4.3f; // Class 8 = NELM 4.1–4.5; average NELM is 4.3
+			nelm = 4.3f; // Class 8 = NELM 4.1-4.5; average NELM is 4.3
 			break;
 		case 9:
 			nelm = 4.0f; // Class 8 = NELM 4.0
@@ -886,14 +889,14 @@ void StelSkyDrawer::initColorTableFromConfigFile(QSettings* conf)
 		for (int i=0;i<128;i++)
 		{
 			const float bV = StelSkyDrawer::indexToBV(i);
-			std::map<float,Vec3f>::const_iterator greater(color_map.upper_bound(bV));
+			auto greater = color_map.upper_bound(bV);
 			if (greater == color_map.begin())
 			{
 				colorTable[i] = greater->second;
 			}
 			else
 			{
-				std::map<float,Vec3f>::const_iterator less(greater);--less;
+				auto less = greater;--less;
 				if (greater == color_map.end())
 				{
 					colorTable[i] = less->second;

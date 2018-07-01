@@ -29,6 +29,7 @@
 #include "StelModuleMgr.hpp"
 #include "StelCore.hpp"
 #include "StelPainter.hpp"
+#include "SolarSystem.hpp"
 
 #include <QTextStream>
 #include <QFile>
@@ -40,13 +41,22 @@
 const QString Nebula::NEBULA_TYPE = QStringLiteral("Nebula");
 
 StelTextureSP Nebula::texCircle;
+StelTextureSP Nebula::texCircleLarge;
 StelTextureSP Nebula::texGalaxy;
+StelTextureSP Nebula::texGalaxyLarge;
 StelTextureSP Nebula::texOpenCluster;
+StelTextureSP Nebula::texOpenClusterLarge;
+StelTextureSP Nebula::texOpenClusterXLarge;
 StelTextureSP Nebula::texGlobularCluster;
+StelTextureSP Nebula::texGlobularClusterLarge;
 StelTextureSP Nebula::texPlanetaryNebula;
 StelTextureSP Nebula::texDiffuseNebula;
+StelTextureSP Nebula::texDiffuseNebulaLarge;
+StelTextureSP Nebula::texDiffuseNebulaXLarge;
 StelTextureSP Nebula::texDarkNebula;
+StelTextureSP Nebula::texDarkNebulaLarge;
 StelTextureSP Nebula::texOpenClusterWithNebulosity;
+StelTextureSP Nebula::texOpenClusterWithNebulosityLarge;
 bool  Nebula::drawHintProportional = false;
 bool  Nebula::surfaceBrightnessUsage = false;
 bool  Nebula::designationUsage = false;
@@ -88,15 +98,15 @@ Vec3f Nebula::supernovaCandidateColor = Vec3f(0.1f,1.0f,0.1f);
 Vec3f Nebula::supernovaRemnantCandidateColor = Vec3f(0.1f,1.0f,0.1f);
 Vec3f Nebula::galaxyClusterColor = Vec3f(0.8f,0.8f,0.5f);
 bool Nebula::flagUseTypeFilters = false;
-Nebula::CatalogGroup Nebula::catalogFilters = Nebula::CatalogGroup(0);
+Nebula::CatalogGroup Nebula::catalogFilters = Nebula::CatalogGroup(Q_NULLPTR);
 Nebula::TypeGroup Nebula::typeFilters = Nebula::TypeGroup(Nebula::AllTypes);
 bool Nebula::flagUseArcsecSurfaceBrightness = false;
 bool Nebula::flagUseShortNotationSurfaceBrightness = true;
 bool Nebula::flagUseOutlines = false;
 bool Nebula::flagShowAdditionalNames = true;
 bool Nebula::flagUseSizeLimits = false;
-double Nebula::minSizeLimit = 1.0f;
-double Nebula::maxSizeLimit = 600.0f;
+double Nebula::minSizeLimit = 1.0;
+double Nebula::maxSizeLimit = 600.0;
 
 Nebula::Nebula()
 	: DSO_nb(0)
@@ -150,6 +160,7 @@ QString Nebula::getInfoString(const StelCore *core, const InfoStringGroup& flags
 	QString str;
 	QTextStream oss(&str);
 	double az_app, alt_app;
+	bool withDecimalDegree = StelApp::getInstance().getFlagShowDecimalDegrees();
 	StelUtils::rectToSphe(&az_app,&alt_app,getAltAzPosApparent(core));
 	Q_UNUSED(az_app);
 
@@ -286,13 +297,25 @@ QString Nebula::getInfoString(const StelCore *core, const InfoStringGroup& flags
 
 	oss << getCommonInfoString(core, flags);
 
-	if (majorAxisSize>0 && flags&Size)
+	if (flags&Size && majorAxisSize>0.f)
 	{
-		if (majorAxisSize==minorAxisSize || minorAxisSize==0.f)
-			oss << QString("%1: %2").arg(q_("Size"), StelUtils::radToDmsStr(majorAxisSize*M_PI/180.)) << "<br />";
+		QString majorAxS, minorAxS, sizeAx = q_("Size");
+		if (withDecimalDegree)
+		{
+			majorAxS = StelUtils::radToDecDegStr(majorAxisSize*M_PI/180., 5, false, true);
+			minorAxS = StelUtils::radToDecDegStr(minorAxisSize*M_PI/180., 5, false, true);
+		}
 		else
 		{
-			oss << QString("%1: %2 x %3").arg(q_("Size"), StelUtils::radToDmsStr(majorAxisSize*M_PI/180.), StelUtils::radToDmsStr(minorAxisSize*M_PI/180.)) << "<br />";
+			majorAxS = StelUtils::radToDmsPStr(majorAxisSize*M_PI/180., 2);
+			minorAxS = StelUtils::radToDmsPStr(minorAxisSize*M_PI/180., 2);
+		}
+
+		if (majorAxisSize==minorAxisSize || minorAxisSize==0.f)
+			oss << QString("%1: %2").arg(sizeAx, majorAxS) << "<br />";
+		else
+		{
+			oss << QString("%1: %2 x %3").arg(sizeAx, majorAxS, minorAxS) << "<br />";
 			if (orientationAngle>0)
 				oss << QString("%1: %2%3").arg(q_("Orientation angle")).arg(orientationAngle).arg(QChar(0x00B0)) << "<br />";
 		}
@@ -738,9 +761,7 @@ void Nebula::drawOutlines(StelPainter &sPainter, float maxMagHints) const
 	if (segments>0 && flagUseOutlines && oLim<=maxMagHints)
 	{
 		unsigned int i, j;
-		Vec3f pt1, pt2;
-		Vec3d ptd1, ptd2;
-		std::vector<Vec3f> *points;
+		std::vector<Vec3d> *points;
 
 		sPainter.setBlending(true);
 		sPainter.setLineSmooth(true);
@@ -752,11 +773,7 @@ void Nebula::drawOutlines(StelPainter &sPainter, float maxMagHints) const
 
 			for (j=0;j<points->size()-1;j++)
 			{
-				pt1 = points->at(j);
-				pt2 = points->at(j+1);
-				ptd1.set(pt1[0], pt1[1], pt1[2]);
-				ptd2.set(pt2[0], pt2[1], pt2[2]);
-				sPainter.drawGreatCircleArc(ptd1, ptd2, &viewportHalfspace);
+				sPainter.drawGreatCircleArc(points->at(j), points->at(j+1), &viewportHalfspace);
 			}
 		}
 		sPainter.setLineSmooth(false);
@@ -767,6 +784,8 @@ void Nebula::drawOutlines(StelPainter &sPainter, float maxMagHints) const
 void Nebula::drawHints(StelPainter& sPainter, float maxMagHints) const
 {
 	size_t segments = outlineSegments.size();
+	if (segments>0 && flagUseOutlines)
+		return;
 	Vec3d win;
 	// Check visibility of DSO hints
 	if (!(sPainter.getProjector()->projectCheck(XYZ, win)))
@@ -776,109 +795,92 @@ void Nebula::drawHints(StelPainter& sPainter, float maxMagHints) const
 		return;
 
 	Vec3f color = getHintColor();
+
+	const float size = 6.0f;
+	float scaledSize = 0.0f;
+	if (drawHintProportional)
+	{
+		scaledSize = getAngularSize(Q_NULLPTR) *M_PI/180.*sPainter.getProjector()->getPixelPerRadAtCenter();
+
+	}
+	const float finalSize=qMax(size, scaledSize);
+
 	switch (nType)
 	{
 		case NebGx:
-			Nebula::texGalaxy->bind();
-			break;
 		case NebIGx:
-			Nebula::texGalaxy->bind();
-			break;
 		case NebAGx:
-			Nebula::texGalaxy->bind();
-			break;
 		case NebQSO:
-			Nebula::texGalaxy->bind();
-			break;
 		case NebPossQSO:
-			Nebula::texGalaxy->bind();
-			break;
 		case NebBLL:
-			Nebula::texGalaxy->bind();
-			break;
 		case NebBLA:
-			Nebula::texGalaxy->bind();
-			break;
 		case NebRGx:
-			Nebula::texGalaxy->bind();
+		case NebGxCl:
+			if (finalSize > 35.f)
+				Nebula::texGalaxyLarge->bind();
+			else
+				Nebula::texGalaxy->bind();
 			break;
 		case NebOc:
-			Nebula::texOpenCluster->bind();
-			break;
 		case NebSA:
-			Nebula::texOpenCluster->bind();
-			break;
 		case NebSC:
-			Nebula::texOpenCluster->bind();
-			break;
 		case NebCl:
-			Nebula::texOpenCluster->bind();
+			if (finalSize > 75.f)
+				Nebula::texOpenClusterXLarge->bind();
+			else if (finalSize > 35.f)
+				Nebula::texOpenClusterLarge->bind();
+			else
+				Nebula::texOpenCluster->bind();
 			break;
 		case NebGc:
-			Nebula::texGlobularCluster->bind();
+			if (finalSize > 35.f)
+				Nebula::texGlobularClusterLarge->bind();
+			else
+				Nebula::texGlobularCluster->bind();
 			break;
 		case NebN:
-			Nebula::texDiffuseNebula->bind();
-			break;
 		case NebHII:
-			Nebula::texDiffuseNebula->bind();
-			break;
 		case NebMolCld:
-			Nebula::texDiffuseNebula->bind();
-			break;
 		case NebYSO:
-			Nebula::texDiffuseNebula->bind();
-			break;
 		case NebRn:		
-			Nebula::texDiffuseNebula->bind();
-			break;
 		case NebSNR:
-			Nebula::texDiffuseNebula->bind();
-			break;
 		case NebBn:
-			Nebula::texDiffuseNebula->bind();
-			break;
 		case NebEn:
-			Nebula::texDiffuseNebula->bind();
+		case NebSNC:
+		case NebSNRC:
+			if (finalSize > 75.f)
+				Nebula::texDiffuseNebulaXLarge->bind();
+			else if (finalSize > 35.f)
+				Nebula::texDiffuseNebulaLarge->bind();
+			else
+				Nebula::texDiffuseNebula->bind();
 			break;
 		case NebPn:
-			Nebula::texPlanetaryNebula->bind();
-			break;
 		case NebPossPN:
-			Nebula::texPlanetaryNebula->bind();
-			break;
 		case NebPPN:
 			Nebula::texPlanetaryNebula->bind();
 			break;
-		case NebDn:		
-			Nebula::texDarkNebula->bind();
+		case NebDn:
+			if (finalSize > 35.f)
+				Nebula::texDarkNebulaLarge->bind();
+			else
+				Nebula::texDarkNebula->bind();
 			break;
 		case NebCn:
-			Nebula::texOpenClusterWithNebulosity->bind();
+			if (finalSize > 35.f)
+				Nebula::texOpenClusterWithNebulosityLarge->bind();
+			else
+				Nebula::texOpenClusterWithNebulosity->bind();
 			break;
-		case NebEMO:
-			Nebula::texCircle->bind();
-			break;
-		case NebStar:
-			Nebula::texCircle->bind();
-			break;
-		case NebSymbioticStar:
-			Nebula::texCircle->bind();
-			break;
-		case NebEmissionLineStar:
-			Nebula::texCircle->bind();
-			break;
-		case NebSNC:
-			Nebula::texDiffuseNebula->bind();
-			break;
-		case NebSNRC:
-			Nebula::texDiffuseNebula->bind();
-			break;
-		case NebGxCl:
-			Nebula::texGalaxy->bind();
-			break;
+		//case NebEMO:
+		//case NebStar:
+		//case NebSymbioticStar:
+		//case NebEmissionLineStar:
 		default:
-			Nebula::texCircle->bind();
+			if (finalSize > 35.f)
+				Nebula::texCircleLarge->bind();
+			else
+				Nebula::texCircle->bind();
 	}
 
 	float lum = 1.f;
@@ -887,15 +889,7 @@ void Nebula::drawHints(StelPainter& sPainter, float maxMagHints) const
 		col = Vec3f(0.f,0.f,0.f);
 	sPainter.setColor(col[0], col[1], col[2], 1);
 
-	float size = 6.0f;
-	float scaledSize = 0.0f;
-	if (drawHintProportional && segments==0)
-	{
-		if (majorAxisSize>0.)
-			scaledSize = majorAxisSize *0.5 *M_PI/180.*sPainter.getProjector()->getPixelPerRadAtCenter();
-		else
-			scaledSize = minorAxisSize *0.5 *M_PI/180.*sPainter.getProjector()->getPixelPerRadAtCenter();
-	}
+
 
 	sPainter.setBlending(true, GL_ONE, GL_ONE);
 
@@ -908,11 +902,11 @@ void Nebula::drawHints(StelPainter& sPainter, float maxMagHints) const
 		XYZrel[2]*=0.99;
 		Vec3d XYrel;
 		sPainter.getProjector()->project(XYZrel, XYrel);
-		float screenAngle=atan2(XYrel[1]-XY[1], XYrel[0]-XY[0]);
-		sPainter.drawSprite2dMode(XY[0], XY[1], qMax(size, scaledSize), screenAngle*180./M_PI + orientationAngle);
+		float screenAngle = atan2(XYrel[1]-XY[1], XYrel[0]-XY[0]);
+		sPainter.drawSprite2dMode(XY[0], XY[1], finalSize, screenAngle*180./M_PI + orientationAngle);
 	}
 	else	// no galaxy
-		sPainter.drawSprite2dMode(XY[0], XY[1], qMax(size, scaledSize));
+		sPainter.drawSprite2dMode(XY[0], XY[1], finalSize);
 
 }
 
@@ -933,7 +927,7 @@ void Nebula::drawLabel(StelPainter& sPainter, float maxMagLabel) const
 		sPainter.setColor(col[0], col[1], col[2], 0.f);
 
 	float size = getAngularSize(Q_NULLPTR)*M_PI/180.*sPainter.getProjector()->getPixelPerRadAtCenter();
-	float shift = 4.f + (drawHintProportional ? size : size/1.8f);
+	float shift = 5.f + (drawHintProportional ? size*0.9f : 0.f);
 
 	QString str = getNameI18n();
 	if (str.isEmpty() || designationUsage)
@@ -1206,39 +1200,39 @@ QString Nebula::getMorphologicalTypeDescription(void) const
 		switch(glclass.indexOf(GlClRx.capturedTexts().at(1).trimmed()))
 		{
 			case 0:
-				r = qc_("high concentration of stars toward the center", "Shapley–Sawyer Concentration Class");
+				r = qc_("high concentration of stars toward the center", "Shapley-Sawyer Concentration Class");
 				break;
 			case 1:
-				r = qc_("dense central concentration of stars", "Shapley–Sawyer Concentration Class");
+				r = qc_("dense central concentration of stars", "Shapley-Sawyer Concentration Class");
 				break;
 			case 2:
-				r = qc_("strong inner core of stars", "Shapley–Sawyer Concentration Class");
+				r = qc_("strong inner core of stars", "Shapley-Sawyer Concentration Class");
 				break;
 			case 3:
-				r = qc_("intermediate rich concentrations of stars", "Shapley–Sawyer Concentration Class");
+				r = qc_("intermediate rich concentrations of stars", "Shapley-Sawyer Concentration Class");
 				break;
 			case 4:
 			case 5:
 			case 6:
-				r = qc_("intermediate concentrations of stars", "Shapley–Sawyer Concentration Class");
+				r = qc_("intermediate concentrations of stars", "Shapley-Sawyer Concentration Class");
 				break;
 			case 7:
-				r = qc_("rather loosely concentration of stars towards the center", "Shapley–Sawyer Concentration Class");
+				r = qc_("rather loose concentration of stars towards the center", "Shapley-Sawyer Concentration Class");
 				break;
 			case 8:
-				r = qc_("loose concentration of stars towards the center", "Shapley–Sawyer Concentration Class");
+				r = qc_("loose concentration of stars towards the center", "Shapley-Sawyer Concentration Class");
 				break;
 			case 9:
-				r = qc_("loose concentration of stars", "Shapley–Sawyer Concentration Class");
+				r = qc_("loose concentration of stars", "Shapley-Sawyer Concentration Class");
 				break;
 			case 10:
-				r = qc_("very loose concentration of stars towards the center", "Shapley–Sawyer Concentration Class");
+				r = qc_("very loose concentration of stars towards the center", "Shapley-Sawyer Concentration Class");
 				break;
 			case 11:
-				r = qc_("almost no concentration towards the center", "Shapley–Sawyer Concentration Class");
+				r = qc_("almost no concentration towards the center", "Shapley-Sawyer Concentration Class");
 				break;
 			default:
-				r = qc_("undocumented concentration class", "Shapley–Sawyer Concentration Class");
+				r = qc_("undocumented concentration class", "Shapley-Sawyer Concentration Class");
 				break;
 		}
 	}

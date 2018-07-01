@@ -24,6 +24,7 @@
 //! Just contains GPS lookup helpers for now
 
 #include "StelLocationMgr.hpp"
+#include <QDebug>
 
 #ifdef ENABLE_GPS
 
@@ -40,7 +41,12 @@ public:
 	//! Performs a GPS query.
 	//! Either the queryFinished() or the queryError() signal
 	//! will be called after this call (or within it)
+public slots:
 	virtual void query() = 0;
+	//! Activate a series of continuous queries. Those will call queryFinished()
+	//! every interval milliseconds or queryError().
+	//! The handler for queryError() should call setPeriodicQuery(0) to stop it.
+	virtual void setPeriodicQuery(int interval) = 0;
 signals:
 	//! Emitted when the query finished successfully
 	//! @param loc The location
@@ -51,6 +57,7 @@ signals:
 
 #ifdef ENABLE_LIBGPS
 #include <libgpsmm.h>
+#include <QTimer>
 
 class LibGPSLookupHelper : public GPSLookupHelper
 {
@@ -60,10 +67,13 @@ public:
 	~LibGPSLookupHelper();
 
 	virtual bool isReady() Q_DECL_OVERRIDE;
+public slots:
 	virtual void query() Q_DECL_OVERRIDE;
+	virtual void setPeriodicQuery(int interval) Q_DECL_OVERRIDE;
 private:
 	bool ready;
 	gpsmm* gps_rec;
+	QTimer timer;
 };
 #endif //ENABLE_LIBGPS
 
@@ -75,12 +85,15 @@ class NMEALookupHelper : public GPSLookupHelper
 	Q_OBJECT
 public:
 	NMEALookupHelper(QObject* parent);
+	~NMEALookupHelper();
 	virtual bool isReady() Q_DECL_OVERRIDE
 	{
-		return nmea;
+		//if (nmea) qDebug() << "NMEALookupHelper::isReady(): Last Error was:" << nmea->error();
+		return nmea && nmea->device();
 	}
-
+public slots:
 	virtual void query() Q_DECL_OVERRIDE;
+	virtual void setPeriodicQuery(int interval) Q_DECL_OVERRIDE;
 private slots:
 	void nmeaError(QGeoPositionInfoSource::Error error);
 	void nmeaUpdated(const QGeoPositionInfo &update);

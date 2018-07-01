@@ -51,6 +51,7 @@
 #include <QTextStream>
 #include <QTranslator>
 #include <QNetworkDiskCache>
+#include <QThread>
 
 #include <clocale>
 
@@ -107,6 +108,28 @@ void clearCache()
 	cacheMgr->setCacheDirectory(StelFileMgr::getCacheDir());
 	cacheMgr->clear(); // Removes all items from the cache.
 }
+
+class SplashScreen : public QSplashScreen
+{
+    bool painted=false;
+    void paintEvent(QPaintEvent* e) override
+    {
+        QSplashScreen::paintEvent(e);
+        painted=true;
+    }
+public:
+    SplashScreen(QPixmap const& pixmap)
+        : QSplashScreen(pixmap)
+    {}
+    void ensureFirstPaint() const
+    {
+        while(!painted)
+        {
+            QThread::usleep(1000);
+            qApp->processEvents();
+        }
+    }
+};
 
 // Main stellarium procedure
 int main(int argc, char **argv)
@@ -168,10 +191,10 @@ int main(int argc, char **argv)
 	StelFileMgr::init();
 
 	QPixmap pixmap(StelFileMgr::findFile("data/splash.png"));
-	QSplashScreen splash(pixmap);
+	SplashScreen splash(pixmap);
 	splash.show();
 	splash.showMessage(StelUtils::getApplicationVersion() , Qt::AlignLeft, Qt::white);
-	app.processEvents();
+	splash.ensureFirstPaint();
 
 	// Log command line arguments.
 	QString argStr;
@@ -222,7 +245,7 @@ int main(int argc, char **argv)
 	qDebug() << "Writing log file to:" << QDir::toNativeSeparators(StelLogger::getLogFileName());
 	qDebug() << "File search paths:";
 	int n=0;
-	foreach (const QString& i, StelFileMgr::getSearchPaths())
+	for (const auto& i : StelFileMgr::getSearchPaths())
 	{
 		qDebug() << " " << n << ". " << QDir::toNativeSeparators(i);
 		++n;

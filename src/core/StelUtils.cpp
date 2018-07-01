@@ -199,6 +199,24 @@ double hmsToRad(const unsigned int h, const unsigned int m, const double s )
 	return (double)h*M_PI/12.+(double)m*M_PI/10800.+(double)s*M_PI/648000.;
 }
 
+double hmsToHours(const int h, const int m, const double s)
+{
+	return (double)h+(double)m/60.+(double)s*3600.;
+}
+
+double hmsStrToHours(const QString& s)
+{
+	QRegExp reg("(\\d+)h(\\d+)m(\\d+)s");
+	if (!reg.exactMatch(s))
+		return 0;
+	QStringList list = reg.capturedTexts();
+	int hrs = list[1].toInt();
+	int min = list[2].toInt();
+	int sec = list[3].toInt();
+
+	return hmsToHours(hrs, min, sec);
+}
+
 double dmsToRad(const int d, const unsigned int m, const double s)
 {
 	if (d>=0)
@@ -429,6 +447,34 @@ QString radToDmsStr(const double angle, const bool decimal, const bool useD)
 		os << qSetRealNumberPrecision(0);
 		width = 2;
 	}
+	os << fixed << qSetFieldWidth(width) << qSetPadChar('0') << s << qSetFieldWidth(0) << '\"';
+
+	return str;
+}
+
+/*************************************************************************
+ Convert an angle in radian to a dms formatted string
+*************************************************************************/
+QString radToDmsPStr(const double angle, const int precision, const bool useD)
+{
+	QChar degsign('d');
+	if (!useD)
+	{
+		degsign = 0x00B0;
+	}
+	bool sign;
+	unsigned int d,m;
+	double s;
+	StelUtils::radToDms(angle+0.005*M_PI/180/(60*60)*(angle<0?-1.:1.), sign, d, m, s);
+	QString str;
+	QTextStream os(&str);
+	os << (sign?'+':'-') << d << degsign;
+
+	os << qSetFieldWidth(2) << qSetPadChar('0') << m << qSetFieldWidth(0) << '\'';
+	int width = 2;
+	if (precision>0)
+		width = 3 + precision;
+	os << qSetRealNumberPrecision(precision);
 	os << fixed << qSetFieldWidth(width) << qSetPadChar('0') << s << qSetFieldWidth(0) << '\"';
 
 	return str;
@@ -711,6 +757,20 @@ double asinh(const double z)
 int imod(const int a, const int b)
 {
 	int ret = a % b;
+	if(ret < 0)
+		ret+=b;
+	return ret;
+}
+double fmodpos(const double a, const double b)
+{
+	double ret = fmod(a, b);
+	if(ret < 0)
+		ret+=b;
+	return ret;
+}
+float fmodpos(const float a, const float b)
+{
+	float ret = fmodf(a, b);
 	if(ret < 0)
 		ret+=b;
 	return ret;
@@ -1277,7 +1337,7 @@ void debugQVariantMap(const QVariant& m, const QString& indent, const QString& k
 		qDebug() << indent + key + "(map):";
 		QList<QString> keys = m.toMap().keys();
 		qSort(keys);
-		foreach(QString k, keys)
+		for (auto k : keys)
 		{
 			debugQVariantMap(m.toMap()[k], indent + "    ", k);
 		}
@@ -1285,7 +1345,7 @@ void debugQVariantMap(const QVariant& m, const QString& indent, const QString& k
 	else if (t == QVariant::List)
 	{
 		qDebug() << indent + key + "(list):";
-		foreach(QVariant item, m.toList())
+		for (const auto& item : m.toList())
 		{
 			debugQVariantMap(item, indent + "    ");
 		}
@@ -1355,13 +1415,17 @@ double calculateSiderealPeriod(const double SemiMajorAxis)
 }
 
 
-QString hoursToHmsStr(const double hours)
+QString hoursToHmsStr(const double hours, const bool lowprecision)
 {
 	int h = (int)hours;
 	int m = (int)((qAbs(hours)-qAbs(double(h)))*60);
-	float s = (((qAbs(hours)-qAbs(double(h)))*60)-m)*60;
-
-	return QString("%1h%2m%3s").arg(h).arg(m).arg(QString::number(s, 'f', 1));
+	if (lowprecision)
+		return QString("%1h%2m").arg(h).arg(m, 2, 10, QChar('0'));
+	else
+	{
+		float s = (((qAbs(hours)-qAbs(double(h)))*60)-m)*60;
+		return QString("%1h%2m%3s").arg(h).arg(m, 2, 10, QChar('0')).arg(s, 4, 'f', 1, QChar('0'));
+	}
 }
 
 /* /////////////////// DELTA T VARIANTS
@@ -1395,7 +1459,7 @@ double getDeltaTByEspenakMeeus(const double jDay)
 	// A summary is described here:
 	// http://eclipse.gsfc.nasa.gov/SEhelp/deltatpoly2004.html
 
-	double y = year+((month-1)*30.5+day/31.*30.5)/366;
+	double y = getDecYear(year, month, day);
 
 	// set the default value for Delta T
 	double u = (y-1820)/100.;
@@ -2575,6 +2639,7 @@ QByteArray uncompress(QIODevice& device, qint64 maxBytes)
 
 	return out;
 }
+
 
 } // end of the StelUtils namespace
 

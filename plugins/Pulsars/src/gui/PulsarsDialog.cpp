@@ -23,6 +23,7 @@
 #include <QDateTime>
 #include <QUrl>
 #include <QFileDialog>
+#include <QColorDialog>
 
 #include "StelApp.hpp"
 #include "ui_pulsarsDialog.h"
@@ -89,8 +90,12 @@ void PulsarsDialog::createDialogContent()
 	connect(ui->displayAtStartupCheckBox, SIGNAL(stateChanged(int)), this, SLOT(setDisplayAtStartupEnabled(int)));
 	ui->displayShowPulsarsButton->setChecked(psr->getFlagShowPulsarsButton());
 	ui->displaySeparateColorsCheckBox->setChecked(psr->getGlitchFlag());
-	connect(ui->displaySeparateColorsCheckBox, SIGNAL(stateChanged(int)), this, SLOT(setSeparateColorsFlag(int)));
+	ui->displayFilteredPulsarsCheckBox->setChecked(psr->getFilteredMode());
+	ui->mJyDoubleSpinBox->setValue(psr->getFilterValue());
 	connect(ui->displayShowPulsarsButton, SIGNAL(stateChanged(int)), this, SLOT(setDisplayShowPulsarsButton(int)));
+	connect(ui->displaySeparateColorsCheckBox, SIGNAL(stateChanged(int)), this, SLOT(setSeparateColorsFlag(int)));
+	connect(ui->displayFilteredPulsarsCheckBox, SIGNAL(stateChanged(int)), this, SLOT(setFilteringEnabled(int)));
+	connect(ui->mJyDoubleSpinBox, SIGNAL(valueChanged(double)), this, SLOT(setFilterValue(double)));
 	connect(ui->internetUpdatesCheckbox, SIGNAL(stateChanged(int)), this, SLOT(setUpdatesEnabled(int)));
 	connect(ui->updateButton, SIGNAL(clicked()), this, SLOT(updateJSON()));
 	connect(psr, SIGNAL(updateStateChanged(Pulsars::UpdateState)), this, SLOT(updateStateReceiver(Pulsars::UpdateState)));
@@ -100,6 +105,12 @@ void PulsarsDialog::createDialogContent()
 	refreshUpdateValues(); // fetch values for last updated and so on
 	// if the state didn't change, setUpdatesEnabled will not be called, so we force it
 	setUpdatesEnabled(ui->internetUpdatesCheckbox->checkState());
+
+	colorButton(ui->pulsarMarkerColor,		psr->getMarkerColor(true));
+	colorButton(ui->pulsarGlitchesMarkerColor,	psr->getMarkerColor(false));
+
+	connect(ui->pulsarMarkerColor,		SIGNAL(released()), this, SLOT(askPulsarsMarkerColor()));
+	connect(ui->pulsarGlitchesMarkerColor,	SIGNAL(released()), this, SLOT(askPulsarGlitchesMarkerColor()));
 
 	updateTimer = new QTimer(this);
 	connect(updateTimer, SIGNAL(timeout()), this, SLOT(refreshUpdateValues()));
@@ -228,6 +239,17 @@ void PulsarsDialog::setDistributionEnabled(int checkState)
 	psr->setDisplayMode(b);
 }
 
+void PulsarsDialog::setFilteringEnabled(int checkState)
+{
+	bool b = checkState != Qt::Unchecked;
+	psr->setFilteredMode(b);
+}
+
+void PulsarsDialog::setFilterValue(double v)
+{
+	psr->setFilterValue((float)v);
+}
+
 void PulsarsDialog::setDisplayAtStartupEnabled(int checkState)
 {
 	bool b = checkState != Qt::Unchecked;
@@ -294,3 +316,41 @@ void PulsarsDialog::updateJSON(void)
 		psr->updateJSON();
 	}
 }
+
+void PulsarsDialog::askPulsarsMarkerColor()
+{
+	Vec3f vColor = psr->getMarkerColor(true);
+	QColor color(0,0,0);
+	color.setRgbF(vColor.v[0], vColor.v[1], vColor.v[2]);
+	QColor c = QColorDialog::getColor(color, Q_NULLPTR, q_(ui->pulsarMarkerColor->toolTip()));
+	if (c.isValid())
+	{
+		vColor = Vec3f(c.redF(), c.greenF(), c.blueF());
+		psr->setMarkerColor(vColor, true);
+		ui->pulsarMarkerColor->setStyleSheet("QToolButton { background-color:" + c.name() + "; }");
+	}
+}
+
+void PulsarsDialog::askPulsarGlitchesMarkerColor()
+{
+	Vec3f vColor = psr->getMarkerColor(false);
+	QColor color(0,0,0);
+	color.setRgbF(vColor.v[0], vColor.v[1], vColor.v[2]);
+	QColor c = QColorDialog::getColor(color, Q_NULLPTR, q_(ui->pulsarGlitchesMarkerColor->toolTip()));
+	if (c.isValid())
+	{
+		vColor = Vec3f(c.redF(), c.greenF(), c.blueF());
+		psr->setMarkerColor(vColor, false);
+		ui->pulsarGlitchesMarkerColor->setStyleSheet("QToolButton { background-color:" + c.name() + "; }");
+	}
+}
+
+void PulsarsDialog::colorButton(QToolButton* toolButton, Vec3f vColor)
+{
+	QColor color(0,0,0);
+	color.setRgbF(vColor.v[0], vColor.v[1], vColor.v[2]);
+	// Use style sheet for create a nice buttons :)
+	toolButton->setStyleSheet("QToolButton { background-color:" + color.name() + "; }");
+	toolButton->setFixedSize(QSize(18, 18));
+}
+

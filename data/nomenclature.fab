@@ -1249,6 +1249,32 @@ Europa	14291	_("Annwn Regio","regio")	RE	20.000000	40.000000	2300
 Europa	2988	_("Kennet Linea","linea")	LI	-41.000000	48.000000	3200
 # TRANSLATORS: Stone row in Brittany, France.
 Europa	3803	_("Mehen Linea","linea")	LI	56.000000	123.300000	1500
+# TRANSLATORS: Chilote (southern Chile) legendary, sentient ghost ship, which could suddenly appear and then quickly disappears again, leaving no evidence of its presence.
+Charon	15732	_("Caleuche Chasma","chasma")	CM	72.400000	241.800000	445
+# TRANSLATORS: Greek mythological ship sailed by Jason and his crew, the Argonauts, from Iolcos to Colchis to retrieve the Golden Fleece, described in the "Argonautica" epic poem by Apollonius Rhodius (3rd cen. BC).
+Charon	15734	_("Argo Chasma","chasma")	CM	27.800000	80.400000	355
+# TRANSLATORS: Stanley, American-British film director and screenwriter (1928-1999). His film "2001: A Space Odyssey" (1968) after the screenplay co-wrote with Arthur Clarke tells the story of humanity’s evolution from tool-using hominids to space explorers and beyon
+Charon	15736	_("Kubrick Mons","mons")	MO	3.600000	30.800000	40
+# TRANSLATORS: Spaceship pilot, the main character in a series of fictional stories by the Polish author Stanislaw Lem (1921–2006). He travelled between the Earth, Moon and Mars.
+Charon	15740	_("Pirx","crater")	AA	55.200000	256.300000	90
+# TRANSLATORS: Hindu mythological princess, who traveled through time and space in search of a suitor, described in the epic narrative "Mahabharata".
+Charon	15741	_("Revati","crater")	AA	20.700000	35.400000	40
+# TRANSLATORS: Captain of the Nautilus, a submarine, in the novels "Twenty Thousand Leagues Under the Sea" (1870) and "The Mysterious Island" (1874) by the French author Jules Verne (1825–1905). The stories recount fantastical undersea travels and explorations.
+Charon	15743	_("Nemo","crater")	AA	-15.700000	314.100000	44
+# TRANSLATORS: Egyptian boat that carries the sun god Ra across the sky in the daytime.
+Charon	15733	_("Mandjet Chasma","chasma")	CM	4.800000	294.400000	385
+# TRANSLATORS: Octavia E., American author (1947-2006). Her "Xenogenesis" trilogy describes humankind’s departure from Earth and subsequent return.
+Charon	15735	_("Butler Mons","mons")	MO	-9.480000	38.740000	90.6
+# TRANSLATORS: Sir Arthur C., British author (1917-2008). Many of his novels depict space explorations, among which the most notable is "2001: A Space Odyssey", describing a voyage to Jupiter. This novel was adapted from the screenplay he co-wrote with Stanley Kubrick
+Charon	15737	_("Clarke Montes","mons")	MO	-5.120000	7.050000	74.6
+# TRANSLATORS: American fictional character, protagonist of "The Wonderful Wizard of Oz" and other children’s novels, small girl who visited the magical Land of Oz.
+Charon	15738	_("Dorothy","crater")	AA	58.530000	40.580000	261
+# TRANSLATORS: Hero of humorous folktales told throughout the Middle East, southern Europe and parts of Asia. Undertook numerous journeys with his donkey, upon which he is seated facing backwards. Supposed to be of a Turkish origin.
+Charon	15739	_("Nasreddin","crater")	AA	25.500000	308.600000	29.7
+# TRANSLATORS: Russian merchant in the medieval epic tale (Bylina), who traveled to the bottom of the sea.
+Charon	15742	_("Sadko","crater")	AA	-16.100000	331.200000	28
+# TRANSLATORS: Jeanne Baret (Baré); first woman to have completed circumnavigation voyage of the globe (1740-1807).
+Pluto	15751	_("Baret Montes","mons")	MO	14.600000	157.800000	170.392
 # TRANSLATORS: Edmund; New Zealand mountaineer (1919–2008).
 Pluto	15671	_("Hillary Montes","mons")	MO	3.260000	169.580000	388
 # TRANSLATORS: A pair of US-launched Voyager 1 and Voyager 2 spacecraft that performed the “grand tour” of all four giant planets (1977-1989).
@@ -1277,6 +1303,8 @@ Pluto	15677	_("Hayabusa Terra","terra")	TA	46.070000	229.880000	1115
 Pluto	15669	_("Sputnik Planitia","planitia")	PL	19.510000	178.690000	1492
 # TRANSLATORS: Ash-Sharīf al-Idrīsī; Arabian mapmaker and geographer (1100–1165/66).
 Pluto	15672	_("Al-Idrisi Montes","mons")	MO	33.990000	156.010000	383
+# TRANSLATORS: An Icelandic volcano believed to be the entrance to Hell in medieval European times.
+Pluto	15755	_("Hekla Cavus","cavus")	CB	6.860000	154.660000	98.408
 # TRANSLATORS: Spa in Crimea, Ukraine.
 Gaspra	3926	_("Miskhor","crater")	AA	15.000000	294.100000	0.5
 # TRANSLATORS: Spa in England.
@@ -1545,18 +1573,32 @@ Mercury	2392	_("Haydn","crater")	AA	-27.224762	288.362071	251
 Mercury	4404	_("Odin Planitia","planitia")	PL	23.598066	190.137227	473
 # TRANSLATORS: Rembrandt Harmenszoon van Rijn; Dutch painter (1606-1669).
 Mercury	14563	_("Rembrandt","crater")	AA	-32.891580	87.865691	716
+# TRANSLATORS: Irish word for snake.
+Mercury	15724	_("Nathair Facula","facula")	FA	36.000000	64.500000	270
 # TRANSLATORS: Apollodorus of Damascus; Greek architect (2nd century AD).
 Mercury	14397	_("Apollodorus","crater")	AA	30.537590	163.283629	41.5
 # TRANSLATORS: Yakovlev; 16th Century Russian architect.
 Mercury	607	_("Barma","crater")	AA	-40.931721	196.506960	123
 # TRANSLATORS: Natalie Clifford; American-French playwright, poet, and novelist (1876-1972).
 Mercury	15185	_("Barney","crater")	AA	-11.689453	59.710144	29
+# TRANSLATORS: Welsh word for snake.
+Mercury	15725	_("Neidr Facula","facula")	FA	35.900000	57.300000	90
+# TRANSLATORS: Igbo (Southeastern Nigeria) word for snake.
+Mercury	15727	_("Agwo Facula","facula")	FA	22.400000	146.300000	50
+# TRANSLATORS: Basque word for snake.
+Mercury	15726	_("Suge Facula","facula")	FA	26.100000	59.600000	32
 # TRANSLATORS: "Northern plain"; from classical albedo name for quadrangle.
 Mercury	823	_("Borealis Planitia","planitia")	PL	67.300000	32.600000	3450
 # TRANSLATORS: Johann Wolfgang von; German poet and dramatist (1749-1832).
 Mercury	2204	_("Goethe","crater")	AA	81.102229	308.965987	317.172
+# TRANSLATORS: Arabic word for snake.
+Mercury	15729	_("Thueban Facula","facula")	FA	48.700000	159.500000	25
+# TRANSLATORS: Somali word for snake.
+Mercury	15728	_("Abeeso Facula","facula")	FA	21.700000	145.400000	32
 # TRANSLATORS: Greek architect (5th century B.C.).
 Mercury	2645	_("Ictinus","crater")	AA	-79.555280	185.756418	58.0252
+# TRANSLATORS: Afrikaans word for snake.
+Mercury	15730	_("Slang Faculae","facula")	FA	24.500000	180.700000	204
 # TRANSLATORS: Seamus Justin; Irish poet and playwright (1939 - 2013).
 Mercury	15565	_("Heaney","crater")	AA	-33.770000	122.290000	125
 # TRANSLATORS: Sumerian poet, world’s first author known by name (2285 BCE to 2250 BCE).
@@ -1569,6 +1611,18 @@ Mercury	15321	_("Carolan","crater")	AA	83.876519	31.765951	24.336
 Mercury	15324	_("Karsh","crater")	AA	-35.485840	78.853821	58
 # TRANSLATORS: Umm; Alternate spellings Kulthūm, Kalthoum, and Kalsoum; Egyptian singer (born between 1898 and 1904, died 1975).
 Mercury	15322	_("Kulthum","crater")	AA	50.721130	93.531555	31
+# TRANSLATORS: Malagasy (Madagascar) word for snake.
+Mercury	15744	_("Bibilava Faculae","facula")	FA	16.400000	157.200000	100
+# TRANSLATORS: Zulu and Xhosa (South Africa) word for snake.
+Mercury	15746	_("Inyoka Faculae","facula")	FA	14.000000	162.300000	130
+# TRANSLATORS: Yoruba (Nigeria) word for snake.
+Mercury	15745	_("Ejo Faculae","facula")	FA	14.500000	159.500000	115
+# TRANSLATORS: Kamba (Kenya) word for snake.
+Mercury	15748	_("Nzoka Facula","facula")	FA	15.400000	165.300000	20
+# TRANSLATORS: Amharic (Ethiopia) word for snake.
+Mercury	15749	_("Ibab Facula","facula")	FA	14.500000	160.800000	13
+# TRANSLATORS: Hausa (Niger and Nigeria) word for snake.
+Mercury	15747	_("Maciji Facula","facula")	FA	14.900000	164.000000	29
 # TRANSLATORS: Ryunosuke; Japanese writer (1892-1927).
 Mercury	15386	_("Akutagawa","crater")	AA	48.251953	218.909180	106
 # TRANSLATORS: Clara; American stained glass artist (1861-1944).
@@ -1593,10 +1647,16 @@ Mercury	15396	_("Du Fu","crater")	AA	25.002136	266.342651	33
 Mercury	15393	_("Jobim","crater")	AA	32.453613	293.121826	167
 # TRANSLATORS: Heitor; Brazilian composer (1887-1959).
 Mercury	15397	_("Villa-Lobos","crater")	AA	5.270691	6.793396	67
+# TRANSLATORS: Fijian and Samoan word for snake.
+Mercury	15752	_("Gata Facula","facula")	FA	-52.900000	38.600000	55
 # TRANSLATORS: Chinese composer (12th century).
 Mercury	1178	_("Chiang K'ui","crater")	AA	14.707119	257.198817	41
 # TRANSLATORS: Jack, American poet and author (1922-1969).
 Mercury	15416	_("Kerouac","crater")	AA	25.213623	129.104736	110
+# TRANSLATORS: Māori word for snake.
+Mercury	15753	_("Nākahi Facula","facula")	FA	-52.700000	17.800000	64
+# TRANSLATORS: Quechua word for snake.
+Mercury	15754	_("Amaru Facula","facula")	FA	-49.800000	10.500000	45
 # TRANSLATORS: Indian poet and dramatist (c. 5th century).
 Mercury	3180	_("Kālidāsā","crater")	AA	-18.209667	180.182910	160
 # TRANSLATORS: Mary William Ethelbert Appleton “Billie”; American performing artist (1884-1970).
@@ -2740,27 +2800,19 @@ Mars	6333	_("Vastitas Borealis","vastitas")	VS	87.729720	32.529755	2002.91
 # TRANSLATORS: Named for classical albedo feature at 20N, 240W.
 Mars	2459	_("Hephaestus Rupēs","rupes")	RU	23.538542	114.902763	1707.44
 # TRANSLATORS: Classical albedo feature name.
-Mars	485	_("Australe Mensa","mensa")	MN	-86.876215	357.240009	172
-# TRANSLATORS: Classical albedo feature name.
 Mars	6963	_("Tenuis Cavus","cavus")	CB	84.763911	1.388291	51.5252
 # TRANSLATORS: Classical albedo feature name.
-Mars	6965	_("Gemini Scopuli","scopulus")	SC	80.388083	26.099586	1000.36
+Mars	485	_("Australe Mensa","mensa")	MN	-86.876000	357.240000	172
 # TRANSLATORS: Town in Armenia.
 Mars	15166	_("Artik","crater")	AA	-34.804001	130.984360	5.359
-# TRANSLATORS: Classical albedo feature.
-Mars	4753	_("Planum Australe","planum")	PM	-83.351784	157.698099	1429.87
 # TRANSLATORS: Village in Turkmenistan.
 Mars	15167	_("Koshoba","crater")	AA	22.927094	77.003448	10.334
-# TRANSLATORS: Classical albedo feature name.
-Mars	14287	_("Gemina Lingula","lingula")	LN	81.874386	2.592392	772.891
-# TRANSLATORS: Classical albedo feature name.
-Mars	3854	_("Meridiani Planum","planum")	PM	-0.040875	356.860057	1058.53
+# TRANSLATORS: Classical albedo feature.
+Mars	4753	_("Planum Australe","planum")	PM	-83.350000	157.700000	1429.87
 # TRANSLATORS: Biblical land to which King Solomon sent naval expedition; probably India.
 Mars	4473	_("Ophir","albedo feature")	AL	-9.884955	295.000000	0
 # TRANSLATORS: Biblical first river of Paradise.
 Mars	4696	_("Phison","albedo feature")	AL	19.783566	40.000000	0
-# TRANSLATORS: From classical albedo feature at 44N, 21W.
-Mars	38	_("Acidalia Planitia","planitia")	PL	49.755629	339.264027	3362.97
 # TRANSLATORS: Town in Moscow region, Russia.
 Mars	15157	_("Reutov","crater")	AA	-45.073471	202.289749	18.02
 # TRANSLATORS: (Belev) Town in Tula region, Russia.
@@ -4853,8 +4905,6 @@ Mars	2407	_("Hecates Tholus","tholus")	TH	32.119545	150.244285	181.572
 Mars	4551	_("Paks","crater")	AA	-7.664186	317.955151	6.90412
 # TRANSLATORS: Town in Kamchatka, Russia.
 Mars	4552	_("Palana","crater")	AA	21.037071	102.023602	4.52639
-# TRANSLATORS: Classical albedo feature name.
-Mars	4451	_("Olympia Undae","unda")	UN	81.163952	178.483025	1507.96
 # TRANSLATORS: Town in Spain.
 Mars	4564	_("Palos","crater")	AA	-2.689650	110.898234	54.8151
 # TRANSLATORS: Famous in antiquity for its marble quarries.
@@ -4889,8 +4939,6 @@ Mars	14279	_("Aspledon Undae","unda")	UN	73.055573	309.653968	215.205
 Mars	4709	_("Phon","crater")	AA	15.527526	102.786374	10.0235
 # TRANSLATORS: Town in Chile.
 Mars	4719	_("Pica","crater")	AA	19.815513	306.766025	2.40453
-# TRANSLATORS: Classical albedo feature name.
-Mars	14281	_("Olympia Planum","planum")	PM	82.180531	188.810071	804.388
 # TRANSLATORS: Named for classical albedo feature at 65N, 150W.
 Mars	5355	_("Scandia Cavi","cavus")	CB	77.552986	209.651807	663.795
 # TRANSLATORS: Edward Charles; American astronomer (1846-1919), William Henry; American astronomer (1858-1938), Sir William Hayward; New Zealand-American engineer (1910-2004).
@@ -4911,8 +4959,6 @@ Mars	6467	_("W. Mareotis Tholus","tholus")	TH	35.558378	272.041275	13.1908
 Mars	4758	_("Platte","crater")	AA	16.030974	113.175150	3.42113
 # TRANSLATORS: John; British geologist and mathematician (1748-1819).
 Mars	4760	_("Playfair","crater")	AA	-77.913009	234.219891	62.2137
-# TRANSLATORS: Classical albedo feature name.
-Mars	6962	_("Boreum Cavus","cavus")	CB	84.635610	339.848464	62.1255
 # TRANSLATORS: Town in Wisconsin, USA.
 Mars	4764	_("Plum","crater")	AA	-26.065307	340.925159	2.75796
 # TRANSLATORS: Town in Senegal.
@@ -5402,8 +5448,6 @@ Mars	6212	_("Ulyxis Rupes","rupes")	RU	-68.775959	160.018144	383.088
 # TRANSLATORS: Classical name for modern Wistla River in Poland.
 Mars	6411	_("Vistula Valles","vallis")	VA	13.405528	308.034034	193
 # TRANSLATORS: Classical albedo feature name.
-Mars	14157	_("Olympia Cavi","cavus")	CB	85.056421	182.228844	342.783
-# TRANSLATORS: Classical albedo feature name.
 Mars	3529	_("Lycus Sulci","sulcus")	SU	28.140443	215.529857	1350.61
 # TRANSLATORS: Albedo name.
 Mars	4619	_("Pavonis Fossae","fossa")	FO	4.148576	248.714438	156.081
@@ -5471,8 +5515,6 @@ Mars	3828	_("Memnonia Sulci","sulcus")	SU	-7.161181	184.173053	452.661
 Mars	6722	_("Zephyrus Fossae","fossa")	FO	23.928075	144.188652	306.188
 # TRANSLATORS: Classical albedo feature name.
 Mars	339	_("Aram Chaos","chaos")	CH	2.523272	337.608425	283.811
-# TRANSLATORS: Classical albedo feature name.
-Mars	228	_("Amenthes Planum","planum")	PM	3.403589	105.920982	0
 # TRANSLATORS: Ancient name for river in Turkey.
 Mars	2237	_("Granicus Valles","vallis")	VA	30.576475	129.970868	777.776
 # TRANSLATORS: Classical albedo feature name.
@@ -5819,16 +5861,16 @@ Mars	5932	_("Terra Sirenum","terra")	TA	-39.494591	205.847887	3635.18
 Mars	1315	_("Coronae Montes","mons")	MO	-34.309417	86.109414	247.396
 # TRANSLATORS: Named for albedo feature Hellas.
 Mars	2430	_("Hellas Chaos","chaos")	CH	-47.121205	64.408084	590.623
-# TRANSLATORS: Named for classical albedo feature at 35N, 195W.
-Mars	4700	_("Phlegra Dorsa","dorsum")	DO	25.083077	170.371548	2818.61
-# TRANSLATORS: From albedo feature at 2N, 183W.
-Mars	5874	_("Tartarus Colles","collis")	CO	21.244977	175.188977	1672.69
-# TRANSLATORS: Albedo feature name.
-Mars	3506	_("Lucus Planum","planum")	PM	-4.993598	182.834591	899.868
 # TRANSLATORS: Ancient name for Greek river.
 Mars	3224	_("Ladon Valles","vallis")	VA	-22.432162	331.391554	244.595
 # TRANSLATORS: Classical albedo feature name.
 Mars	4416	_("Ogygis Rupes","rupes")	RU	-33.027909	305.473913	184.231
+# TRANSLATORS: Albedo feature name.
+Mars	3506	_("Lucus Planum","planum")	PM	-4.990000	182.830000	899.868
+# TRANSLATORS: Named for classical albedo feature at 35N, 195W.
+Mars	4700	_("Phlegra Dorsa","dorsum")	DO	25.080000	170.370000	2818.61
+# TRANSLATORS: From albedo feature at 2N, 183W.
+Mars	5874	_("Tartarus Colles","collis")	CO	21.244977	175.188977	1672.69
 # TRANSLATORS: Classical albedo feature name.
 Mars	311	_("Aonia Terra","terra")	TA	-60.203399	262.954723	3873.48
 # TRANSLATORS: From albedo feature at 20N, 205W.
@@ -5853,8 +5895,6 @@ Mars	4743	_("Pityusa Rupes","rupes")	RU	-63.955160	28.319687	430.14
 Mars	15147	_("Bashkaus Valles","vallis")	VA	-25.677600	356.736476	246.925
 # TRANSLATORS: Ancient and modern name for South American river (Brazil, Argentina).
 Mars	4585	_("Paraná Valles","vallis")	VA	-23.188958	350.204761	329.13
-# TRANSLATORS: Classical albedo feature name.
-Mars	4754	_("Planum Boreum","planum")	PM	87.323620	54.958502	354.635
 # TRANSLATORS: Ancient European river (Bulgaria).
 Mars	352	_("Arda Valles","vallis")	VA	-20.402976	327.687216	173.674
 # TRANSLATORS: Named for albedo feature.
@@ -6139,14 +6179,12 @@ Mars	4474	_("Ophir Catenae","catena")	CA	-9.460000	300.600000	509
 Mars	1758	_("Elaver Vallis","vallis")	VA	-9.384624	310.476426	178.919
 # TRANSLATORS: Classical albedo feature name.
 Mars	6204	_("Ultimi Scopuli","scopulus")	SC	-77.879089	179.044779	560.466
-# TRANSLATORS: Classical albedo feature name.
-Mars	6964	_("Boreales Scopuli","scopulus")	SC	88.876663	269.842581	1.12554
 # TRANSLATORS: Town in Belize.
 Mars	14871	_("Corozal","crater")	AA	-38.788583	159.422641	8.334
 # TRANSLATORS: Classical albedo feature name.
-Mars	5579	_("Sisyphi Cavi","cavus")	CB	-72.200917	353.701234	423.632
-# TRANSLATORS: Classical albedo feature name.
 Mars	14860	_("Oenotria Scopuli","scopulus")	SC	-6.620000	77.110000	1425
+# TRANSLATORS: Classical albedo feature name.
+Mars	5579	_("Sisyphi Cavi","cavus")	CB	-72.200000	353.700000	423.63
 # TRANSLATORS: Merton Edward; American engineer, planetary geodesist (1917-2001).
 Mars	1426	_("Davies","crater")	AA	45.960745	0.090694	48.0635
 # TRANSLATORS: Capital of the Republic of the Marshall Islands.
@@ -6173,8 +6211,6 @@ Mars	220	_("Amazonis Planitia","planitia")	PL	25.746138	197.087152	2809.04
 Mars	15015	_("Moanda","crater")	AA	-35.926666	320.052200	38.881
 # TRANSLATORS: Joshua; American molecular biologist (1925-2008).
 Mars	15016	_("Lederberg","crater")	AA	13.007812	314.082642	87.249
-# TRANSLATORS: From classical albedo feature at 45N, 120W.
-Mars	348	_("Arcadia Planitia","planitia")	PL	47.191241	184.310902	1871.97
 # TRANSLATORS: River in British Columbia and Alberta, Canada.
 Mars	15036	_("Peace Vallis","vallis")	VA	-4.205704	137.227341	35.236
 # TRANSLATORS: Town in Saint Vincent and the Grenadines.
@@ -6267,6 +6303,8 @@ Mars	15564	_("Tarq","crater")	AA	-38.097288	171.221256	35.362
 Mars	15318	_("Garni","crater")	AA	-11.515732	290.310837	2.572
 # TRANSLATORS: River in Argentina.
 Mars	15330	_("Dulce Vallis","vallis")	VA	-4.818535	136.539459	32.464
+# TRANSLATORS: Town in Ghana.
+Mars	15731	_("Garu","crater")	AA	-6.390000	141.280000	32
 # TRANSLATORS: Village in Latvia.
 Mars	15319	_("Rauna","crater")	AA	35.258903	327.915802	2.534
 # TRANSLATORS: Classical martian albedo feature, Coprates
@@ -6297,6 +6335,8 @@ Mars	15316	_("Juventae Mensa","mensa")	MN	-7.929958	294.374464	116
 Mars	15362	_("Talas","crater")	AA	-35.665741	75.373077	30
 # TRANSLATORS: Town in Kermān province in Iran.
 Mars	15569	_("Bam","crater")	AA	-25.790000	115.670000	6.8
+# TRANSLATORS: Town in (Bacău) Romania.
+Mars	15750	_("Oituz","crater")	AA	23.460000	341.240000	15.3
 # TRANSLATORS: Classical albedo feature name, Nia
 Mars	15317	_("Nia Mensa","mensa")	MN	-7.721854	292.684834	95
 # TRANSLATORS: River in Fiji.
@@ -6329,6 +6369,32 @@ Mars	15605	_("Alnif","crater")	AA	-15.135430	328.910000	23.991
 Mars	15432	_("Bradbury","crater")	AA	2.581787	85.795532	63.2
 # TRANSLATORS: Town in Zimbabwe.
 Mars	15606	_("Gokwe","crater")	AA	-27.140000	78.120000	2.163
+# TRANSLATORS: From classical albedo feature at 44N, 21W.
+Mars	38	_("Acidalia Planitia","planitia")	PL	49.760000	339.260000	3505
+# TRANSLATORS: From classical albedo feature at 45N, 120W.
+Mars	348	_("Arcadia Planitia","planitia")	PL	49.020000	188.150000	2245
+# TRANSLATORS: Classical albedo feature name.
+Mars	14287	_("Gemina Lingula","lingula")	LN	81.870000	2.590000	772.89
+# TRANSLATORS: Classical albedo feature name.
+Mars	6962	_("Boreum Cavus","cavus")	CB	84.640000	339.850000	62.13
+# TRANSLATORS: Classical albedo feature name.
+Mars	14281	_("Olympia Planum","planum")	PM	82.180000	188.810000	804.39
+# TRANSLATORS: John “Jack”; American geologist (1932-2012).
+Mars	15756	_("McCauley","crater")	AA	-27.350000	83.230000	90
+# TRANSLATORS: Town in Republic of Korea.
+Mars	15757	_("Jori","crater")	AA	-28.380000	83.400000	31
+# TRANSLATORS: Raymond Milner; American geologist and photogrammetrist (1931-2013).
+Mars	15758	_("Batson","crater")	AA	-28.910000	84.150000	75
+# TRANSLATORS: Town in Burkina Faso.
+Mars	15759	_("Nako","crater")	AA	-29.670000	82.930000	43
+# TRANSLATORS: Town in Syria.
+Mars	15760	_("Salkhad","crater")	AA	-29.850000	83.690000	42
+# TRANSLATORS: Classical albedo feature name.
+Mars	228	_("Amenthes Planum","planum")	PM	3.400000	105.920000	953
+# TRANSLATORS: Classical albedo feature name.
+Mars	14157	_("Olympia Cavi","cavus")	CB	85.060000	182.230000	342.783
+# TRANSLATORS: Classical albedo feature name.
+Mars	15761	_("Aeolis Chaos","chaos")	CH	-7.130000	150.600000	201
 # TRANSLATORS: Classical martian albedo feature, Coprates.
 Mars	15438	_("Coprates Mensa","mensa")	MN	-12.200393	288.836480	240
 # TRANSLATORS: Town in Vietnam.
@@ -6453,6 +6519,16 @@ Mars	15713	_("Chukhung","crater")	AA	38.470000	287.580000	45
 Mars	15714	_("Qara","crater")	AA	16.430000	209.700000	2.5
 # TRANSLATORS: Village in India.
 Mars	15715	_("Dechu","crater")	AA	-42.250000	202.010000	22
+# TRANSLATORS: Classical albedo feature name.
+Mars	3854	_("Meridiani Planum","planum")	PM	-0.040000	356.860000	1058.53
+# TRANSLATORS: Classical albedo feature name.
+Mars	6965	_("Gemini Scopuli","scopulus")	SC	80.390000	26.100000	1000.36
+# TRANSLATORS: Classical albedo feature name.
+Mars	6964	_("Boreales Scopuli","scopulus")	SC	88.880000	269.840000	873
+# TRANSLATORS: Classical albedo feature name.
+Mars	4451	_("Olympia Undae","unda")	UN	81.160000	178.480000	1507.96
+# TRANSLATORS: Classical albedo feature name.
+Mars	4754	_("Planum Boreum","planum")	PM	87.320000	54.960000	354.63
 # TRANSLATORS: Soldier of Turnus, brother of Lucagus.
 Dione	14358	_("Liger","crater")	AA	24.000000	233.370000	53
 # TRANSLATORS: Soldier of Turnus, brother of Liger.
@@ -23513,44 +23589,34 @@ Moon	13175	_("Spallanzani F","satellite feature")	SF	-45.672166	28.033758	21.986
 Moon	13176	_("Spallanzani G","satellite feature")	SF	-45.424685	28.534270	15.0398
 # TRANSLATORS: Spanish for "mountain chain."
 Moon	4008	_("Montes Cordillera","mons")	MO	-19.435803	265.069035	963.501
-# TRANSLATORS: Male name of German origin (Lunokhod-1 landing site feature).
-Moon	15003	_("Albert","crater")	AA	38.298683	325.001816	0.1
-# TRANSLATORS: Slavic male name Boris in Russian diminutive form (Lunokhod-1 landing site feature).
-Moon	15004	_("Borya","crater")	AA	38.299370	324.999619	0.4
-# TRANSLATORS: Norse male name Ingvar adopted as Russian name (Lunokhod-1 landing site feature).
-Moon	15006	_("Igor","crater")	AA	38.299370	325.001266	0.1
 # TRANSLATORS: Greek-derived male name Gennady in Russian diminutive form (Lunokhod-1 landing site feature).
-Moon	15005	_("Gena","crater")	AA	38.300743	325.000580	0.2
+Moon	15005	_("Gena","crater")	AA	38.270016	324.987587	0.2
+# TRANSLATORS: Norse male name Ingvar adopted as Russian name (Lunokhod-1 landing site feature).
+Moon	15006	_("Igor","crater")	AA	38.253635	324.993665	0.1
 # TRANSLATORS: Russian male name, diminutive from Greek-derived Nicholas (Lunokhod-1 landing site feature).
-Moon	15007	_("Kolya","crater")	AA	38.300743	325.000305	0.1
+Moon	15007	_("Kolya","crater")	AA	38.313040	325.001113	0.14
 # TRANSLATORS: Latin-derived male name Konstantin in Russian diminutive form (Lunokhod-1 landing site feature).
-Moon	15008	_("Kostya","crater")	AA	38.299370	325.000443	0.2
+Moon	15008	_("Kostya","crater")	AA	38.264205	324.979731	0.13
 # TRANSLATORS: Russian male name of Greek origin (Lunokhod-1 landing site feature).
-Moon	15009	_("Leonid","crater")	AA	38.300056	324.999756	0.1
+Moon	15009	_("Leonid","crater")	AA	38.313455	324.992757	0.12
 # TRANSLATORS: Russian diminutive form of the Greek-derived male name Nicholas (Lunokhod-1 landing site feature).
-Moon	15010	_("Nikolya","crater")	AA	38.300056	324.999756	0.1
+Moon	15010	_("Nikolya","crater")	AA	38.202364	325.016040	0.12
 # TRANSLATORS: Slavic male name, diminutive from Vyacheslav (Lunokhod-1 landing site feature).
-Moon	15011	_("Slava","crater")	AA	38.299370	325.000443	0.1
+Moon	15011	_("Slava","crater")	AA	38.228225	324.995990	0.1
 # TRANSLATORS: Sir Harold; British astronomer (1890-1960).
 Moon	13179	_("Spencer Jones K","satellite feature")	SF	10.353223	167.301342	27.5784
 # TRANSLATORS: Sir Harold; British astronomer (1890-1960).
 Moon	13180	_("Spencer Jones Q","satellite feature")	SF	11.725975	164.790915	15.1004
 # TRANSLATORS: Nicolaus; Danish doctor (1638-1686).
 Moon	13233	_("Steno T","satellite feature")	SF	32.516314	159.666073	37.8815
-# TRANSLATORS: Male name Valery of Latin origin in Russian diminutive form (Lunokhod-1 landing site feature).
-Moon	15012	_("Valera","crater")	AA	38.300056	325.001129	0.1
 # TRANSLATORS: Sir Harold; British astronomer (1890-1960).
 Moon	13181	_("Spencer Jones W","satellite feature")	SF	14.942603	163.533574	53.4463
 # TRANSLATORS: Nicolaus; Danish doctor (1638-1686).
 Moon	13234	_("Steno U","satellite feature")	SF	32.974077	158.231331	29.9797
-# TRANSLATORS: Russian diminutive form of male name Vasily of Greek origin (Lunokhod-1 landing site feature).
-Moon	15013	_("Vasya","crater")	AA	38.300056	324.999756	0.1
 # TRANSLATORS: Franz Maria Ulrich Theodor Hoch; German-Russian astronomer (1724-1802).
 Moon	14523	_("Aepinus","crater")	AA	87.958199	250.313053	16.7447
 # TRANSLATORS: Carl; German chemist, Nobel Prize winner 1931 (1874-1940).
 Moon	14524	_("Bosch","crater")	AA	86.817516	133.542942	19.5827
-# TRANSLATORS: Latin male name Victor in Russian diminutive form (Lunokhod-1 landing site feature).
-Moon	15014	_("Vitya","crater")	AA	38.300056	325.000443	0.2
 # TRANSLATORS: Joseph; American physiologist, Nobel Prize winner 1944 (1874-1965).
 Moon	14525	_("Erlanger","crater")	AA	86.988313	28.616612	10.9374
 # TRANSLATORS: Joahnnes Andreas Grib; Danish pathologist, Nobel Prize winner 1926 (1867-1928).
@@ -25539,6 +25605,18 @@ Moon	3185	_("La Caille","crater")	AA	-23.676336	1.083640	67.2229
 Moon	14527	_("Florey","crater")	AA	87.037185	340.253406	69.0583
 # TRANSLATORS: Egor Ivanovich, Russian meteorite researcher (1923-2008).
 Moon	15242	_("Malinkin","crater")	AA	-87.221741	75.936586	8.281
+# TRANSLATORS: Male name of German origin (Lunokhod-1 landing site feature).
+Moon	15003	_("Albert","crater")	AA	38.316688	324.987689	0.1
+# TRANSLATORS: Slavic male name Boris in Russian diminutive form (Lunokhod-1 landing site feature).
+Moon	15004	_("Borya","crater")	AA	38.283858	324.993176	0.4
+# TRANSLATORS: Male name Valery of Latin origin in Russian diminutive form (Lunokhod-1 landing site feature).
+Moon	15012	_("Valera","crater")	AA	38.289552	324.981487	0.13
+# TRANSLATORS: Russian diminutive form of male name Vasily of Greek origin (Lunokhod-1 landing site feature).
+Moon	15013	_("Vasya","crater")	AA	38.199418	325.018140	0.1
+# TRANSLATORS: Latin male name Victor in Russian diminutive form (Lunokhod-1 landing site feature).
+Moon	15014	_("Vitya","crater")	AA	38.268749	324.971960	0.13
+# TRANSLATORS: Bernard Ray; American lunar scientist (1946-2015).
+Moon	15723	_("Hawke","crater")	AA	-66.610000	128.650000	13.2
 # TRANSLATORS: Elisabetta; Italian planetary scientist (1963-2011).
 Moon	15328	_("Pierazzo","crater")	AA	3.304825	259.760742	9.289
 # TRANSLATORS: Marie; Geologist and oceanographer, created first comprehensive map of the ocean floor and is credited with discovering the Mid-Atlantic Ridge (1920-2006).
@@ -25556,21 +25634,21 @@ Moon	15414	_("Tai Wei","crater")	AA	44.153366	340.507165	0.482
 # TRANSLATORS: Moon palace where Chang-E and Yutu lived in Chinese mythology.
 Moon	15415	_("Guang Han Gong","landing site name")	LF	44.118350	340.487686	0.077
 # TRANSLATORS: Arnold; German astronomer (1883-1969).
-Moon	15607	_("Kohlschütter V","crater")	AA	15.410000	151.610000	19
+Moon	15607	_("Kohlschütter V","satellite feature")	SF	15.410000	151.610000	19
 # TRANSLATORS: Robert Williams; American physicist (1868-1955).
-Moon	15610	_("Wood T","crater")	AA	43.910000	-124.320000	10.5
+Moon	15610	_("Wood T","satellite feature")	SF	43.910000	-124.320000	10.5
 # TRANSLATORS: Michael J.; American planetary scientist (1951 – 2013).
 Moon	15611	_("Wargo","crater")	AA	27.680000	-148.620000	13.9
 # TRANSLATORS: Sergei Alekseevich; Soviet mathematician, engineer (1869-1942).
-Moon	15614	_("Chaplygin B","crater")	AA	-4.080000	151.690000	1.5
+Moon	15614	_("Chaplygin B","satellite feature")	SF	-4.080000	151.690000	1.5
 # TRANSLATORS: John; New Zealander astronomer (1838-1920).
-Moon	15608	_("Grigg E","crater")	AA	13.510000	-125.680000	10.4
+Moon	15608	_("Grigg E","satellite feature")	SF	13.510000	-125.680000	10.4
 # TRANSLATORS: Sergey Pavlovich; Soviet rocketry scientist (1906-1966).
-Moon	15612	_("Korolev Z","crater")	AA	1.150000	-159.480000	17.7
+Moon	15612	_("Korolev Z","satellite feature")	SF	1.150000	-159.480000	17.7
 # TRANSLATORS: John E.; British volcanologist (1938-2012).
 Moon	15613	_("Guest","crater")	AA	-19.790000	117.390000	19.79
 # TRANSLATORS: Pafnuty Lvovich; Russian mathematician (1821-1894).
-Moon	15609	_("Chebyshev Z","crater")	AA	-28.730000	-132.680000	11.5
+Moon	15609	_("Chebyshev Z","satellite feature")	SF	-28.730000	-132.680000	11.5
 # TRANSLATORS: Astronaut named feature, Apollo 11 site.
 Moon	15617	_("Mount Marilyn","landing site name")	LF	1.130000	40.000000	30
 # TRANSLATORS: Astronaut named crater, Apollo 11 site.

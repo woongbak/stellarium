@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Alexander Wolf
+ * Copyright (C) 2011, 2018 Alexander Wolf
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -39,17 +39,22 @@ const QString Quasar::QUASAR_TYPE = QStringLiteral("Quasar");
 StelTextureSP Quasar::markerTexture;
 
 bool Quasar::distributionMode = false;
+bool Quasar::useMarkers = false;
 Vec3f Quasar::markerColor = Vec3f(1.0f,0.5f,0.4f);
 
 Quasar::Quasar(const QVariantMap& map)
 	: initialized(false)
+	, shiftVisibility(3.f) // increase magnitude for better visibility markers of quasars (sync with DSO)
 	, designation("")
-	, VMagnitude(21.)
-	, AMagnitude(21.)
-	, bV(0.)
+	, VMagnitude(-99.f)
+	, AMagnitude(-99.f)
+	, bV(-99.f)
 	, qRA(0.)
 	, qDE(0.)
-	, redshift(0.)
+	, redshift(0.f)
+	, f6(-9999.f)
+	, f20(-9999.f)
+	, sclass("")
 {
 	if (!map.contains("designation") || !map.contains("RA") || !map.contains("DE"))
 	{
@@ -59,12 +64,30 @@ Quasar::Quasar(const QVariantMap& map)
 	}
 
 	designation  = map.value("designation").toString();
-	VMagnitude = map.value("Vmag").toFloat();
-	AMagnitude = map.value("Amag").toFloat();
-	bV = map.value("bV").toFloat();
+	if (map.contains("Vmag"))
+		VMagnitude = map.value("Vmag").toFloat();
+	else
+		VMagnitude = -99.f;
+	if (map.contains("Amag"))
+		AMagnitude = map.value("Amag").toFloat();
+	else
+		AMagnitude = -99.f;
+	if (map.contains("bV"))
+		bV = map.value("bV").toFloat();
+	else
+		bV = -99.f;
 	qRA = StelUtils::getDecAngle(map.value("RA").toString());
 	qDE = StelUtils::getDecAngle(map.value("DE").toString());
 	redshift = map.value("z").toFloat();
+	if (map.contains("f6"))
+		f6 = map.value("f6").toFloat();
+	else
+		f6 = -9999.f;
+	if (map.contains("f20"))
+		f20 = map.value("f20").toFloat();
+	else
+		f20 = -9999.f;
+	sclass = map.value("sclass").toString();
 
 	initialized = true;
 }
@@ -84,6 +107,9 @@ QVariantMap Quasar::getMap(void) const
 	map["RA"] = qRA;
 	map["DE"] = qDE;	
 	map["z"] = redshift;
+	map["f6"] = f6;
+	map["f20"] = f20;
+	map["sclass"] = sclass;
 
 	return map;
 }
@@ -101,7 +127,7 @@ QString Quasar::getInfoString(const StelCore* core, const InfoStringGroup& flags
 	if (flags&ObjectType)
 		oss << QString("%1: <b>%2</b>").arg(q_("Type"), q_("quasar")) << "<br />";
 
-	if (flags&Magnitude)
+	if (flags&Magnitude && VMagnitude>-99.f)
 	{
 		QString emag = "";
 		if (core->getSkyDrawer()->getFlagHasAtmosphere())
@@ -110,10 +136,10 @@ QString Quasar::getInfoString(const StelCore* core, const InfoStringGroup& flags
 		oss << QString("%1: <b>%2</b>%3").arg(q_("Magnitude"), QString::number(mag, 'f', 2), emag) << "<br />";
 	}
 
-	if (flags&AbsoluteMagnitude && AMagnitude!=0)
-		oss << QString("%1: %2").arg(q_("Absolute Magnitude")).arg(AMagnitude, 0, 'f', 2) << "<br />";
+	if (flags&AbsoluteMagnitude && AMagnitude>-99.f)
+		oss << QString("%1: %2").arg(q_("Absolute Magnitude")).arg(QString::number(AMagnitude, 'f', 2)) << "<br />";
 
-	if (flags&Extra)
+	if (flags&Extra && bV>-99.f)
 		oss << QString("%1: <b>%2</b>").arg(q_("Color Index (B-V)"), QString::number(bV, 'f', 2)) << "<br />";
 	
 	// Ra/Dec etc.
@@ -121,8 +147,16 @@ QString Quasar::getInfoString(const StelCore* core, const InfoStringGroup& flags
 
 	if (flags&Extra)
 	{
-		if (redshift>0)
+		if (!sclass.isEmpty())
+			oss <<  QString("%1: %2").arg(q_("Spectral Type"), sclass) << "<br />";
+		// TRANSLATORS: Jy is Jansky(10-26W/m2/Hz)
+		QString sfd  = qc_("Jy", "radio flux density");
+		if (redshift>0.f)
 			oss << QString("%1: %2").arg(q_("Redshift")).arg(redshift) << "<br />";
+		if (f6>-9999.f)
+			oss << QString("%1: %2 %3").arg(q_("Radio flux density around 5GHz (6cm)")).arg(QString::number(f6, 'f', 3)).arg(sfd) << "<br />";
+		if (f20>-9999.f)
+			oss << QString("%1: %2 %3").arg(q_("Radio flux density around 1.4GHz (21cm)")).arg(QString::number(f20, 'f', 3)).arg(sfd) << "<br />";
 	}
 
 	postProcessInfoString(str, flags);
@@ -136,6 +170,9 @@ QVariantMap Quasar::getInfoMap(const StelCore *core) const
 	map["amag"] = AMagnitude;
 	map["bV"] = bV;
 	map["redshift"] = redshift;
+	map["f6"] = f6;
+	map["f20"] = f20;
+	map["sclass"] = sclass;
 
 	return map;
 }
@@ -159,8 +196,12 @@ double Quasar::getAngularSize(const StelCore*) const
 float Quasar::getSelectPriority(const StelCore* core) const
 {
 	float mag = getVMagnitudeWithExtinction(core);
+	if (useMarkers)
+		mag -= shiftVisibility;
+
 	if (distributionMode)
 		mag = 4.f;
+
 	return mag;
 }
 
@@ -173,49 +214,61 @@ void Quasar::draw(StelCore* core, StelPainter& painter)
 {
 	StelSkyDrawer* sd = core->getSkyDrawer();
 
-	Vec3f color = sd->indexToColor(BvToColorIndex(bV))*0.75f;	
-	RCMag rcMag;
-	float size, shift=0;
-	double mag;
-
 	StelUtils::spheToRect(qRA, qDE, XYZ);
-	mag = getVMagnitudeWithExtinction(core);	
+
+	Vec3d win;
+	// Check visibility of quasar
+	if (!(painter.getProjector()->projectCheck(XYZ, win)))
+		return;
+
+	float size, mag, mlimit, shift=0;
+
+	mlimit = sd->getLimitMagnitude();
+	mag = getVMagnitudeWithExtinction(core);
+	if (useMarkers)
+		mag -= shiftVisibility;
 
 	if (distributionMode)
-	{
-		painter.setBlending(true, GL_ONE, GL_ONE);
-		painter.setColor(markerColor[0], markerColor[1], markerColor[2], 1);
+		mag = 3.f;
 
-		Quasar::markerTexture->bind();
-		//size = getAngularSize(Q_NULLPTR)*M_PI/180.*painter.getProjector()->getPixelPerRadAtCenter();
-		if (labelsFader.getInterstate()<=0.f)
-		{
-			painter.drawSprite2dMode(XYZ, 4);			
-		}
-	}
-	else
+	if (mag <= mlimit)
 	{
-		sd->preDrawPointSource(&painter);
-	
-		if (mag <= sd->getLimitMagnitude())
+		if (distributionMode || useMarkers)
 		{
+			painter.setBlending(true, GL_ONE, GL_ONE);
+			painter.setColor(markerColor[0], markerColor[1], markerColor[2], 1);
+
+			Quasar::markerTexture->bind();
+			size = getAngularSize(Q_NULLPTR)*M_PI/180.*painter.getProjector()->getPixelPerRadAtCenter();
+			shift = 5.f + size/1.6f;
+
+			painter.drawSprite2dMode(XYZ, distributionMode ? 4.f : 5.f);
+		}
+		else
+		{
+			Vec3f color = sd->indexToColor(BvToColorIndex(bV))*0.75f;
+			RCMag rcMag;
+
+			sd->preDrawPointSource(&painter);
 			sd->computeRCMag(mag, &rcMag);
 			sd->drawPointSource(&painter, Vec3f(XYZ[0],XYZ[1],XYZ[2]), rcMag, sd->indexToColor(BvToColorIndex(bV)), true);
 			painter.setColor(color[0], color[1], color[2], 1);
 			size = getAngularSize(Q_NULLPTR)*M_PI/180.*painter.getProjector()->getPixelPerRadAtCenter();
 			shift = 6.f + size/1.8f;
-			if (labelsFader.getInterstate()<=0.f)
-			{
-				painter.drawText(XYZ, designation, 0, shift, shift, false);
-			}
+			sd->postDrawPointSource(&painter);
 		}
 
-		sd->postDrawPointSource(&painter);
+		if (labelsFader.getInterstate()<=0.f && !distributionMode && (mag+2.f)<mlimit)
+		{
+			painter.drawText(XYZ, designation, 0, shift, shift, false);
+		}
 	}
 }
 
 unsigned char Quasar::BvToColorIndex(float b_v)
 {
+	if (b_v<-98.f)
+		b_v = 0.f;
 	double dBV = b_v;
 	dBV *= 1000.0;
 	if (dBV < -500)

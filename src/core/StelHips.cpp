@@ -49,7 +49,7 @@ public:
 
 static QString getExt(const QString& format)
 {
-	foreach(QString ext, format.split(' '))
+	for (auto ext : format.split(' '))
 	{
 		if (ext == "jpeg") return "jpg";
 		if (ext == "png") return "png";
@@ -70,14 +70,18 @@ QUrl HipsSurvey::getUrlFor(const QString& path) const
 HipsSurvey::HipsSurvey(const QString& url_, double releaseDate_):
 	url(url_),
 	releaseDate(releaseDate_),
-	tiles(1000)
+	tiles(1000),
+	nbVisibleTiles(0),
+	nbLoadedTiles(0)
 {
 	// Immediatly download the properties.
 	QNetworkRequest req = QNetworkRequest(getUrlFor("properties"));
+	req.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache);
+	req.setRawHeader("User-Agent", StelUtils::getUserAgentString().toLatin1());
 	QNetworkReply* networkReply = StelApp::getInstance().getNetworkAccessManager()->get(req);
 	connect(networkReply, &QNetworkReply::finished, [&, networkReply] {
 		QByteArray data = networkReply->readAll();
-		foreach(QString line, data.split('\n'))
+		for (QString line : data.split('\n'))
 		{
 			if (line.startsWith("#")) continue;
 			QString key = line.section("=", 0, 0).trimmed();
@@ -152,6 +156,8 @@ bool HipsSurvey::getAllsky()
 		QUrl path = getUrlFor(QString("Norder%1/Allsky.%2").arg(getPropertyInt("hips_order_min", 3)).arg(ext));
 		qDebug() << "Load allsky" << path;
 		QNetworkRequest req = QNetworkRequest(path);
+		req.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache);
+		req.setRawHeader("User-Agent", StelUtils::getUserAgentString().toLatin1());
 		networkReply = StelApp::getInstance().getNetworkAccessManager()->get(req);
 		emit statusChanged();
 
@@ -458,7 +464,7 @@ QList<HipsSurveyP> HipsSurvey::parseHipslist(const QString& data)
 	QList<HipsSurveyP> ret;
 	QString url;
 	double releaseDate = 0;
-	foreach(QString line, data.split('\n'))
+	for (auto line : data.split('\n'))
 	{
 		if (line.startsWith('#')) continue;
 		QString key = line.section("=", 0, 0).trimmed();

@@ -814,10 +814,14 @@ public slots:
 	//! time is moving backwards, the function will return immediately.
 	//! If the time rate is 0, the function will not wait.  This is to
 	//! prevent infinite wait time.
-	//! @param dt the date string to use
+	//! @param dt the date string to use, format like "2012-06-06T4:44:00" or "-1428-03-04T22:23:45"
 	//! @param spec "local" or "utc"
 	void waitFor(const QString& dt, const QString& spec="utc");
 
+	//! Retrieve value of environment variable @param name.
+	//! On desktop Windows and Qt before 5.10, this call may result in data loss if the original
+	//! string contains Unicode characters not representable in the ANSI encoding.
+	QString getEnv(const QString& var);
 
 signals:
 

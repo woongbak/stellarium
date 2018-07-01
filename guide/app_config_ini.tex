@@ -297,6 +297,9 @@ flag\_show\_eclcoordj2000     & bool & ecliptic coordinates (J2000.0 frame) of o
 flag\_show\_eclcoordofdate    & bool & ecliptic coordinates (of date) of object.\\%\midrule
 flag\_show\_type              & bool & type of object.\\%\midrule
 flag\_show\_size              & bool & size of object.\\%\midrule
+flag\_show\_sidereal\_time    & bool & sidereal time.\\%\midrule
+flag\_show\_rts\_time         & bool & rise, transit and set times.\\%\midrule
+flag\_show\_velocity          & bool & velocity of object.\\%\midrule
 flag\_show\_constellation     & bool & show 3-letter IAU\index{IAU} constellation label.\\\bottomrule
 \end{longtable}
 
@@ -433,10 +436,11 @@ flag\_surface\_brightness\_short  & bool   & false & Toggle usage the short nota
 flag\_enable\_kinetic\_scrolling & bool  & true  & If \emph{true}, use kinetic scrolling in the GUI\footnote{This option is available on Windows tablets only.}.\\\midrule
 pointer\_animation\_speed 		& float  & 1.0 	 & Animation speed of pointers.\\\midrule
 %
-gpsd\_hostname                  & string & "localhost" & hostname of server running \program{gpsd} (non-Windows only)\\%\midrule
+gpsd\_hostname                  & string & localhost & hostname of server running \program{gpsd} (non-Windows only)\\%\midrule
 gpsd\_port                      & int    & 2947   & port number of \program{gpsd} (non-Windows only)\\%\midrule
-gps\_interface                  & string & "COM3" & Port number of serial/USB GPS device (Windows only)\\%\midrule
-gps\_baudrate                   & int    &  4800  & baudrate of serial/USB GPS device (Windows only)\\\bottomrule
+gps\_interface                  & string &  COM3  & Port number of serial/USB GPS device. (May look like \texttt{ttyUSB0} on Linux,
+                                                    if you really don't run \program{gpsd}.)\\%\midrule
+gps\_baudrate                   & int    &  4800  & baudrate of serial/USB GPS device (for direct serial connection only)\\\bottomrule
 \end{longtable}
 
 \subsection{\big[init\_location\big]}
@@ -501,11 +505,14 @@ date\_display\_format & string & date display format: can be \emph{system\_defau
 \begin{tabularx}{\textwidth}{l|l|X}\toprule
 \emph{ID}                 & \emph{Type} & \emph{Description}\\\midrule
 invert\_screenshots\_colors & bool   & If \emph{true}, Stellarium will saving the screenshorts with inverted colors.\\%\midrule
-restore\_defaults           & bool   & If \emph{true}, Stellarium will restore default settings at startup. 
-                                       This is equivalent to calling Stellarium with the \command{--restore-defaults} option.\\%\midrule
 screenshot\_dir             & string & Path for saving screenshots\\%\midrule
+screenshot\_custom\_size    & bool   & \emph{true} if you want to specify particular dimensions next:\\
+screenshot\_custom\_width   & int    & custom width of screenshots. Max.\ available size is hardware dependent!\\
+screenshot\_custom\_height  & int    & custom height of screenshots. Max.\ available size is hardware dependent!\\\midrule
 version                     & string & Version of Stellarium. This parameter may be used to detect necessary changes in config.ini file, do not edit.\\%\midrule
 use\_separate\_output\_file & bool   & Set to \emph{true} if you want to create a new file for script output for each start of Stellarium\\%\midrule
+restore\_defaults           & bool   & If \emph{true}, Stellarium will restore default settings at startup. 
+                                       This is equivalent to calling Stellarium with the \command{--restore-defaults} option.\\%\midrule
 ignore\_opengl\_warning     & bool   & Set to \emph{true} if you don't want to see OpenGL warnings for each start of Stellarium.\\%\midrule
 check\_requirements         & bool   & Set to \emph{false} if you want to disable and permanently ignore checking hardware requirements at startup. 
                                        Expect problems if hardware is below requirements!\\
@@ -629,7 +636,10 @@ password   & string & Password for proxy. E.g. \emph{xxxxx}\\\bottomrule
 
 \begin{tabularx}{\textwidth}{l|l|l|X}\toprule
 \emph{ID}                  & \emph{Type} & \emph{Default} & \emph{Description}\\\midrule
-startup\_script                & string & startup.ssc & name of script executed on program start\\\bottomrule 
+startup\_script                            & string & startup.ssc & name of script executed on program start\\
+flag\_script\_allow\_write\_absolute\_path & bool   & false       & set true to let scripts store files to absolute pathnames.
+                                                                    This may pose a security risk if you run scripts from other authors
+                                                                    without checking what they are doing.\\\bottomrule 
 %% These are unused as on 0.15pre.
 %flag\_script\_allow\_ui        & bool &\\\midrule
 %scripting\_allow\_write\_files & bool &\\\bottomrule

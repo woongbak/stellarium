@@ -17,9 +17,6 @@ SET(Satellites_SRCS
      gsatellite/gTime.cpp
      gsatellite/gTime.hpp
      gsatellite/gTimeSpan.cpp
-     gsatellite/gVector.cpp
-     gsatellite/gVector.hpp
-     gsatellite/gVectorTempl.hpp
      gsatellite/sgp4ext.cpp
      gsatellite/sgp4ext.h
      gsatellite/sgp4io.cpp
@@ -63,3 +60,5 @@ ELSE()
      SET_TARGET_PROPERTIES(Satellites-static PROPERTIES COMPILE_FLAGS "-DQT_STATICPLUGIN -Wno-unused-parameter")
 ENDIF()
 ADD_DEPENDENCIES(AllStaticPlugins Satellites-static)
+
+SET_TARGET_PROPERTIES(Satellites-static PROPERTIES FOLDER "plugins/Satellites")

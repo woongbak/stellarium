@@ -25,9 +25,11 @@
 #include "StelTranslator.hpp"
 #include "StelModuleMgr.hpp"
 #include "StelSkyLayerMgr.hpp"
+#include "StelUtils.hpp"
 
 #include <QNetworkReply>
 #include <QSettings>
+#include <QTimer>
 
 HipsMgr::HipsMgr()
 {
@@ -41,26 +43,45 @@ HipsMgr::~HipsMgr()
 	QSettings* conf = StelApp::getInstance().getSettings();
 	conf->beginGroup("hips");
 	conf->setValue("show", getFlagShow());
-	conf->beginGroup("visible");
-	if (surveys.count()>0)
-		conf->remove(""); // Don't clear list in case of just a short offline period.
+
+	// remove 0.18.0 scheme
+	conf->remove("visible");
+
+	QStringList surveyUrls;
 	for (auto survey: surveys)
 	{
 		if (survey->isVisible() && survey->planet.isEmpty())
-		{
-			conf->setValue(survey->getUrl(), "true");
-		}
+			surveyUrls << survey->getUrl();
 	}
-	conf->endGroup();
+
+	int surveyListSize = surveyUrls.count();
+	if (surveyListSize==0)
+	{
+		// remove old urls
+		conf->remove("surveys");
+	}
+	else
+	{
+		conf->beginWriteArray("surveys");
+		for(int i=0;i<surveyListSize;i++)
+		{
+			conf->setArrayIndex(i);
+			conf->setValue("url", surveyUrls.at(i));
+		}
+		conf->endArray();
+	}
+
 	conf->endGroup();
 	conf->sync();
 }
 
-void HipsMgr::init()
+void HipsMgr::loadSources()
 {
+	if (state != Created) return; // Already loaded.
+	state = Loading;
+	emit stateChanged(state);
 	QSettings* conf = StelApp::getInstance().getSettings();
 	conf->beginGroup("hips");
-	setFlagShow(conf->value("show", true).toBool());
 
 	// Start to load survey lists
 	QStringList sources;
@@ -81,22 +102,47 @@ void HipsMgr::init()
 	{
 		if (source.scheme().isEmpty()) source.setScheme("file");
 		QNetworkRequest req = QNetworkRequest(source);
+		req.setRawHeader("User-Agent", StelUtils::getUserAgentString().toLatin1());
 		QNetworkReply* networkReply = StelApp::getInstance().getNetworkAccessManager()->get(req);
 		connect(networkReply, &QNetworkReply::finished, [=] {
 			QByteArray data = networkReply->readAll();
 			QList<HipsSurveyP> newSurveys = HipsSurvey::parseHipslist(data);
 			for (HipsSurveyP survey: newSurveys)
 			{
+				connect(survey.data(), SIGNAL(propertiesChanged()), this, SIGNAL(surveysChanged()));
 				emit gotNewSurvey(survey);
 			}
 			surveys += newSurveys;
 			emit surveysChanged();
+			nbSourcesLoaded++;
+			if (nbSourcesLoaded == sources.size())
+			{
+				state = Loaded;
+				emit stateChanged(state);
+			}
 		});
 	}
+	conf->endGroup();
+}
 
+void HipsMgr::init()
+{
+	QSettings* conf = StelApp::getInstance().getSettings();
+	conf->beginGroup("hips");
+	setFlagShow(conf->value("show", false).toBool());
+	int size = conf->beginReadArray("surveys");
+	conf->endArray();
+	bool hasVisibleSurvey = size>0 ? true: false;
 	conf->endGroup();
 
 	addAction("actionShow_Hips_Surveys", N_("Display Options"), N_("Toggle Hierarchical Progressive Surveys (experimental)"), "flagShow", "Ctrl+Alt+D");
+
+	// Start loading the sources only after stellarium has time to set up the proxy.
+	// We only do it if we actually have a visible survey.  Otherwise it's
+	// better not to do it until the user open the survey ui so that we
+	// don't make a systematic request to the hipslist files!
+	if (hasVisibleSurvey)
+		QTimer::singleShot(0, this, SLOT(loadSources()));
 }
 
 
@@ -106,25 +152,21 @@ void HipsMgr::restoreVisibleSurveys()
 	QSettings* conf = StelApp::getInstance().getSettings();
 	conf->beginGroup("hips");
 
-//	// restore visible state of last run, if possible
-//	for (auto survey: surveys)
-//	{
-//		qDebug() << "Known Survey: " << survey->getUrl();
-//	}
-	conf->beginGroup("visible");
-	for (QString key : conf->allKeys())
+	// Start to load survey lists
+	int size = conf->beginReadArray("surveys");
+	for (int i = 0; i < size; i++)
 	{
-		if (conf->value(key).toBool()==true)
+		conf->setArrayIndex(i);
+		QString url = conf->value("url").toString();
+		if (!url.isEmpty())
 		{
-			// We have to restore one slash after colon.
-			QString realURL=key.replace(":/", "://");
-			qDebug() << "HiPS: Restore visible survey:" << realURL;
-			HipsSurveyP survey=getSurveyByUrl(realURL);
+			// qDebug() << "HiPS: Restore visible survey:" << url;
+			HipsSurveyP survey=getSurveyByUrl(url);
 			if (survey)
 				survey->setVisible(true);
 		}
 	}
-	conf->endGroup();
+	conf->endArray();
 	conf->endGroup();
 }
 

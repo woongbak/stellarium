@@ -276,7 +276,7 @@ QList<StelObjectP> Satellites::searchAround(const Vec3d& av, double limitFov, co
 	double cosLimFov = cos(limitFov * M_PI/180.);
 	Vec3d equPos;
 
-	foreach(const SatelliteP& sat, satellites)
+	for (const auto& sat : satellites)
 	{
 		if (sat->initialized && sat->displayed)
 		{
@@ -310,7 +310,7 @@ StelObjectP Satellites::searchByNameI18n(const QString& nameI18n) const
 	if (result)
 		return result;
 
-	foreach(const SatelliteP& sat, satellites)
+	for (const auto& sat : satellites)
 	{
 		if (sat->initialized && sat->displayed)
 		{
@@ -341,7 +341,7 @@ StelObjectP Satellites::searchByName(const QString& englishName) const
 	if (result)
 		return result;
 	
-	foreach(const SatelliteP& sat, satellites)
+	for (const auto& sat : satellites)
 	{
 		if (sat->initialized && sat->displayed)
 		{
@@ -355,7 +355,7 @@ StelObjectP Satellites::searchByName(const QString& englishName) const
 
 StelObjectP Satellites::searchByID(const QString &id) const
 {
-	foreach(const SatelliteP& sat, satellites)
+	for (const auto& sat : satellites)
 	{
 		if (sat->initialized && sat->getID() == id)
 		{
@@ -385,7 +385,7 @@ StelObjectP Satellites::searchByNoradNumber(const QString &noradNumber) const
 	{
 		QString numberString = regExp.capturedTexts().at(2);
 		
-		foreach(const SatelliteP& sat, satellites)
+		for (const auto& sat : satellites)
 		{
 			if (sat->initialized && sat->displayed)
 			{
@@ -425,7 +425,7 @@ QStringList Satellites::listMatchingObjects(const QString& objPrefix, int maxNbI
 			numberPrefix = numberString;
 	}
 
-	foreach(const SatelliteP& sobj, satellites)
+	for (const auto& sobj : satellites)
 	{
 		if (!sobj->initialized || !sobj->displayed)
 		{
@@ -469,14 +469,14 @@ QStringList Satellites::listAllObjects(bool inEnglish) const
 
 	if (inEnglish)
 	{
-		foreach(const SatelliteP& sat, satellites)
+		for (const auto& sat : satellites)
 		{
 			result << sat->getEnglishName();
 		}
 	}
 	else
 	{
-		foreach(const SatelliteP& sat, satellites)
+		for (const auto& sat : satellites)
 		{
 			result << sat->getNameI18n();
 		}
@@ -625,7 +625,7 @@ void Satellites::loadSettings()
 //	if (conf->contains("tle_url0")) // This can skip some operations...
 	QRegExp keyRE("^tle_url\\d+$");
 	QStringList urls;
-	foreach(const QString& key, conf->childKeys())
+	for (const auto& key : conf->childKeys())
 	{
 		if (keyRE.exactMatch(key))
 		{
@@ -691,6 +691,7 @@ void Satellites::loadSettings()
 
 	// realistic mode
 	setFlagRelisticMode(conf->value("realistic_mode_enabled", true).toBool());
+	setFlagHideInvisibleSatellites(conf->value("hide_invisible_satellites", false).toBool());
 
 	conf->endGroup();
 }
@@ -720,6 +721,7 @@ void Satellites::saveSettings()
 
 	// realistic mode
 	conf->setValue("realistic_mode_enabled", getFlagRealisticMode());
+	conf->setValue("hide_invisible_satellites", getFlagHideInvisibleSatellites());
 
 	conf->endGroup();
 	
@@ -818,7 +820,7 @@ void Satellites::setDataMap(const QVariantMap& map)
 	satellites.clear();
 	groups.clear();
 	QVariantMap satMap = map.value("satellites").toMap();
-	foreach(const QString& satId, satMap.keys())
+	for (const auto& satId : satMap.keys())
 	{
 		QVariantMap satData = satMap.value(satId).toMap();
 
@@ -857,7 +859,7 @@ QVariantMap Satellites::createDataMap(void)
 	map["hintColor"] = defHintCol;
 	map["shortName"] = "satellite orbital data";
 	QVariantMap sats;
-	foreach(const SatelliteP& sat, satellites)
+	for (const auto& sat : satellites)
 	{
 		QVariantMap satMap = sat->getMap();
 
@@ -909,7 +911,7 @@ QHash<QString,QString> Satellites::getSatellites(const QString& group, Status vi
 {
 	QHash<QString,QString> result;
 
-	foreach(const SatelliteP& sat, satellites)
+	for (const auto& sat : satellites)
 	{
 		if (sat->initialized)
 		{
@@ -936,7 +938,7 @@ SatellitesListModel* Satellites::getSatellitesListModel()
 
 SatelliteP Satellites::getById(const QString& id) const
 {
-	foreach(const SatelliteP& sat, satellites)
+	for (const auto& sat : satellites)
 	{
 		if (sat->initialized && sat->id == id)
 			return sat;
@@ -947,7 +949,7 @@ SatelliteP Satellites::getById(const QString& id) const
 QStringList Satellites::listAllIds() const
 {
 	QStringList result;
-	foreach(const SatelliteP& sat, satellites)
+	for (const auto& sat : satellites)
 	{
 		if (sat->initialized)
 			result.append(sat->id);
@@ -1001,7 +1003,7 @@ void Satellites::add(const TleDataList& newSatellites)
 		satelliteListModel->beginSatellitesChange();
 	
 	int numAdded = 0;
-	foreach (const TleData& tleSet, newSatellites)
+	for (const auto& tleSet : newSatellites)
 	{
 		if (add(tleSet))
 		{
@@ -1075,7 +1077,7 @@ void Satellites::saveTleSources(const QStringList& urls)
 
 	int index = 0;
 	conf->beginWriteArray("tle_sources");
-	foreach (QString url, urls)
+	for (auto url : urls)
 	{
 		conf->setArrayIndex(index++);
 		if (url.startsWith("1,"))
@@ -1129,11 +1131,25 @@ bool Satellites::getFlagRealisticMode() const
 	return Satellite::realisticModeFlag;
 }
 
+bool Satellites::getFlagHideInvisibleSatellites() const
+{
+	return Satellite::hideInvisibleSatellitesFlag;
+}
+
 void Satellites::setFlagRelisticMode(bool b)
 {
 	if (Satellite::realisticModeFlag != b)
 	{
 		Satellite::realisticModeFlag = b;
+		emit settingsChanged();
+	}
+}
+
+void Satellites::setFlagHideInvisibleSatellites(bool b)
+{
+	if (Satellite::hideInvisibleSatellitesFlag != b)
+	{
+		Satellite::hideInvisibleSatellitesFlag = b;
 		emit settingsChanged();
 	}
 }
@@ -1229,7 +1245,7 @@ void Satellites::updateFromOnlineSources()
 	progressBar->setRange(0, updateUrls.size());
 	progressBar->setFormat("TLE download %v/%m");
 
-	foreach (QString url, updateUrls)
+	for (auto url : updateUrls)
 	{
 		TleSource source;
 		source.file = 0;
@@ -1287,7 +1303,7 @@ void Satellites::saveDownloadedUpdate(QNetworkReply* reply)
 					else
 					{
 						QList<Stel::QZipReader::FileInfo> infoList = reader.fileInfoList();
-						foreach(Stel::QZipReader::FileInfo info, infoList)
+						for (const auto& info : infoList)
 						{
 							// qWarning() << "[Satellites] Processing:" << info.filePath;
 							if (info.isFile)
@@ -1382,7 +1398,7 @@ bool Satellites::getOrbitLinesFlag() const
 
 void Satellites::recalculateOrbitLines(void)
 {
-	foreach(const SatelliteP& sat, satellites)
+	for (const auto& sat : satellites)
 	{
 		if (sat->initialized && sat->displayed && sat->orbitDisplayed)
 			sat->recalculateOrbitLines();
@@ -1404,7 +1420,7 @@ void Satellites::updateFromFiles(QStringList paths, bool deleteFiles)
 {
 	// Container for the new data.
 	TleDataHash newTleSets;
-	foreach(const QString& tleFilePath, paths)
+	for (const auto& tleFilePath : paths)
 	{
 		QFile tleFile(tleFilePath);
 		if (tleFile.open(QIODevice::ReadOnly|QIODevice::Text))
@@ -1445,7 +1461,7 @@ void Satellites::updateSatellites(TleDataHash& newTleSets)
 	int addedCount = 0;
 	int missingCount = 0; // Also the number of removed sats, if any.
 	QStringList toBeRemoved;
-	foreach(const SatelliteP& sat, satellites)
+	for (const auto& sat : satellites)
 	{
 		totalCount++;
 		
@@ -1504,13 +1520,12 @@ void Satellites::updateSatellites(TleDataHash& newTleSets)
 	
 	// Only those not in the loaded collection have remained
 	// (autoAddEnabled is not checked, because it's already in the flags)
-	QHash<QString, TleData>::const_iterator i;
-	for (i = newTleSets.begin(); i != newTleSets.end(); ++i)
+	for (const auto& tleData : newTleSets)
 	{
-		if (i.value().addThis)
+		if (tleData.addThis)
 		{
 			// Add the satellite...
-			if (add(i.value()))
+			if (add(tleData))
 				addedCount++;
 		}
 	}
@@ -1688,7 +1703,7 @@ void Satellites::update(double deltaTime)
 
 	hintFader.update((int)(deltaTime*1000));
 
-	foreach(const SatelliteP& sat, satellites)
+	for (const auto& sat : satellites)
 	{
 		if (sat->initialized && sat->displayed)
 			sat->update(deltaTime);
@@ -1715,7 +1730,7 @@ void Satellites::draw(StelCore* core)
 	painter.setBlending(true);
 	Satellite::hintTexture->bind();
 	Satellite::viewportHalfspace = painter.getProjector()->getBoundingCap();
-	foreach (const SatelliteP& sat, satellites)
+	for (const auto& sat : satellites)
 	{
 		if (sat && sat->initialized && sat->displayed)
 			sat->draw(core, painter);
@@ -1811,9 +1826,9 @@ IridiumFlaresPredictionList Satellites::getIridiumFlaresPrediction()
 
 	IridiumFlaresPredictionList predictions;
 	predictions.clear();
-	foreach(const SatelliteP& sat, satellites)
+	for (const auto& sat : satellites)
 	{
-		if (sat->initialized && sat.data()->getEnglishName().startsWith("IRIDIUM"))
+		if (sat->initialized && sat->getEnglishName().startsWith("IRIDIUM"))
 		{
 			double dt  = 0;
 			double angle0 = 100;
@@ -1821,13 +1836,13 @@ IridiumFlaresPredictionList Satellites::getIridiumFlaresPrediction()
 			while (dt<1)
 			{
 				Satellite::timeShift = dt+delta;
-				sat.data()->update(0);
+				sat->update(0);
 
-				Vec3d pos = sat.data()->getAltAzPosApparent(pcore);
+				Vec3d pos = sat->getAltAzPosApparent(pcore);
 				double lat = pos.latitude();
 				double lon = M_PI - pos.longitude();
-				double v =   sat.data()->getVMagnitude(pcore);
-				double angle =  sat.data()->sunReflAngle;
+				double v =   sat->getVMagnitude(pcore);
+				double angle =  sat->sunReflAngle;
 
 				if (angle>0 && angle<2)
 				{
@@ -1835,7 +1850,7 @@ IridiumFlaresPredictionList Satellites::getIridiumFlaresPrediction()
 					{
 						IridiumFlaresPrediction flare;
 						flare.datetime = StelUtils::julianDayToISO8601String(currentJD+dt+StelApp::getInstance().getCore()->getUTCOffset(currentJD+dt)/24.f);
-						flare.satellite = sat.data()->getEnglishName();
+						flare.satellite = sat->getEnglishName();
 						flare.azimuth   = lon;
 						flare.altitude  = lat;
 						flare.magnitude = v;
@@ -1898,15 +1913,15 @@ IridiumFlaresPredictionList Satellites::getIridiumFlaresPrediction()
 	SatDataStruct sds;
 	double nextJD = predictionJD + 1./24;
 
-	foreach(const SatelliteP& sat, satellites)
+	for (const auto& sat : satellites)
 	{
-		if (sat->initialized && sat.data()->getEnglishName().startsWith("IRIDIUM"))
+		if (sat->initialized && sat->getEnglishName().startsWith("IRIDIUM"))
 		{
-			Vec3d pos = sat.data()->getAltAzPosApparent(pcore);
-			sds.angleToSun = sat.data()->sunReflAngle;
+			Vec3d pos = sat->getAltAzPosApparent(pcore);
+			sds.angleToSun = sat->sunReflAngle;
 			sds.altitude = pos.latitude();
 			sds.azimuth = pos.longitude();
-			sds.v = sat.data()->getVMagnitude(pcore);
+			sds.v = sat->getVMagnitude(pcore);
 			double t;
 			if (sds.altitude<0)
 				t = qMax(-sds.altitude, 1.) / 2880;
@@ -1921,7 +1936,7 @@ IridiumFlaresPredictionList Satellites::getIridiumFlaresPrediction()
 
 			sds.nextJD = predictionJD + t;
 			iridiums.insert(sat, sds);
-			//qDebug() << sat.data()->getEnglishName() << ": "
+			//qDebug() << sat->getEnglishName() << ": "
 			//		 << sds.altitude
 			//		 << sds.azimuth
 			//		 << sds.angleToSun
@@ -1939,18 +1954,17 @@ IridiumFlaresPredictionList Satellites::getIridiumFlaresPrediction()
 		nextJD = predictionJD + 1./24;
 		pcore->setJD(predictionJD);
 
-		ssystem->getEarth().data()->computePosition(predictionJD);
+		ssystem->getEarth()->computePosition(predictionJD);
 		pcore->update(0);
 
-		QMap<SatelliteP,SatDataStruct>::iterator i = iridiums.begin();
-		while (i != iridiums.end())
+		for (auto i = iridiums.begin(); i != iridiums.end(); ++i)
 		{
 			if ( i.value().nextJD<=predictionJD)
 			{
 
-				i.key().data()->update(0);
+				i.key()->update(0);
 
-				double v = i.key().data()->getVMagnitude(pcore);
+				double v = i.key()->getVMagnitude(pcore);
 				bool flareFound = false;
 				if (v > i.value().v)
 				{
@@ -1960,7 +1974,7 @@ IridiumFlaresPredictionList Satellites::getIridiumFlaresPrediction()
 					{
 						IridiumFlaresPrediction flare;
 						flare.datetime = StelUtils::julianDayToISO8601String(predictionJD+StelApp::getInstance().getCore()->getUTCOffset(predictionJD)/24.f);
-						flare.satellite = i.key().data()->getEnglishName();
+						flare.satellite = i.key()->getEnglishName();
 						flare.azimuth   = i.value().azimuth;
 						if (useSouthAzimuth)
 						{
@@ -1979,7 +1993,7 @@ IridiumFlaresPredictionList Satellites::getIridiumFlaresPrediction()
 				}
 
 /*				qDebug() << QString::asprintf("%20s  alt:%6.1f  az:%6.1f  sun:%6.1f  v:%6.1f",
-											 i.key().data()->getEnglishName().toStdString(),
+											 i.key()->getEnglishName().toStdString(),
 											 i.value().altitude*180/M_PI,
 											 i.value().azimuth*180/M_PI,
 											 i.value().angleToSun,
@@ -1989,12 +2003,12 @@ IridiumFlaresPredictionList Satellites::getIridiumFlaresPrediction()
 							 ;
 */
 
-				Vec3d pos = i.key().data()->getAltAzPosApparent(pcore);
+				Vec3d pos = i.key()->getAltAzPosApparent(pcore);
 
 				i.value().v = flareFound ?  17 : v; // block extra report
 				i.value().altitude = pos.latitude();
 				i.value().azimuth = M_PI - pos.longitude();
-				i.value().angleToSun = i.key().data()->sunReflAngle;
+				i.value().angleToSun = i.key()->sunReflAngle;
 
 
 
@@ -2017,7 +2031,6 @@ IridiumFlaresPredictionList Satellites::getIridiumFlaresPrediction()
 				if (nextJD>i.value().nextJD)
 					nextJD = i.value().nextJD;
 			}
-			++i;
 		}
 		predictionJD = nextJD;
 	}

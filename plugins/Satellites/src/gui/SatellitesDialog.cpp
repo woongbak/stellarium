@@ -151,7 +151,9 @@ void SatellitesDialog::createDialogContent()
 
 	// Settings tab / realistic mode group
 	connect(ui->realisticGroup, SIGNAL(clicked(bool)),
-		plugin, SLOT(setFlagRelisticMode(bool)));
+		this, SLOT(setFlagRealisticMode(bool)));
+	connect(ui->hideInvisibleSatellites, SIGNAL(clicked(bool)),
+		plugin, SLOT(setFlagHideInvisibleSatellites(bool)));
 
 	// Settings tab - populate all values
 	updateSettingsPage();
@@ -236,6 +238,11 @@ void SatellitesDialog::createDialogContent()
 	connect(ui->predictIridiumFlaresPushButton, SIGNAL(clicked()), this, SLOT(predictIridiumFlares()));
 	connect(ui->predictedIridiumFlaresSaveButton, SIGNAL(clicked()), this, SLOT(savePredictedIridiumFlares()));
 	connect(ui->iridiumFlaresTreeWidget, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(selectCurrentIridiumFlare(QModelIndex)));
+}
+
+void SatellitesDialog::setFlagRealisticMode(bool state)
+{
+	GETSTELMODULE(Satellites)->setFlagRelisticMode(!state);
 }
 
 void SatellitesDialog::savePredictedIridiumFlares()
@@ -419,7 +426,7 @@ void SatellitesDialog::updateSatelliteData()
 	// Nice list of checkable, translated groups that allows adding new groups
 	ui->groupsListWidget->blockSignals(true);
 	ui->groupsListWidget->clear();
-	foreach (const QString& group, globalGroups)
+	for (const auto& group : globalGroups)
 	{
 		QListWidgetItem* item = new QListWidgetItem(q_(group),
 		                                            ui->groupsListWidget);
@@ -698,7 +705,8 @@ void SatellitesDialog::updateSettingsPage()
 	ui->orbitFadeSpin->setValue(Satellite::orbitLineFadeSegments);
 	ui->orbitDurationSpin->setValue(Satellite::orbitLineSegmentDuration);
 
-	ui->realisticGroup->setChecked(plugin->getFlagRealisticMode());
+	ui->realisticGroup->setChecked(!plugin->getFlagRealisticMode());
+	ui->hideInvisibleSatellites->setChecked(plugin->getFlagHideInvisibleSatellites());
 }
 
 void SatellitesDialog::populateFilterMenu()
@@ -716,7 +724,7 @@ void SatellitesDialog::populateFilterMenu()
 	
 	// Populate with group names/IDs
 	ui->groupFilterCombo->clear();
-	foreach (const QString& group, GETSTELMODULE(Satellites)->getGroupIdList())
+	for (const auto& group : GETSTELMODULE(Satellites)->getGroupIdList())
 	{
 		ui->groupFilterCombo->addItem(q_(group), group);
 	}
@@ -750,7 +758,7 @@ void SatellitesDialog::populateSourcesList()
 	QStringList urls = plugin->getTleSources();
 	checkStateRole = plugin->isAutoAddEnabled() ? Qt::CheckStateRole 
 	                                            : Qt::UserRole;
-	foreach (QString url, urls)
+	for (auto url : urls)
 	{
 		bool checked = false;
 		if (url.startsWith("1,"))
@@ -835,7 +843,7 @@ void SatellitesDialog::addSatellites(const TleDataList& newSatellites)
 	selectionModel->clearSelection();
 	QModelIndex firstSelectedIndex;
 	QSet<QString> newIds;
-	foreach (const TleData& sat, newSatellites)
+	for (const auto& sat : newSatellites)
 		newIds.insert(sat.id);
 	for (int row = 0; row < ui->satellitesList->model()->rowCount(); row++)
 	{
@@ -859,7 +867,7 @@ void SatellitesDialog::removeSatellites()
 	QStringList idList;
 	QItemSelectionModel* selectionModel = ui->satellitesList->selectionModel();
 	QModelIndexList selectedIndexes = selectionModel->selectedRows();
-	foreach (const QModelIndex& index, selectedIndexes)
+	for (const auto& index : selectedIndexes)
 	{
 		QString id = index.data(Qt::UserRole).toString();
 		idList.append(id);
@@ -1027,7 +1035,7 @@ void SatellitesDialog::predictIridiumFlares()
 	IridiumFlaresPredictionList predictions = GETSTELMODULE(Satellites)->getIridiumFlaresPrediction();
 
 	ui->iridiumFlaresTreeWidget->clear();
-	foreach (const IridiumFlaresPrediction& flare, predictions)
+	for (const auto& flare : predictions)
 	{
 		SatPIFTreeWidgetItem *treeItem = new SatPIFTreeWidgetItem(ui->iridiumFlaresTreeWidget);
 		QString dt = flare.datetime;

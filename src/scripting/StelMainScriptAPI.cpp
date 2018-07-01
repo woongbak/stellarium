@@ -717,7 +717,7 @@ void StelMainScriptAPI::setSelectedObjectInfo(const QString& level)
 	else if (level == "ShortInfo")
 		StelApp::getInstance().getGui()->setInfoTextFilters(StelObject::InfoStringGroup(StelObject::ShortInfo));
 	else if (level == "None")
-		StelApp::getInstance().getGui()->setInfoTextFilters((StelObject::InfoStringGroup)0);
+		StelApp::getInstance().getGui()->setInfoTextFilters(StelObject::InfoStringGroup(Q_NULLPTR));
 	else
 		qWarning() << "setSelectedObjectInfo unknown level string \"" << level << "\"";
 }
@@ -759,9 +759,8 @@ QString StelMainScriptAPI::mapToString(const QVariantMap& map) const
 	simpleTypeList.push_back(QVariant::UInt);
 	simpleTypeList.push_back(QVariant::Double);
 
-	QVariantMap::const_iterator i=map.constBegin();
-	while (i != map.constEnd()){
-
+	for (auto i = map.constBegin(); i != map.constEnd(); ++i)
+	{
 		if (i.value().type()==QVariant::String)
 		{
 			res.append(QString("[ \"%1\" = \"%2\" ]\n").arg(i.key()).arg(i.value().toString()));
@@ -774,8 +773,6 @@ QString StelMainScriptAPI::mapToString(const QVariantMap& map) const
 		{
 			res.append(QString("[ \"%1\" = \"<%2>:%3\" ]\n").arg(i.key()).arg(i.value().typeName()).arg(i.value().toString()));
 		}
-
-		++i;
 	}
 	res.append( QString("]\n"));
 	return res;
@@ -1423,4 +1420,13 @@ QVariantMap StelMainScriptAPI::getScreenXYFromAltAzi(const QString &alt, const Q
 	map.insert("y", prj->getViewportHeight()-qRound(v[1]));
 
 	return map;
+}
+
+QString StelMainScriptAPI::getEnv(const QString &var)
+{
+#if QT_VERSION>=0x051000
+	return qEnvironmentVariable(var);
+#else
+	return QString::fromLocal8Bit(qgetenv(var.toLocal8Bit().constData()));
+#endif
 }

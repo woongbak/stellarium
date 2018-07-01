@@ -46,6 +46,9 @@ LocationDialog::LocationDialog(QObject* parent)
 	, allModel(Q_NULLPTR)
 	, pickedModel(Q_NULLPTR)
 	, proxyModel(Q_NULLPTR)
+#ifdef ENABLE_GPS
+	, gpsCount(0)
+#endif
 {
 	ui = new Ui_locationDialogForm;
 }
@@ -154,11 +157,12 @@ void LocationDialog::createDialogContent()
 	setFieldsFromLocation(currentLocation);
 
 #ifdef ENABLE_GPS
-	connect(ui->gpsPushButton, SIGNAL(clicked(bool)), this, SLOT(gpsQueryLocation()));
+	connect(ui->gpsToolButton, SIGNAL(toggled(bool)), this, SLOT(gpsEnableQueryLocation(bool)));
+	ui->gpsToolButton->setStyleSheet(QString("QToolButton{ background: gray; }")); // ? Missing default style?
 	connect(locMgr, SIGNAL(gpsQueryFinished(bool)), this, SLOT(gpsReturn(bool)));
 #else
-	ui->gpsPushButton->setEnabled(false);
-	ui->gpsPushButton->hide();
+	ui->gpsToolButton->setEnabled(false);
+	ui->gpsToolButton->hide();
 #endif
 	connect(ui->useIpQueryCheckBox, SIGNAL(clicked(bool)), this, SLOT(ipQueryLocation(bool)));
 	connect(ui->useAsDefaultLocationCheckBox, SIGNAL(clicked(bool)), this, SLOT(setDefaultLocation(bool)));
@@ -365,7 +369,7 @@ void LocationDialog::populatePlanetList()
 	planets->clear();
 	//For each planet, display the localized name and store the original as user
 	//data. Unfortunately, there's no other way to do this than with a cycle.
-	foreach(const PlanetP& p, ss)
+	for (const auto& p : ss)
 	{
 		planets->addItem(p->getNameI18n(), p->getEnglishName());
 	}
@@ -390,7 +394,7 @@ void LocationDialog::populateCountryList()
 	countries->clear();
 	//For each country, display the localized name and store the original as user
 	//data. Unfortunately, there's no other way to do this than with a cycle.
-	foreach(const QString& name, countryNames)
+	for (const auto& name : countryNames)
 	{
 		countries->addItem(q_(name), name);
 	}
@@ -410,13 +414,12 @@ void LocationDialog::populateTimeZonesList()
 	QComboBox* timeZones = ui->timeZoneNameComboBox;
 	// Return a list of all the known time zone names (from Qt)
 	QStringList tzNames;
-	QList<QByteArray> tzList = QTimeZone::availableTimeZoneIds(); // System dependent set of IANA timezone names.
-	QList<QByteArray>::iterator i;
-	for (i = tzList.begin(); i!= tzList.end(); ++i)
+	auto tzList = QTimeZone::availableTimeZoneIds(); // System dependent set of IANA timezone names.
+	for (const auto& tz : tzList)
 	{
-		tzNames.append(*i);
+		tzNames.append(tz);
 		// Activate this to get a list of known TZ names...
-		//qDebug() << "Qt/IANA TZ entry: " << *i;
+		//qDebug() << "Qt/IANA TZ entry: " << tz;
 	}
 
 	tzNames.sort();
@@ -428,7 +431,7 @@ void LocationDialog::populateTimeZonesList()
 	timeZones->clear();
 	//For each time zone, display the localized name and store the original as user
 	//data. Unfortunately, there's no other way to do this than with a loop.
-	foreach(const QString& name, tzNames)
+	for (const auto& name : tzNames)
 	{
 		timeZones->addItem(name, name);
 	}
@@ -720,14 +723,23 @@ void LocationDialog::ipQueryLocation(bool state)
 }
 
 #ifdef ENABLE_GPS
-// called when the user clicks on the GPS Query button. Use gpsd or Qt's NMEA reader.
-void LocationDialog::gpsQueryLocation()
+// called when the user toggles the GPS Query button. Use gpsd or Qt's NMEA reader.
+void LocationDialog::gpsEnableQueryLocation(bool running)
 {
-	disconnectEditSignals();
-	ui->gpsPushButton->setText(q_("GPS..."));
-
-	//only use a single call from a service class here
-	StelApp::getInstance().getLocationMgr().locationFromGPS();
+	if (running)
+	{
+		disconnectEditSignals();
+		gpsCount=0;
+		ui->gpsToolButton->setText(q_("GPS listening..."));
+		StelApp::getInstance().getLocationMgr().locationFromGPS(3000);
+	}
+	else
+	{
+		// (edit signals restored by gpsReturn())
+		StelApp::getInstance().getLocationMgr().locationFromGPS(0);
+		ui->gpsToolButton->setText(q_("GPS disconnecting..."));
+		QTimer::singleShot(1500, this, SLOT(resetGPSbuttonLabel()));
+	}
 }
 
 void LocationDialog::gpsReturn(bool success)
@@ -736,7 +748,8 @@ void LocationDialog::gpsReturn(bool success)
 	{
 		StelCore* core = StelApp::getInstance().getCore();
 
-		ui->gpsPushButton->setText(q_("GPS:SUCCESS"));
+		gpsCount++;
+		ui->gpsToolButton->setText(QString("%1 %2").arg(q_("GPS location fix")).arg(gpsCount));
 		ui->useAsDefaultLocationCheckBox->setChecked(false);
 		ui->pushButtonReturnToDefault->setEnabled(true);
 		ui->useCustomTimeZoneCheckBox->setChecked(true);
@@ -744,21 +757,32 @@ void LocationDialog::gpsReturn(bool success)
 		updateTimeZoneControls(true);
 		StelLocation loc=core->getCurrentLocation();
 		setFieldsFromLocation(loc);
+		if (loc.altitude==0) // give feedback of fix quality.
+		{
+			ui->gpsToolButton->setStyleSheet(QString("QToolButton{ background: yellow; }"));
+		}
+		else
+		{
+			ui->gpsToolButton->setStyleSheet(QString("QToolButton{ background: green; }"));
+		}
 	}
 	else
 	{
-		ui->gpsPushButton->setText(q_("GPS:FAILED"));
+		ui->gpsToolButton->setText(q_("GPS:FAILED"));
+		ui->gpsToolButton->setStyleSheet(QString("QToolButton{ background: red; }"));
+		// Use QTimer to reset the labels after 2 seconds.
+		QTimer::singleShot(2000, this, SLOT(resetGPSbuttonLabel()));
 	}
 	connectEditSignals();
 	ui->citySearchLineEdit->setFocus();
-
-	// Use QTimer to reset the labels after 2 seconds.
-	QTimer::singleShot(2000, this, SLOT(resetGPSbuttonLabel()));
 }
 
 void LocationDialog::resetGPSbuttonLabel()
 {
-	ui->gpsPushButton->setText(q_("Get location from GPS"));
+	ui->gpsToolButton->setChecked(false);
+	ui->gpsToolButton->setText(q_("Get location from GPS"));
+	ui->gpsToolButton->setStyleSheet(QString("QToolButton{ background: gray; }"));
+
 }
 #endif
 
