@@ -50,9 +50,60 @@
 #include <QRegExp>
 #include <QDir>
 
+static const unsigned int DWARF_GALAXIES[] =
+{
+	3589, 3792, 6830, 10074, 19441, 28913,
+	29194, 29653, 50779, 54074, 60095, 63287,
+	69519, 88608, 2807155, 3097691
+};
+
+static const unsigned int H400_LIST[] =
+{
+	  40,  129,  136,  157,  185,  205,  225,  246,  247,  253,
+	 278,  288,  381,  404,  436,  457,  488,  524,  559,  584,
+	 596,  598,  613,  615,  637,  650,  654,  659,  663,  720,
+	 752,  772,  779,  869,  884,  891,  908,  936, 1022, 1023,
+	1027, 1052, 1055, 1084, 1245, 1342, 1407, 1444, 1501, 1502,
+	1513, 1528, 1535, 1545, 1647, 1664, 1788, 1817, 1857, 1907,
+	1931, 1961, 1964, 1980, 1999, 2022, 2024, 2126, 2129, 2158,
+	2169, 2185, 2186, 2194, 2204, 2215, 2232, 2244, 2251, 2264,
+	2266, 2281, 2286, 2301, 2304, 2311, 2324, 2335, 2343, 2353,
+	2354, 2355, 2360, 2362, 2371, 2372, 2392, 2395, 2403, 2419,
+	2420, 2421, 2422, 2423, 2438, 2440, 2479, 2482, 2489, 2506,
+	2509, 2527, 2539, 2548, 2567, 2571, 2613, 2627, 2655, 2681,
+	2683, 2742, 2768, 2775, 2782, 2787, 2811, 2841, 2859, 2903,
+	2950, 2964, 2974, 2976, 2985, 3034, 3077, 3079, 3115, 3147,
+	3166, 3169, 3184, 3190, 3193, 3198, 3226, 3227, 3242, 3245,
+	3277, 3294, 3310, 3344, 3377, 3379, 3384, 3395, 3412, 3414,
+	3432, 3486, 3489, 3504, 3521, 3556, 3593, 3607, 3608, 3610,
+	3613, 3619, 3621, 3626, 3628, 3631, 3640, 3655, 3665, 3675,
+	3686, 3726, 3729, 3810, 3813, 3877, 3893, 3898, 3900, 3912,
+	3938, 3941, 3945, 3949, 3953, 3962, 3982, 3992, 3998, 4026,
+	4027, 4030, 4036, 4039, 4041, 4051, 4085, 4088, 4102, 4111,
+	4143, 4147, 4150, 4151, 4179, 4203, 4214, 4216, 4245, 4251,
+	4258, 4261, 4273, 4274, 4278, 4281, 4293, 4303, 4314, 4346,
+	4350, 4361, 4365, 4371, 4394, 4414, 4419, 4429, 4435, 4438,
+	4442, 4448, 4449, 4450, 4459, 4473, 4477, 4478, 4485, 4490,
+	4494, 4526, 4527, 4535, 4536, 4546, 4548, 4550, 4559, 4565,
+	4570, 4594, 4596, 4618, 4631, 4636, 4643, 4654, 4656, 4660,
+	4665, 4666, 4689, 4697, 4698, 4699, 4725, 4753, 4754, 4762,
+	4781, 4800, 4845, 4856, 4866, 4900, 4958, 4995, 5005, 5033,
+	5054, 5195, 5248, 5273, 5322, 5363, 5364, 5466, 5473, 5474,
+	5557, 5566, 5576, 5631, 5634, 5676, 5689, 5694, 5746, 5846,
+	5866, 5897, 5907, 5982, 6118, 6144, 6171, 6207, 6217, 6229,
+	6235, 6284, 6287, 6293, 6304, 6316, 6342, 6355, 6356, 6369,
+	6401, 6426, 6440, 6445, 6451, 6514, 6517, 6520, 6522, 6528,
+	6540, 6543, 6544, 6553, 6568, 6569, 6583, 6624, 6629, 6633,
+	6638, 6642, 6645, 6664, 6712, 6755, 6756, 6781, 6802, 6818,
+	6823, 6826, 6830, 6834, 6866, 6882, 6885, 6905, 6910, 6934,
+	6939, 6940, 6946, 7000, 7006, 7008, 7009, 7044, 7062, 7086,
+	7128, 7142, 7160, 7209, 7217, 7243, 7296, 7331, 7380, 7448,
+	7479, 7510, 7606, 7662, 7686, 7723, 7727, 7789, 7790, 7814
+};
+
 // Define version of valid Stellarium DSO Catalog
 // This number must be incremented each time the content or file format of the stars catalogs change
-static const QString StellariumDSOCatalogVersion = "3.4";
+static const QString StellariumDSOCatalogVersion = "3.5";
 
 void NebulaMgr::setLabelsColor(const Vec3f& c) {Nebula::labelColor = c; emit labelsColorChanged(c);}
 const Vec3f NebulaMgr::getLabelsColor(void) const {return Nebula::labelColor;}
@@ -186,31 +237,31 @@ void NebulaMgr::init()
 
 	nebulaFont.setPixelSize(StelApp::getInstance().getBaseFontSize());
 	// Load circle texture
-	Nebula::texCircle			= StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb.png");
+	Nebula::texCircle		= StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb.png");
 	// Load circle texture for large DSO
-	Nebula::texCircleLarge			= StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb_lrg.png");
+	Nebula::texCircleLarge		= StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb_lrg.png");
 	// Load ellipse texture
-	Nebula::texGalaxy			= StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb_gal.png");
+	Nebula::texGalaxy		= StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb_gal.png");
 	// Load ellipse texture for large galaxies
-	Nebula::texGalaxyLarge			= StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb_gal_lrg.png");
+	Nebula::texGalaxyLarge		= StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb_gal_lrg.png");
 	// Load open cluster marker texture
 	Nebula::texOpenCluster		= StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb_ocl.png");
 	// Load open cluster marker texture for large objects
-	Nebula::texOpenClusterLarge		= StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb_ocl_lrg.png");
+	Nebula::texOpenClusterLarge	= StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb_ocl_lrg.png");
 	// Load open cluster marker texture for extra large objects
-	Nebula::texOpenClusterXLarge		= StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb_ocl_xlrg.png");
+	Nebula::texOpenClusterXLarge	= StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb_ocl_xlrg.png");
 	// Load globular cluster marker texture
-	Nebula::texGlobularCluster		= StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb_gcl.png");
+	Nebula::texGlobularCluster	= StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb_gcl.png");
 	// Load globular cluster marker texture for large GCls
-	Nebula::texGlobularClusterLarge		= StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb_gcl_lrg.png");
+	Nebula::texGlobularClusterLarge	= StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb_gcl_lrg.png");
 	// Load planetary nebula marker texture
 	Nebula::texPlanetaryNebula	= StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb_pnb.png");
 	// Load diffuse nebula marker texture
-	Nebula::texDiffuseNebula		= StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb_dif.png");
+	Nebula::texDiffuseNebula	= StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb_dif.png");
 	// Load diffuse nebula marker texture for large DSO
-	Nebula::texDiffuseNebulaLarge		= StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb_dif_lrg.png");
+	Nebula::texDiffuseNebulaLarge	= StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb_dif_lrg.png");
 	// Load diffuse nebula marker texture for extra large DSO
-	Nebula::texDiffuseNebulaXLarge		= StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb_dif_xlrg.png");
+	Nebula::texDiffuseNebulaXLarge	= StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb_dif_xlrg.png");
 	// Load dark nebula marker texture
 	Nebula::texDarkNebula		= StelApp::getInstance().getTextureManager().createTexture(StelFileMgr::getInstallationDir()+"/textures/neb_drk.png");
 	// Load dark nebula marker texture for large DSO
@@ -224,8 +275,8 @@ void NebulaMgr::init()
 
 	setFlagShow(conf->value("astro/flag_nebula",true).toBool());
 	setFlagHints(conf->value("astro/flag_nebula_name",false).toBool());
-	setHintsAmount(conf->value("astro/nebula_hints_amount", 3).toFloat());
-	setLabelsAmount(conf->value("astro/nebula_labels_amount", 3).toFloat());
+	setHintsAmount(conf->value("astro/nebula_hints_amount", 3.0).toDouble());
+	setLabelsAmount(conf->value("astro/nebula_labels_amount", 3.0).toDouble());
 	setHintsProportional(conf->value("astro/flag_nebula_hints_proportional", false).toBool());
 	setFlagOutlines(conf->value("astro/flag_dso_outlines_usage", false).toBool());
 	setFlagAdditionalNames(conf->value("astro/flag_dso_additional_names",true).toBool());
@@ -348,7 +399,7 @@ void NebulaMgr::init()
 
 	setFlagUseTypeFilters(conf->value("astro/flag_use_type_filter", false).toBool());
 
-	Nebula::CatalogGroup catalogFilters = Nebula::CatalogGroup(0);
+	Nebula::CatalogGroup catalogFilters = Nebula::CatalogGroup(Q_NULLPTR);
 
 	conf->beginGroup("dso_catalog_filters");
 	if (conf->value("flag_show_ngc", true).toBool())
@@ -400,7 +451,7 @@ void NebulaMgr::init()
 	// NB: nebula set loaded inside setter of catalog filter
 	setCatalogFilters(catalogFilters);
 
-	Nebula::TypeGroup typeFilters = Nebula::TypeGroup(0);
+	Nebula::TypeGroup typeFilters = Nebula::TypeGroup(Q_NULLPTR);
 
 	conf->beginGroup("dso_type_filters");
 	if (conf->value("flag_show_galaxies", true).toBool())
@@ -2903,59 +2954,14 @@ QStringList NebulaMgr::listAllObjectsByType(const QString &objType, bool inEngli
 			break;
 		case 150: // Dwarf galaxies
 		{
-			QStringList dwarfGalaxies;
-			dwarfGalaxies  << "PGC 3589" << "PGC 3792" << "PGC 6830" << "PGC 10074" << "PGC 19441"
-				       << "PGC 28913" << "PGC 29194" << "PGC 29653" << "PGC 50779" << "PGC 54074"
-				       << "PGC 60095" << "PGC 63287" << "PGC 69519" << "PGC 88608" << "PGC 2807155"
-				       << "PGC 3097691";
-			result = dwarfGalaxies;
+			for (unsigned int i = 0; i < sizeof(DWARF_GALAXIES) / sizeof(DWARF_GALAXIES[0]); i++)
+				result << QString("PGC %1").arg(DWARF_GALAXIES[i]);
 			break;
 		}
 		case 151: // Herschel 400 Catalogue
 		{
-			QList<int> h400list;
-			h400list <<   40 <<  129 <<  136 <<  157 <<  185 <<  205 <<  225 <<  246 <<  247 <<  253
-				 <<  278 <<  288 <<  381 <<  404 <<  436 <<  457 <<  488 <<  524 <<  559 <<  584
-				 <<  596 <<  598 <<  613 <<  615 <<  637 <<  650 <<  654 <<  659 <<  663 <<  720
-				 <<  752 <<  772 <<  779 <<  869 <<  884 <<  891 <<  908 <<  936 << 1022 << 1023
-				 << 1027 << 1052 << 1055 << 1084 << 1245 << 1342 << 1407 << 1444 << 1501 << 1502
-				 << 1513 << 1528 << 1535 << 1545 << 1647 << 1664 << 1788 << 1817 << 1857 << 1907
-				 << 1931 << 1961 << 1964 << 1980 << 1999 << 2022 << 2024 << 2126 << 2129 << 2158
-				 << 2169 << 2185 << 2186 << 2194 << 2204 << 2215 << 2232 << 2244 << 2251 << 2264
-				 << 2266 << 2281 << 2286 << 2301 << 2304 << 2311 << 2324 << 2335 << 2343 << 2353
-				 << 2354 << 2355 << 2360 << 2362 << 2371 << 2372 << 2392 << 2395 << 2403 << 2419
-				 << 2420 << 2421 << 2422 << 2423 << 2438 << 2440 << 2479 << 2482 << 2489 << 2506
-				 << 2509 << 2527 << 2539 << 2548 << 2567 << 2571 << 2613 << 2627 << 2655 << 2681
-				 << 2683 << 2742 << 2768 << 2775 << 2782 << 2787 << 2811 << 2841 << 2859 << 2903
-				 << 2950 << 2964 << 2974 << 2976 << 2985 << 3034 << 3077 << 3079 << 3115 << 3147
-				 << 3166 << 3169 << 3184 << 3190 << 3193 << 3198 << 3226 << 3227 << 3242 << 3245
-				 << 3277 << 3294 << 3310 << 3344 << 3377 << 3379 << 3384 << 3395 << 3412 << 3414
-				 << 3432 << 3486 << 3489 << 3504 << 3521 << 3556 << 3593 << 3607 << 3608 << 3610
-				 << 3613 << 3619 << 3621 << 3626 << 3628 << 3631 << 3640 << 3655 << 3665 << 3675
-				 << 3686 << 3726 << 3729 << 3810 << 3813 << 3877 << 3893 << 3898 << 3900 << 3912
-				 << 3938 << 3941 << 3945 << 3949 << 3953 << 3962 << 3982 << 3992 << 3998 << 4026
-				 << 4027 << 4030 << 4036 << 4039 << 4041 << 4051 << 4085 << 4088 << 4102 << 4111
-				 << 4143 << 4147 << 4150 << 4151 << 4179 << 4203 << 4214 << 4216 << 4245 << 4251
-				 << 4258 << 4261 << 4273 << 4274 << 4278 << 4281 << 4293 << 4303 << 4314 << 4346
-				 << 4350 << 4361 << 4365 << 4371 << 4394 << 4414 << 4419 << 4429 << 4435 << 4438
-				 << 4442 << 4448 << 4449 << 4450 << 4459 << 4473 << 4477 << 4478 << 4485 << 4490
-				 << 4494 << 4526 << 4527 << 4535 << 4536 << 4546 << 4548 << 4550 << 4559 << 4565
-				 << 4570 << 4594 << 4596 << 4618 << 4631 << 4636 << 4643 << 4654 << 4656 << 4660
-				 << 4665 << 4666 << 4689 << 4697 << 4698 << 4699 << 4725 << 4753 << 4754 << 4762
-				 << 4781 << 4800 << 4845 << 4856 << 4866 << 4900 << 4958 << 4995 << 5005 << 5033
-				 << 5054 << 5195 << 5248 << 5273 << 5322 << 5363 << 5364 << 5466 << 5473 << 5474
-				 << 5557 << 5566 << 5576 << 5631 << 5634 << 5676 << 5689 << 5694 << 5746 << 5846
-				 << 5866 << 5897 << 5907 << 5982 << 6118 << 6144 << 6171 << 6207 << 6217 << 6229
-				 << 6235 << 6284 << 6287 << 6293 << 6304 << 6316 << 6342 << 6355 << 6356 << 6369
-				 << 6401 << 6426 << 6440 << 6445 << 6451 << 6514 << 6517 << 6520 << 6522 << 6528
-				 << 6540 << 6543 << 6544 << 6553 << 6568 << 6569 << 6583 << 6624 << 6629 << 6633
-				 << 6638 << 6642 << 6645 << 6664 << 6712 << 6755 << 6756 << 6781 << 6802 << 6818
-				 << 6823 << 6826 << 6830 << 6834 << 6866 << 6882 << 6885 << 6905 << 6910 << 6934
-				 << 6939 << 6940 << 6946 << 7000 << 7006 << 7008 << 7009 << 7044 << 7062 << 7086
-				 << 7128 << 7142 << 7160 << 7209 << 7217 << 7243 << 7296 << 7331 << 7380 << 7448
-				 << 7479 << 7510 << 7606 << 7662 << 7686 << 7723 << 7727 << 7789 << 7790 << 7814;
-			for (int i=0; i < h400list.size(); i++)
-				result << QString("NGC %1").arg(h400list.at(i));
+			for (unsigned int i = 0; i < sizeof(H400_LIST) / sizeof(H400_LIST[0]); i++)
+				result << QString("NGC %1").arg(H400_LIST[i]);
 			break;
 		}
 		default:
@@ -3188,14 +3194,10 @@ QList<NebulaP> NebulaMgr::getDeepSkyObjectsByType(const QString &objType)
 			break;
 		case 150: // Dwarf galaxies
 		{
-			QList<int> dwarfGalaxies;
-			dwarfGalaxies  <<    3589 <<    3792 <<    6830 <<   10074 <<   19441 <<   28913
-				       <<   29194 <<   29653 <<   50779 <<   54074 <<   60095 <<   63287
-				       <<   69519 <<   88608 << 2807155 << 3097691;
 			NebulaP ds;
-			for (int i=0; i < dwarfGalaxies.size(); i++)
+			for (unsigned int i = 0; i < sizeof(DWARF_GALAXIES) / sizeof(DWARF_GALAXIES[0]); i++)
 			{
-				ds = searchPGC(dwarfGalaxies.at(i));
+				ds = searchPGC(DWARF_GALAXIES[i]);
 				if (!ds.isNull())
 					dso.append(ds);
 			}
@@ -3203,51 +3205,10 @@ QList<NebulaP> NebulaMgr::getDeepSkyObjectsByType(const QString &objType)
 		}
 		case 151: // Herschel 400 Catalogue
 		{
-			QList<int> h400list;
-			h400list <<   40 <<  129 <<  136 <<  157 <<  185 <<  205 <<  225 <<  246 <<  247 <<  253
-				 <<  278 <<  288 <<  381 <<  404 <<  436 <<  457 <<  488 <<  524 <<  559 <<  584
-				 <<  596 <<  598 <<  613 <<  615 <<  637 <<  650 <<  654 <<  659 <<  663 <<  720
-				 <<  752 <<  772 <<  779 <<  869 <<  884 <<  891 <<  908 <<  936 << 1022 << 1023
-				 << 1027 << 1052 << 1055 << 1084 << 1245 << 1342 << 1407 << 1444 << 1501 << 1502
-				 << 1513 << 1528 << 1535 << 1545 << 1647 << 1664 << 1788 << 1817 << 1857 << 1907
-				 << 1931 << 1961 << 1964 << 1980 << 1999 << 2022 << 2024 << 2126 << 2129 << 2158
-				 << 2169 << 2185 << 2186 << 2194 << 2204 << 2215 << 2232 << 2244 << 2251 << 2264
-				 << 2266 << 2281 << 2286 << 2301 << 2304 << 2311 << 2324 << 2335 << 2343 << 2353
-				 << 2354 << 2355 << 2360 << 2362 << 2371 << 2372 << 2392 << 2395 << 2403 << 2419
-				 << 2420 << 2421 << 2422 << 2423 << 2438 << 2440 << 2479 << 2482 << 2489 << 2506
-				 << 2509 << 2527 << 2539 << 2548 << 2567 << 2571 << 2613 << 2627 << 2655 << 2681
-				 << 2683 << 2742 << 2768 << 2775 << 2782 << 2787 << 2811 << 2841 << 2859 << 2903
-				 << 2950 << 2964 << 2974 << 2976 << 2985 << 3034 << 3077 << 3079 << 3115 << 3147
-				 << 3166 << 3169 << 3184 << 3190 << 3193 << 3198 << 3226 << 3227 << 3242 << 3245
-				 << 3277 << 3294 << 3310 << 3344 << 3377 << 3379 << 3384 << 3395 << 3412 << 3414
-				 << 3432 << 3486 << 3489 << 3504 << 3521 << 3556 << 3593 << 3607 << 3608 << 3610
-				 << 3613 << 3619 << 3621 << 3626 << 3628 << 3631 << 3640 << 3655 << 3665 << 3675
-				 << 3686 << 3726 << 3729 << 3810 << 3813 << 3877 << 3893 << 3898 << 3900 << 3912
-				 << 3938 << 3941 << 3945 << 3949 << 3953 << 3962 << 3982 << 3992 << 3998 << 4026
-				 << 4027 << 4030 << 4036 << 4039 << 4041 << 4051 << 4085 << 4088 << 4102 << 4111
-				 << 4143 << 4147 << 4150 << 4151 << 4179 << 4203 << 4214 << 4216 << 4245 << 4251
-				 << 4258 << 4261 << 4273 << 4274 << 4278 << 4281 << 4293 << 4303 << 4314 << 4346
-				 << 4350 << 4361 << 4365 << 4371 << 4394 << 4414 << 4419 << 4429 << 4435 << 4438
-				 << 4442 << 4448 << 4449 << 4450 << 4459 << 4473 << 4477 << 4478 << 4485 << 4490
-				 << 4494 << 4526 << 4527 << 4535 << 4536 << 4546 << 4548 << 4550 << 4559 << 4565
-				 << 4570 << 4594 << 4596 << 4618 << 4631 << 4636 << 4643 << 4654 << 4656 << 4660
-				 << 4665 << 4666 << 4689 << 4697 << 4698 << 4699 << 4725 << 4753 << 4754 << 4762
-				 << 4781 << 4800 << 4845 << 4856 << 4866 << 4900 << 4958 << 4995 << 5005 << 5033
-				 << 5054 << 5195 << 5248 << 5273 << 5322 << 5363 << 5364 << 5466 << 5473 << 5474
-				 << 5557 << 5566 << 5576 << 5631 << 5634 << 5676 << 5689 << 5694 << 5746 << 5846
-				 << 5866 << 5897 << 5907 << 5982 << 6118 << 6144 << 6171 << 6207 << 6217 << 6229
-				 << 6235 << 6284 << 6287 << 6293 << 6304 << 6316 << 6342 << 6355 << 6356 << 6369
-				 << 6401 << 6426 << 6440 << 6445 << 6451 << 6514 << 6517 << 6520 << 6522 << 6528
-				 << 6540 << 6543 << 6544 << 6553 << 6568 << 6569 << 6583 << 6624 << 6629 << 6633
-				 << 6638 << 6642 << 6645 << 6664 << 6712 << 6755 << 6756 << 6781 << 6802 << 6818
-				 << 6823 << 6826 << 6830 << 6834 << 6866 << 6882 << 6885 << 6905 << 6910 << 6934
-				 << 6939 << 6940 << 6946 << 7000 << 7006 << 7008 << 7009 << 7044 << 7062 << 7086
-				 << 7128 << 7142 << 7160 << 7209 << 7217 << 7243 << 7296 << 7331 << 7380 << 7448
-				 << 7479 << 7510 << 7606 << 7662 << 7686 << 7723 << 7727 << 7789 << 7790 << 7814;
 			NebulaP ds;
-			for (int i=0; i < h400list.size(); i++)
+			for (unsigned int i = 0; i < sizeof(H400_LIST) / sizeof(H400_LIST[0]); i++)
 			{
-				ds = searchNGC(h400list.at(i));
+				ds = searchNGC(H400_LIST[i]);
 				if (!ds.isNull())
 					dso.append(ds);
 			}

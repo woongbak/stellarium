@@ -1113,7 +1113,14 @@
              </widget>
             </item>
             <item>
-             <widget class="QListWidget" name="wutMatchingObjectsListWidget"/>
+             <widget class="QLineEdit" name="wutMatchingObjectsLineEdit">
+              <property name="placeholderText">
+               <string>Search in list...</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QListView" name="wutMatchingObjectsListView"/>
             </item>
             <item>
              <layout class="QGridLayout" name="gridLayoutRTSData">
@@ -1125,7 +1132,7 @@
                </widget>
               </item>
               <item row="0" column="4">
-               <widget class="QLabel" name="label">
+               <widget class="QLabel" name="labelSet">
                 <property name="text">
                  <string comment="celestial event">Set:</string>
                 </property>
@@ -1197,6 +1204,19 @@
         </widget>
         <widget class="QWidget" name="stackedWidgetPage8">
          <layout class="QGridLayout" name="gridLayout_8">
+          <item row="1" column="0">
+           <spacer name="verticalSpacer">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>148</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
           <item row="0" column="0">
            <layout class="QGridLayout" name="gridLayoutPCalc">
             <item row="7" column="1">
@@ -1291,6 +1311,9 @@
             <item row="3" column="1">
              <widget class="QLabel" name="labelAngularDistanceValue"/>
             </item>
+            <item row="5" column="1">
+             <widget class="QLabel" name="labelSynodicPeriodValue"/>
+            </item>
             <item row="0" column="1">
              <widget class="QLabel" name="labelSCB">
               <property name="text">
@@ -1308,23 +1331,24 @@
               </property>
              </widget>
             </item>
-            <item row="5" column="1">
-             <widget class="QLabel" name="labelSynodicPeriodValue"/>
+            <item row="8" column="0">
+             <widget class="QLabel" name="labelEquatorialRadiiRatioRatio">
+              <property name="text">
+               <string>Equatorial diameters ratio:</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="8" column="1">
+             <widget class="QLabel" name="labelEquatorialRadiiRatioValue">
+              <property name="text">
+               <string/>
+              </property>
+             </widget>
             </item>
            </layout>
-          </item>
-          <item row="1" column="0">
-           <spacer name="verticalSpacer">
-            <property name="orientation">
-             <enum>Qt::Vertical</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>20</width>
-              <height>148</height>
-             </size>
-            </property>
-           </spacer>
           </item>
          </layout>
         </widget>

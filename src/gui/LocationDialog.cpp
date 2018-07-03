@@ -66,6 +66,7 @@ void LocationDialog::retranslate()
 		populatePlanetList();
 		populateCountryList();
 		populateTimeZonesList();
+		populateTooltips();
 	}
 }
 
@@ -174,6 +175,8 @@ void LocationDialog::createDialogContent()
 
 	connectEditSignals();
 
+	populateTooltips();
+
 	connect(core, SIGNAL(locationChanged(StelLocation)), this, SLOT(updateFromProgram(StelLocation)));
 
 	ui->citySearchLineEdit->setFocus();
@@ -190,6 +193,12 @@ void LocationDialog::handleDialogSizeChanged(QSizeF size)
 void LocationDialog::reloadLocations()
 {
 	allModel->setStringList(StelApp::getInstance().getLocationMgr().getAllMap().keys());
+}
+
+void LocationDialog::populateTooltips()
+{
+	ui->resetListPushButton->setToolTip(q_("Reset location list to show all known locations"));
+	ui->gpsToolButton->setToolTip(QString("<p>%1</p>").arg(q_("Toggle fetching GPS location. (Does not change time zone!) When satisfied, toggle off to let other programs access the GPS device.")));
 }
 
 // Update the widget to make sure it is synchrone if the location is changed programmatically
@@ -414,13 +423,12 @@ void LocationDialog::populateTimeZonesList()
 	QComboBox* timeZones = ui->timeZoneNameComboBox;
 	// Return a list of all the known time zone names (from Qt)
 	QStringList tzNames;
-	QList<QByteArray> tzList = QTimeZone::availableTimeZoneIds(); // System dependent set of IANA timezone names.
-	QList<QByteArray>::iterator i;
-	for (i = tzList.begin(); i!= tzList.end(); ++i)
+	auto tzList = QTimeZone::availableTimeZoneIds(); // System dependent set of IANA timezone names.
+	for (const auto& tz : tzList)
 	{
-		tzNames.append(*i);
+		tzNames.append(tz);
 		// Activate this to get a list of known TZ names...
-		//qDebug() << "Qt/IANA TZ entry: " << *i;
+		//qDebug() << "Qt/IANA TZ entry: " << tz;
 	}
 
 	tzNames.sort();

@@ -42,6 +42,8 @@
 
 #include <QFileDialog>
 #include <QDir>
+#include <QSortFilterProxyModel>
+#include <QStringListModel>
 
 QVector<Vec3d> AstroCalcDialog::EphemerisListCoords;
 QVector<QString> AstroCalcDialog::EphemerisListDates;
@@ -66,6 +68,8 @@ QString AstroCalcDialog::yAxis2Legend = "";
 
 AstroCalcDialog::AstroCalcDialog(QObject* parent)
 	: StelDialog("AstroCalc", parent)
+	, wutModel(Q_NULLPTR)
+	, proxyModel(Q_NULLPTR)
 	, currentTimeLine(Q_NULLPTR)
 	, plotAltVsTime(false)	
 	, plotAltVsTimeSun(false)
@@ -141,7 +145,7 @@ void AstroCalcDialog::createDialogContent()
 	// Kinetic scrolling for tablet pc and pc
 	QList<QWidget*> addscroll;
 	addscroll << ui->celestialPositionsTreeWidget << ui->ephemerisTreeWidget << ui->phenomenaTreeWidget
-			  << ui->wutCategoryListWidget << ui->wutMatchingObjectsListWidget;
+		  << ui->wutCategoryListWidget << ui->wutMatchingObjectsListView;
 	installKineticScrolling(addscroll);
 	acEndl = "\r\n";
 #else
@@ -180,7 +184,7 @@ void AstroCalcDialog::createDialogContent()
 	ui->dateToDateTimeEdit->setDateTime(currentDT.addMonths(1));
 	ui->phenomenFromDateEdit->setDateTime(currentDT);
 	ui->phenomenToDateEdit->setDateTime(currentDT.addMonths(1));
-	ui->monthlyElevationTimeInfo->setStyleSheet("font-size: 18pt");
+	ui->monthlyElevationTimeInfo->setStyleSheet("font-size: 18pt; color: rgb(238, 238, 238);");
 
 	// TODO: Switch a QDateTimeEdit to StelDateTimeEdit widget to apply wide range of dates
 	QDate min = QDate(100, 1, 1);
@@ -265,17 +269,29 @@ void AstroCalcDialog::createDialogContent()
 	connect(ui->graphsSecondComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(saveGraphsSecondId(int)));
 	connect(ui->drawGraphsPushButton, SIGNAL(clicked()), this, SLOT(drawXVsTimeGraphs()));
 
+	wutModel = new QStringListModel(this);
+	proxyModel = new QSortFilterProxyModel(ui->wutMatchingObjectsListView);
+	proxyModel->setSourceModel(wutModel);
+	proxyModel->sort(0, Qt::AscendingOrder);
+	proxyModel->setFilterCaseSensitivity(Qt::CaseInsensitive);
+	ui->wutMatchingObjectsListView->setModel(proxyModel);
+
 	ui->wutMagnitudeDoubleSpinBox->setValue(conf->value("astrocalc/wut_magnitude_limit", 10.0).toDouble());
 	connect(ui->wutMagnitudeDoubleSpinBox, SIGNAL(valueChanged(double)), this, SLOT(saveWutMagnitudeLimit(double)));
 	connect(ui->wutComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(saveWutTimeInterval(int)));
 	connect(ui->wutCategoryListWidget, SIGNAL(currentRowChanged(int)), this, SLOT(calculateWutObjects()));
-	connect(ui->wutMatchingObjectsListWidget, SIGNAL(currentRowChanged(int)), this, SLOT(selectWutObject()));
+	connect(ui->wutMatchingObjectsListView->selectionModel() , SIGNAL(currentRowChanged(const QModelIndex&, const QModelIndex&)),
+		this, SLOT(selectWutObject(const QModelIndex&)));
 	connect(ui->saveObjectsButton, SIGNAL(clicked()), this, SLOT(saveWutObjects()));
+	connect(ui->wutMatchingObjectsLineEdit, SIGNAL(textChanged(const QString&)), proxyModel, SLOT(setFilterWildcard(const QString&)));
 	connect(dsoMgr, SIGNAL(catalogFiltersChanged(Nebula::CatalogGroup)), this, SLOT(calculateWutObjects()));
 	connect(dsoMgr, SIGNAL(typeFiltersChanged(Nebula::TypeGroup)), this, SLOT(calculateWutObjects()));
 	connect(dsoMgr, SIGNAL(flagSizeLimitsUsageChanged(bool)), this, SLOT(calculateWutObjects()));
 	connect(dsoMgr, SIGNAL(minSizeLimitChanged(double)), this, SLOT(calculateWutObjects()));
 	connect(dsoMgr, SIGNAL(maxSizeLimitChanged(double)), this, SLOT(calculateWutObjects()));
+
+	QAction *clearAction = ui->wutMatchingObjectsLineEdit->addAction(QIcon(":/graphicGui/backspace-white.png"), QLineEdit::ActionPosition::TrailingPosition);
+	connect(clearAction, SIGNAL(triggered()), this, SLOT(searchWutClear()));
 
 	currentCelestialPositions();
 
@@ -294,6 +310,33 @@ void AstroCalcDialog::createDialogContent()
 	connect(ui->stackListWidget, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)), this, SLOT(changePage(QListWidgetItem*, QListWidgetItem*)));
 
 	updateTabBarListWidgetWidth();
+
+	// Let's improve visibility of the text
+	QString style = "QLabel { color: rgb(238, 238, 238); }";
+	ui->celestialPositionsTimeLabel->setStyleSheet(style);
+	ui->altVsTimeLabel->setStyleSheet(style);
+	ui->monthlyElevationLabel->setStyleSheet(style);
+	ui->graphsFirstLabel->setStyleSheet(style);
+	ui->graphsCelestialBodyLabel->setStyleSheet(style);
+	ui->graphsSecondLabel->setStyleSheet(style);
+	ui->labelRise->setStyleSheet(style);
+	ui->labelRiseValue->setStyleSheet(style);
+	ui->labelTransit->setStyleSheet(style);
+	ui->labelTransitValue->setStyleSheet(style);
+	ui->labelSet->setStyleSheet(style);
+	ui->labelSetValue->setStyleSheet(style);
+	style = "QCheckBox { color: rgb(238, 238, 238); }";
+	ui->sunAltitudeCheckBox->setStyleSheet(style);
+	ui->moonAltitudeCheckBox->setStyleSheet(style);
+	ui->positiveAltitudeOnlyCheckBox->setStyleSheet(style);
+	ui->monthlyElevationPositiveCheckBox->setStyleSheet(style);
+}
+
+void AstroCalcDialog::searchWutClear()
+{
+	ui->wutMatchingObjectsLineEdit->clear();
+	proxyModel->setSourceModel(wutModel);
+	proxyModel->sort(0, Qt::AscendingOrder);	
 }
 
 void AstroCalcDialog::updateAstroCalcData()
@@ -3656,7 +3699,6 @@ void AstroCalcDialog::saveWutTimeInterval(int index)
 
 void AstroCalcDialog::calculateWutObjects()
 {
-	ui->wutMatchingObjectsListWidget->clear();
 	if (ui->wutCategoryListWidget->currentItem())
 	{
 		ui->labelRiseValue->setText("");
@@ -4088,19 +4130,18 @@ void AstroCalcDialog::calculateWutObjects()
 		}
 
 		core->setJD(JD);
-		ui->wutMatchingObjectsListWidget->blockSignals(true);
-		ui->wutMatchingObjectsListWidget->clear();
-		ui->wutMatchingObjectsListWidget->addItems(wutObjects.keys());
-		ui->wutMatchingObjectsListWidget->sortItems(Qt::AscendingOrder);
-		ui->wutMatchingObjectsListWidget->blockSignals(false);
+		ui->wutMatchingObjectsListView->blockSignals(true);
+		ui->wutMatchingObjectsListView->reset();
+		wutModel->setStringList(wutObjects.keys());
+		ui->wutMatchingObjectsListView->blockSignals(false);
 	}
 }
 
-void AstroCalcDialog::selectWutObject()
+void AstroCalcDialog::selectWutObject(const QModelIndex &index)
 {
-	if (ui->wutMatchingObjectsListWidget->currentItem())
+	if (index.isValid())
 	{
-		QString wutObjectEnglisName = wutObjects.value(ui->wutMatchingObjectsListWidget->currentItem()->text());
+		QString wutObjectEnglisName = wutObjects.value(index.data().toString());
 		if (objectMgr->findAndSelectI18n(wutObjectEnglisName) || objectMgr->findAndSelect(wutObjectEnglisName))
 		{
 			const QList<StelObjectP> newSelected = objectMgr->getSelectedObject();
@@ -4154,9 +4195,9 @@ void AstroCalcDialog::saveWutObjects()
 	QTextStream wutObjList(&objlist);
 	wutObjList.setCodec("UTF-8");
 
-	for (int row = 0; row < ui->wutMatchingObjectsListWidget->count(); ++row)
+	for (int row = 0; row < proxyModel->rowCount(); ++row)
 	{
-		wutObjList << ui->wutMatchingObjectsListWidget->item(row)->text() << acEndl;
+		wutObjList << proxyModel->index(row, 0).data(Qt::DisplayRole).toString() << acEndl;
 	}
 
 	objlist.close();
@@ -4303,4 +4344,15 @@ void AstroCalcDialog::computePlanetaryData()
 	}
 
 	ui->labelSynodicPeriodValue->setText(synodicPeriod);
+
+	double fcbs = 2.0 * AU * firstCBId->getRadius();
+	double scbs = 2.0 * AU * secondCBId->getRadius();
+	double sratio = fcbs/scbs;
+
+	int ss = 2;
+	if (sratio < 1.0)
+		ss = 6;
+
+	QString sizeRatio = QString("%1 (%2 %4 / %3 %4)").arg(QString::number(sratio, 'f', ss), QString::number(fcbs, 'f', 1), QString::number(scbs, 'f', 1) , km);
+	ui->labelEquatorialRadiiRatioValue->setText(sizeRatio);
 }
