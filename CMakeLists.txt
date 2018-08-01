@@ -627,7 +627,7 @@ IF(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebI
      ADD_DEFINITIONS(-DNDEBUG)
 ENDIF()
 
-CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/cmake/default_config.ini.cmake ${CMAKE_SOURCE_DIR}/data/default_config.ini @ONLY)
+CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/cmake/default_cfg.ini.cmake ${CMAKE_SOURCE_DIR}/data/default_cfg.ini @ONLY)
 
 ########### uninstall files ###############
 CONFIGURE_FILE(
@@ -662,7 +662,7 @@ IF(GENERATE_PACKAGE_TARGET)
      SET(CPACK_SOURCE_IGNORE_FILES "/.tx/" "/CVS/" "/.svn/" "/.git/" "/.github/" "/.bzr/" "builds/" "installers/" "util/spout2" "util/DSSToStellarium/toastForShape$" "Stellarium.tag$" "Stellarium.kdevelop.pcs$" "/CMakeLists.txt.user$" "\\\\.bzrignore$" "\\\\.gitignore$" "\\\\.clang-format$" "\\\\.yml$" "~$" "\\\\.swp$" "\\\\.#" "/#")
      SET(CPACK_RPM_PACKAGE_LICENSE "GPLv2+")
      SET(CPACK_RPM_PACKAGE_GROUP "Amusements/Graphics")
-     SET(CPACK_RPM_PACKAGE_URL "http://stellarium.org/")
+     SET(CPACK_RPM_PACKAGE_URL "https://stellarium.org/")
      SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "${CPACK_PACKAGE_VENDOR} <stellarium@googlegroups.com>")
      SET(CPACK_DEBIAN_PACKAGE_SECTION "science")
      SET(CPACK_DEBIAN_PACKAGE_VERSION "${VERSION}+deb1")

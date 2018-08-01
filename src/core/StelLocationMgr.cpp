@@ -487,7 +487,7 @@ void StelLocationMgr::setLocations(const LocationList &locations)
 
 void StelLocationMgr::generateBinaryLocationFile(const QString& fileName, bool isUserLocation, const QString& binFilePath) const
 {
-	qWarning() << "Generating a locations list...";
+	qDebug() << "Generating a locations list...";
 	const QMap<QString, StelLocation>& cities = loadCities(fileName, isUserLocation);
 	QFile binfile(StelFileMgr::findFile(binFilePath, StelFileMgr::New));
 	if(binfile.open(QIODevice::WriteOnly))
@@ -498,6 +498,7 @@ void StelLocationMgr::generateBinaryLocationFile(const QString& fileName, bool i
 		binfile.flush();
 		binfile.close();
 	}
+	qDebug() << "[...] Please use 'gzip -nc base_locations.bin > base_locations.bin.gz' to pack a locations list.";
 }
 
 LocationMap StelLocationMgr::loadCitiesBin(const QString& fileName)
@@ -804,7 +805,8 @@ bool StelLocationMgr::deleteUserLocation(const QString& id)
 // lookup location from IP address.
 void StelLocationMgr::locationFromIP()
 {
-	QNetworkRequest req( QUrl( QString("http://freegeoip.net/json/") ) );
+	QSettings* conf = StelApp::getInstance().getSettings();
+	QNetworkRequest req( QUrl( conf->value("main/geoip_api_url", "https://freegeoip.stellarium.org/json/").toString() ) );
 	req.setAttribute(QNetworkRequest::CacheLoadControlAttribute, QNetworkRequest::PreferCache);
 	req.setRawHeader("User-Agent", StelUtils::getUserAgentString().toLatin1());
 	QNetworkReply* networkReply=StelApp::getInstance().getNetworkAccessManager()->get(req);
@@ -943,10 +945,14 @@ void StelLocationMgr::changeLocationFromNetworkLookup()
 			QVariantMap locMap = StelJsonParser::parse(networkReply->readAll()).toMap();
 
 			QString ipRegion = locMap.value("region_name").toString();
+			if (ipRegion.isEmpty())
+				ipRegion = locMap.value("region").toString();
 			QString ipCity = locMap.value("city").toString();
 			QString ipCountry = locMap.value("country_name").toString(); // NOTE: Got a short name of country
 			QString ipCountryCode = locMap.value("country_code").toString();
 			QString ipTimeZone = locMap.value("time_zone").toString();
+			if (ipTimeZone.isEmpty())
+				ipTimeZone = locMap.value("timezone").toString();
 			float latitude=locMap.value("latitude").toFloat();
 			float longitude=locMap.value("longitude").toFloat();
 

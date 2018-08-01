@@ -66,8 +66,10 @@ public:
 		CatPK		= 0x00020000, //!< Catalogue of Galactic Planetary Nebulae (PK)
 		CatPNG		= 0x00040000, //!< Strasbourg-ESO Catalogue of Galactic Planetary Nebulae (Acker+, 1992) (PN G)
 		CatSNRG		= 0x00080000, //!< A catalogue of Galactic supernova remnants (Green, 2014) (SNR G)
-		CatACO		= 0x00100000, //!< A Catalog of Rich Clusters of Galaxies (Abell+ 1989) (ACO)
-		CatHCG		= 0x00200000  //!< Hickson, Compact Group (Hickson+ 1982) (HCG)
+		CatACO		= 0x00100000, //!< A Catalog of Rich Clusters of Galaxies (Abell+, 1989) (ACO)
+		CatHCG		= 0x00200000, //!< Hickson, Compact Group (Hickson+ 1982) (HCG)
+		CatAbell	= 0x00400000, //!< Abell Catalog of Planetary Nebulae (Abell, 1966) (Abell; PN A66)
+		CatESO		= 0x00800000  //!< ESO/Uppsala Survey of the ESO(B) Atlas (Lauberts, 1982) (ESO)
 	};
 	Q_DECLARE_FLAGS(CatalogGroup, CatalogGroupFlags)
 
@@ -197,7 +199,7 @@ public:
 	void addNameAlias(QString name) { englishAliases.append(name); }
 	void removeAllNames() { englishName=""; englishAliases.clear(); }
 
-	//! Get designation for DSO (with priority: M, C, NGC, IC, B, Sh2, VdB, RCW, LDN, LBN, Cr, Mel, PGC, UGC, Ced, Arp, VV, PK, PN G, SNR G, ACO, HCG)
+	//! Get designation for DSO (with priority: M, C, NGC, IC, B, Sh2, VdB, RCW, LDN, LBN, Cr, Mel, PGC, UGC, Ced, Arp, VV, PK, PN G, SNR G, ACO, HCG, Abell, ESO)
 	//! @return a designation
 	QString getDSODesignation() const;
 
@@ -249,12 +251,14 @@ private:
 	unsigned int UGC_nb;		// UGC number (The Uppsala General Catalogue of Galaxies)
 	unsigned int Arp_nb;		// Arp number (Atlas of Peculiar Galaxies (Arp, 1966))
 	unsigned int VV_nb;		// VV number (The Catalogue of Interacting Galaxies (Vorontsov-Velyaminov+, 2001))
+	unsigned int Abell_nb;		// Abell number (Abell Catalog of Planetary Nebulae (Abell, 1966))
 	QString Ced_nb;			// Ced number (Cederblad Catalog of bright diffuse Galactic nebulae)	
 	QString PK_nb;			// PK number (Catalogue of Galactic Planetary Nebulae)
 	QString PNG_nb;			// PN G number (Strasbourg-ESO Catalogue of Galactic Planetary Nebulae (Acker+, 1992))
 	QString SNRG_nb;		// SNR G number (A catalogue of Galactic supernova remnants (Green, 2014))
-	QString ACO_nb;			// ACO number (Rich Clusters of Galaxies (Abell+ 1989))
-	QString HCG_nb;			// HCG number (Hickson Compact Group (Hickson+ 1989))
+	QString ACO_nb;			// ACO number (Rich Clusters of Galaxies (Abell+, 1989))
+	QString HCG_nb;			// HCG number (Hickson Compact Group (Hickson, 1989))
+	QString ESO_nb;			// ESO number (ESO/Uppsala Survey of the ESO(B) Atlas (Lauberts, 1982))
 	bool withoutID;
 	QString englishName;		// English name
 	QStringList englishAliases;	// English aliases

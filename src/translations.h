@@ -415,6 +415,10 @@ class Translations
 		N_("A Catalog of Rich Clusters of Galaxies");
 		// TRANSLATORS: Catalogue of objects (for "Lists" in the search tool)
 		N_("Hickson Compact Group");
+		// TRANSLATORS: Catalogue of objects (for "Lists" in the search tool)
+		N_("Abell Catalog of Planetary Nebulae");
+		// TRANSLATORS: Catalogue of objects (for "Lists" in the search tool)
+		N_("ESO/Uppsala Survey of the ESO(B) Atlas")
 		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
 		N_("Dwarf galaxies");
 		// TRANSLATORS: Catalogue of objects (for "Lists" in the search tool)
@@ -469,6 +473,8 @@ class Translations
 		N_("Maori");
 		// TRANSLATORS: Name of the sky culture
 		N_("Mongolian");
+		// TRANSLATORS: Name of the sky culture
+		N_("Lokono");
 		// TRANSLATORS: Name of the sky culture
 		N_("Navajo");
 		// TRANSLATORS: Name of the sky culture

@@ -26,6 +26,7 @@
 #include "StelTranslator.hpp"
 #include "StelLocaleMgr.hpp"
 #include "StelFileMgr.hpp"
+#include "AngleSpinBox.hpp"
 
 #include "SolarSystem.hpp"
 #include "Planet.hpp"
@@ -226,10 +227,17 @@ void AstroCalcDialog::createDialogContent()
 	connect(ui->ephemerisStepComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(saveEphemerisTimeStep(int)));
 	connect(ui->celestialBodyComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(saveEphemerisCelestialBody(int)));
 
+	// Let's use DMS and decimal degrees as acceptable values for "Maximum allowed separation" input box
+	ui->allowedSeparationSpinBox->setDisplayFormat(AngleSpinBox::DMSSymbols);
+	ui->allowedSeparationSpinBox->setPrefixType(AngleSpinBox::NormalPlus);
+	ui->allowedSeparationSpinBox->setMinimum(0.0, true);
+	ui->allowedSeparationSpinBox->setMaximum(10.0, true);
+	ui->allowedSeparationSpinBox->setWrapping(false);
+
 	ui->phenomenaOppositionCheckBox->setChecked(conf->value("astrocalc/flag_phenomena_opposition", false).toBool());
 	connect(ui->phenomenaOppositionCheckBox, SIGNAL(toggled(bool)), this, SLOT(savePhenomenaOppositionFlag(bool)));
-	ui->allowedSeparationDoubleSpinBox->setValue(conf->value("astrocalc/phenomena_angular_separation", 1.0).toDouble());
-	connect(ui->allowedSeparationDoubleSpinBox, SIGNAL(valueChanged(double)), this, SLOT(savePhenomenaAngularSeparation(double)));
+	ui->allowedSeparationSpinBox->setDegrees(conf->value("astrocalc/phenomena_angular_separation", 1.0).toDouble());
+	connect(ui->allowedSeparationSpinBox, SIGNAL(valueChanged()), this, SLOT(savePhenomenaAngularSeparation()));
 
 	connect(ui->phenomenaPushButton, SIGNAL(clicked()), this, SLOT(calculatePhenomena()));
 	connect(ui->phenomenaCleanupButton, SIGNAL(clicked()), this, SLOT(cleanupPhenomena()));
@@ -334,9 +342,7 @@ void AstroCalcDialog::createDialogContent()
 
 void AstroCalcDialog::searchWutClear()
 {
-	ui->wutMatchingObjectsLineEdit->clear();
-	proxyModel->setSourceModel(wutModel);
-	proxyModel->sort(0, Qt::AscendingOrder);	
+	ui->wutMatchingObjectsLineEdit->clear();	
 }
 
 void AstroCalcDialog::updateAstroCalcData()
@@ -451,7 +457,7 @@ void AstroCalcDialog::setCelestialPositionsHeaderNames()
 		positionsHeader << q_("S.B.");
 	}
 	// TRANSLATORS: time of transit
-	positionsHeader << qc_("Transit", "celestial event");
+	positionsHeader << qc_("Transit", "celestial event; passage across a meridian");
 	// TRANSLATORS: type of object
 	positionsHeader << q_("Type");
 
@@ -559,6 +565,10 @@ void AstroCalcDialog::populateCelestialCategoryList()
 		category->addItem(q_("A Catalog of Rich Clusters of Galaxies"), "120");
 	if (catalogFilters & Nebula::CatHCG)
 		category->addItem(q_("Hickson Compact Group"), "121");
+	if (catalogFilters & Nebula::CatAbell)
+		category->addItem(q_("Abell Catalog of Planetary Nebulae"), "122");
+	if (catalogFilters & Nebula::CatESO)
+		category->addItem(q_("ESO/Uppsala Survey of the ESO(B) Atlas"), "123");
 	category->addItem(q_("Dwarf galaxies"), "150");
 	category->addItem(q_("Herschel 400 Catalogue"), "151");
 	category->addItem(q_("Bright double stars"), "170");
@@ -1916,9 +1926,9 @@ void AstroCalcDialog::savePhenomenaOppositionFlag(bool b)
 	conf->setValue("astrocalc/flag_phenomena_opposition", b);
 }
 
-void AstroCalcDialog::savePhenomenaAngularSeparation(double v)
+void AstroCalcDialog::savePhenomenaAngularSeparation()
 {
-	conf->setValue("astrocalc/phenomena_angular_separation", QString::number(v, 'f', 5));
+	conf->setValue("astrocalc/phenomena_angular_separation", QString::number(ui->allowedSeparationSpinBox->valueDegrees(), 'f', 5));
 }
 
 void AstroCalcDialog::drawAltVsTimeDiagram()
@@ -2855,7 +2865,7 @@ void AstroCalcDialog::selectCurrentPhenomen(const QModelIndex& modelIndex)
 void AstroCalcDialog::calculatePhenomena()
 {
 	QString currentPlanet = ui->object1ComboBox->currentData().toString();
-	double separation = ui->allowedSeparationDoubleSpinBox->value();
+	double separation = ui->allowedSeparationSpinBox->valueDegrees();
 	bool opposition = ui->phenomenaOppositionCheckBox->isChecked();
 
 	initListPhenomena();
@@ -3172,7 +3182,10 @@ void AstroCalcDialog::fillPhenomenaTable(const QMap<double, double> list, const 
 			double d1 = object1->getJ2000EquatorialPos(core).length();
 			double d2 = object2->getJ2000EquatorialPos(core).length();
 			if ((d1 < d2 && s1 <= s2) || (d1 > d2 && s1 > s2))
-				phenomenType = q_("Transit");
+			{
+				// The passage of the celestial body in front of another of greater apparent diameter
+				phenomenType = qc_("Transit", "passage of the celestial body");
+			}
 			else
 				phenomenType = q_("Occultation");
 

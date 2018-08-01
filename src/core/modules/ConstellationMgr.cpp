@@ -143,6 +143,7 @@ void ConstellationMgr::init()
 	addAction("actionShow_Constellation_Boundaries", displayGroup, N_("Constellation boundaries"), "boundariesDisplayed", "B");
 	addAction("actionShow_Constellation_Isolated", displayGroup, N_("Select single constellation"), "isolateSelected"); // no shortcut, sync with GUI
 	addAction("actionShow_Constellation_Deselect", displayGroup, N_("Remove selection of constellations"), this, "deselectConstellations()", "W");
+	addAction("actionShow_Constellation_Select", displayGroup, N_("Select all constellations"), this, "selectAllConstellations()", "Alt+W");
 }
 
 /*************************************************************************
@@ -266,11 +267,10 @@ void ConstellationMgr::selectedObjectChange(StelModule::StelModuleSelectAction a
 
 void ConstellationMgr::deselectConstellations(void)
 {
+	StelObjectMgr* omgr = GETSTELMODULE(StelObjectMgr);
+	Q_ASSERT(omgr);
 	if (getFlagIsolateSelected())
 	{
-		StelObjectMgr* omgr = GETSTELMODULE(StelObjectMgr);
-		Q_ASSERT(omgr);
-
 		// The list of selected constellations is empty, but...
 		if (selected.size()==0)
 		{
@@ -297,6 +297,23 @@ void ConstellationMgr::deselectConstellations(void)
 			constellation->setFlagBoundaries(false);
 		}
 		selected.clear();
+	}
+	else
+	{
+		const QList<StelObjectP> newSelectedConst = omgr->getSelectedObject("Constellation");
+		if (!newSelectedConst.empty())
+			omgr->unSelect();
+
+		selected.clear();
+	}
+
+}
+
+void ConstellationMgr::selectAllConstellations()
+{
+	for (auto* constellation : constellations)
+	{
+		setSelectedConst(constellation);
 	}
 }
 

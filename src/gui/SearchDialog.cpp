@@ -128,7 +128,7 @@ void CompletionLabel::updateText()
 
 // Start of members for class SearchDialog
 
-const char* SearchDialog::DEF_SIMBAD_URL = "http://simbad.u-strasbg.fr/";
+const char* SearchDialog::DEF_SIMBAD_URL = "https://simbad.u-strasbg.fr/";
 SearchDialog::SearchDialogStaticData SearchDialog::staticData;
 QString SearchDialog::extSearchText = "";
 
@@ -767,9 +767,7 @@ void SearchDialog::gotoObject(const QModelIndex &modelIndex)
 
 void SearchDialog::searchListClear()
 {
-	ui->searchInListLineEdit->clear();
-	proxyModel->setSourceModel(listModel);
-	proxyModel->sort(0, Qt::AscendingOrder);
+	ui->searchInListLineEdit->clear();	
 }
 
 bool SearchDialog::eventFilter(QObject*, QEvent *event)
