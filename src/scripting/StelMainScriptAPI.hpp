@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
-#ifndef _STELMAINSCRIPTAPI_HPP_
-#define _STELMAINSCRIPTAPI_HPP_
+#ifndef STELMAINSCRIPTAPI_HPP
+#define STELMAINSCRIPTAPI_HPP
 
 #include <QObject>
 #include <QVariant>
@@ -113,7 +113,7 @@ public slots:
 	//! MorrisonStephenson1982, StephensonMorrison1984, StephensonHoulden, Espenak, Borkowski,
 	//! SchmadelZech1988, ChaprontTouze, StephensonMorrison1995, Stephenson1997, ChaprontMeeus,
 	//! JPLHorizons, MeeusSimons, MontenbruckPfleger, ReingoldDershowitz, MorrisonStephenson2004,
-	//! EspenakMeeus, Reijs, Banjevic, IslamSadiqQureshi, Custom.
+	//! EspenakMeeus, Reijs, Banjevic, IslamSadiqQureshi, Henriksson2017, Custom.
 	void setDeltaTAlgorithm(QString algorithmName);
 
 	//! Set time speed in JDay/sec
@@ -867,5 +867,5 @@ signals:
 	void requestSetHomePosition();
 };
 
-#endif // _STELMAINSCRIPTAPI_HPP_
+#endif // STELMAINSCRIPTAPI_HPP
 

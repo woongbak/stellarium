@@ -85,6 +85,7 @@ Novae::Novae()
 	, texPointer(Q_NULLPTR)
 	, updateState(CompleteNoUpdates)
 	, networkManager(Q_NULLPTR)
+	, downloadReply(Q_NULLPTR)
 	, progressBar(Q_NULLPTR)
 	, updateTimer(Q_NULLPTR)
 	, updatesEnabled(false)
@@ -420,8 +421,16 @@ QVariantMap Novae::loadNovaeMap(QString path)
 		qWarning() << "[Novae] cannot open" << QDir::toNativeSeparators(path);
 	else
 	{
-		map = StelJsonParser::parse(jsonFile.readAll()).toMap();
-		jsonFile.close();
+		try
+		{
+			map = StelJsonParser::parse(jsonFile.readAll()).toMap();
+			jsonFile.close();
+		}
+		catch (std::runtime_error &e)
+		{
+			qDebug() << "[Novae] File format is wrong! Error: " << e.what();
+			return QVariantMap();
+		}
 	}
 	return map;
 }
@@ -461,13 +470,20 @@ int Novae::getJsonFileVersion(void) const
 	}
 
 	QVariantMap map;
-	map = StelJsonParser::parse(&novaeJsonFile).toMap();
+	try
+	{
+		map = StelJsonParser::parse(&novaeJsonFile).toMap();
+		novaeJsonFile.close();
+	}
+	catch (std::runtime_error &e)
+	{
+		qDebug() << "[Novae] File format is wrong! Error: " << e.what();
+		return jsonVersion;
+	}
 	if (map.contains("version"))
 	{
 		jsonVersion = map.value("version").toInt();
 	}
-
-	novaeJsonFile.close();
 	qDebug() << "[Novae] version of the catalog:" << jsonVersion;
 	return jsonVersion;
 }
@@ -486,8 +502,6 @@ bool Novae::checkJsonFileFormat() const
 	{
 		map = StelJsonParser::parse(&novaeJsonFile).toMap();
 		novaeJsonFile.close();
-		if (map.isEmpty())
-			return false;
 	}
 	catch (std::runtime_error& e)
 	{
@@ -753,13 +767,20 @@ float Novae::getLowerLimitBrightness()
 	}
 
 	QVariantMap map;
-	map = StelJsonParser::parse(&novaeJsonFile).toMap();
+	try
+	{
+		map = StelJsonParser::parse(&novaeJsonFile).toMap();
+		novaeJsonFile.close();
+	}
+	catch (std::runtime_error &e)
+	{
+		qDebug() << "[Novae] File format is wrong! Error: " << e.what();
+		return lowerLimit;
+	}
 	if (map.contains("limit"))
 	{
 		lowerLimit = map.value("limit").toFloat();
 	}
-
-	novaeJsonFile.close();
 	return lowerLimit;
 }
 

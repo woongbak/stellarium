@@ -90,6 +90,7 @@ Exoplanets::Exoplanets()
 	, EPCountPH(0)
 	, updateState(CompleteNoUpdates)
 	, networkManager(Q_NULLPTR)
+	, downloadReply(Q_NULLPTR)
 	, updateTimer(Q_NULLPTR)
 	, updatesEnabled(false)
 	, updateFrequencyHours(0)
@@ -522,8 +523,16 @@ QVariantMap Exoplanets::loadEPMap(QString path)
 		qWarning() << "[Exoplanets] Cannot open " << QDir::toNativeSeparators(path);
 	else
 	{
-		map = StelJsonParser::parse(jsonFile.readAll()).toMap();
-		jsonFile.close();
+		try
+		{
+			map = StelJsonParser::parse(jsonFile.readAll()).toMap();
+			jsonFile.close();
+		}
+		catch (std::runtime_error &e)
+		{
+			qDebug() << "[Exoplanets] File format is wrong! Error: " << e.what();
+			return QVariantMap();
+		}
 	}
 	return map;
 }
@@ -600,8 +609,16 @@ int Exoplanets::getJsonFileFormatVersion(void) const
 	}
 
 	QVariantMap map;
-	map = StelJsonParser::parse(&jsonEPCatalogFile).toMap();
-	jsonEPCatalogFile.close();
+	try
+	{
+		map = StelJsonParser::parse(&jsonEPCatalogFile).toMap();
+		jsonEPCatalogFile.close();
+	}
+	catch (std::runtime_error &e)
+	{
+		qDebug() << "[Exoplanets] File format is wrong! Error: " << e.what();
+		return jsonVersion;
+	}
 	if (map.contains("version"))
 	{
 		jsonVersion = map.value("version").toInt();
@@ -625,8 +642,6 @@ bool Exoplanets::checkJsonFileFormat() const
 	{
 		map = StelJsonParser::parse(&jsonEPCatalogFile).toMap();
 		jsonEPCatalogFile.close();
-		if (map.isEmpty())
-			return false;
 	}
 	catch (std::runtime_error& e)
 	{
