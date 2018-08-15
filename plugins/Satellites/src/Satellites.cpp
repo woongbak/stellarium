@@ -70,7 +70,7 @@ StelPluginInfo SatellitesStelPluginInterface::getPluginInfo() const
 	info.id = "Satellites";
 	info.displayedName = N_("Satellites");
 	info.authors = "Matthew Gates, Jose Luis Canales";
-	info.contact = "http://stellarium.org/";
+	info.contact = "https://stellarium.org/";
 	info.description = N_("Prediction of artificial satellite positions in Earth orbit based on NORAD TLE data");
 	info.version = SATELLITES_PLUGIN_VERSION;
 	info.license = SATELLITES_PLUGIN_LICENSE;
@@ -745,7 +745,17 @@ const QString Satellites::readCatalogVersion()
 	}
 
 	QVariantMap map;
-	map = StelJsonParser::parse(&satelliteJsonFile).toMap();
+	try
+	{
+		map = StelJsonParser::parse(&satelliteJsonFile).toMap();
+		satelliteJsonFile.close();
+	}
+	catch (std::runtime_error &e)
+	{
+		qDebug() << "[Satellites] File format is wrong! Error: " << e.what();
+		return jsonVersion;
+	}
+
 	if (map.contains("creator"))
 	{
 		QString creator = map.value("creator").toString();
@@ -756,7 +766,6 @@ const QString Satellites::readCatalogVersion()
 		}
 	}
 
-	satelliteJsonFile.close();
 	//qDebug() << "[Satellites] catalog version from file:" << jsonVersion;
 	return jsonVersion;
 }
@@ -796,8 +805,16 @@ QVariantMap Satellites::loadDataMap(QString path)
 		qWarning() << "[Satellites] cannot open " << QDir::toNativeSeparators(path);
 	else
 	{
-		map = StelJsonParser::parse(&jsonFile).toMap();
-		jsonFile.close();
+		try
+		{
+			map = StelJsonParser::parse(&jsonFile).toMap();
+			jsonFile.close();
+		}
+		catch (std::runtime_error &e)
+		{
+			qDebug() << "[Satellites] File format is wrong! Error: " << e.what();
+			return QVariantMap();
+		}
 	}
 	return map;
 }
@@ -1787,8 +1804,7 @@ bool Satellites::checkJsonFileFormat()
 	}
 	catch (std::runtime_error& e)
 	{
-		qDebug() << "[Satellites] file format is wrong!";
-		qDebug() << "[Satellites] error:" << e.what();
+		qDebug() << "[Satellites] File format is wrong! Error:" << e.what();
 		return false;
 	}
 
@@ -2099,6 +2115,8 @@ void Satellites::translations()
 	// Satellite names - a few famous objects only
 	// TRANSLATORS: Satellite name: International Space Station
 	N_("ISS (ZARYA)");
+	// TRANSLATORS: Satellite name: International Space Station
+	N_("ISS");
 	// TRANSLATORS: Satellite name: Hubble Space Telescope
 	N_("HST");
 	// TRANSLATORS: Satellite name: Spektr-R Space Observatory (or RadioAstron)

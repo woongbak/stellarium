@@ -143,6 +143,7 @@ void ConstellationMgr::init()
 	addAction("actionShow_Constellation_Boundaries", displayGroup, N_("Constellation boundaries"), "boundariesDisplayed", "B");
 	addAction("actionShow_Constellation_Isolated", displayGroup, N_("Select single constellation"), "isolateSelected"); // no shortcut, sync with GUI
 	addAction("actionShow_Constellation_Deselect", displayGroup, N_("Remove selection of constellations"), this, "deselectConstellations()", "W");
+	addAction("actionShow_Constellation_Select", displayGroup, N_("Select all constellations"), this, "selectAllConstellations()", "Alt+W");
 }
 
 /*************************************************************************
@@ -266,24 +267,54 @@ void ConstellationMgr::selectedObjectChange(StelModule::StelModuleSelectAction a
 
 void ConstellationMgr::deselectConstellations(void)
 {
-	selected.clear();
 	StelObjectMgr* omgr = GETSTELMODULE(StelObjectMgr);
 	Q_ASSERT(omgr);
-	const QList<StelObjectP> currSelection = omgr->getSelectedObject();
-	if (currSelection.empty())
+	if (getFlagIsolateSelected())
 	{
-		return;
+		// The list of selected constellations is empty, but...
+		if (selected.size()==0)
+		{
+			// ...let's unselect all constellations for guarantee
+			for (auto* constellation : constellations)
+			{
+				constellation->setFlagLines(false);
+				constellation->setFlagLabels(false);
+				constellation->setFlagArt(false);
+				constellation->setFlagBoundaries(false);
+			}
+		}
+
+		// If any constellation is selected at the moment, then let's do not touch to it!
+		if (omgr->getWasSelected())
+			selected.pop_back();
+
+		// Let's hide all previously selected constellations
+		for (auto* constellation : selected)
+		{
+			constellation->setFlagLines(false);
+			constellation->setFlagLabels(false);
+			constellation->setFlagArt(false);
+			constellation->setFlagBoundaries(false);
+		}
+		selected.clear();
+	}
+	else
+	{
+		const QList<StelObjectP> newSelectedConst = omgr->getSelectedObject("Constellation");
+		if (!newSelectedConst.empty())
+			omgr->unSelect();
+
+		selected.clear();
 	}
 
-	QList<StelObjectP> newSelection;
-	for (const auto& obj : currSelection)
+}
+
+void ConstellationMgr::selectAllConstellations()
+{
+	for (auto* constellation : constellations)
 	{
-		if (obj->getType() != "Constellation")
-		{
-			newSelection.push_back(obj);
-		}
+		setSelectedConst(constellation);
 	}
-	omgr->setSelectedObject(newSelection, StelModule::ReplaceSelection);
 }
 
 void ConstellationMgr::setLinesColor(const Vec3f& color)

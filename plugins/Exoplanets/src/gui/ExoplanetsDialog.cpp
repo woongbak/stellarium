@@ -107,8 +107,7 @@ void ExoplanetsDialog::createDialogContent()
 	connect(ui->internetUpdatesCheckbox, SIGNAL(stateChanged(int)), this, SLOT(setUpdatesEnabled(int)));
 	connect(ui->updateButton, SIGNAL(clicked()), this, SLOT(updateJSON()));
 	connect(ep, SIGNAL(updateStateChanged(Exoplanets::UpdateState)), this, SLOT(updateStateReceiver(Exoplanets::UpdateState)));
-	connect(ep, SIGNAL(jsonUpdateComplete(void)), this, SLOT(updateCompleteReceiver(void)));
-	connect(ep, SIGNAL(jsonUpdateComplete(void)), ep, SLOT(reloadCatalog()));
+	connect(ep, SIGNAL(jsonUpdateComplete(void)), this, SLOT(updateCompleteReceiver(void)));	
 	connect(ui->updateFrequencySpinBox, SIGNAL(valueChanged(int)), this, SLOT(setUpdateValues(int)));
 	refreshUpdateValues(); // fetch values for last updated and so on
 	// if the state didn't change, setUpdatesEnabled will not be called, so we force it
@@ -323,6 +322,7 @@ void ExoplanetsDialog::setWebsitesHtml(void)
 
 void ExoplanetsDialog::refreshUpdateValues(void)
 {
+	QString nextUpdate = q_("Next update");
 	ui->lastUpdateDateTimeEdit->setDateTime(ep->getLastUpdate());
 	ui->updateFrequencySpinBox->setValue(ep->getUpdateFrequencyHours());
 	int secondsToUpdate = ep->getSecondsToUpdate();
@@ -332,16 +332,18 @@ void ExoplanetsDialog::refreshUpdateValues(void)
 	else if (ep->getUpdateState() == Exoplanets::Updating)
 		ui->nextUpdateLabel->setText(q_("Updating now..."));
 	else if (secondsToUpdate <= 60)
-		ui->nextUpdateLabel->setText(q_("Next update: < 1 minute"));
+		ui->nextUpdateLabel->setText(QString("%1: %2").arg(nextUpdate, q_("< 1 minute")));
 	else if (secondsToUpdate < 3600)
 	{
 		int n = (secondsToUpdate/60)+1;
-		ui->nextUpdateLabel->setText(qn_("Next update: %1 minute(s)", n).arg(n));
+		// TRANSLATORS: minutes.
+		ui->nextUpdateLabel->setText(QString("%1: %2 %3").arg(nextUpdate, QString::number(n), qc_("m", "time")));
 	}
 	else
 	{
 		int n = (secondsToUpdate/3600)+1;
-		ui->nextUpdateLabel->setText(qn_("Next update: %1 hour(s)", n).arg(n));
+		// TRANSLATORS: hours.
+		ui->nextUpdateLabel->setText(QString("%1: %2 %3").arg(nextUpdate, QString::number(n), qc_("h", "time")));
 	}
 }
 
@@ -402,7 +404,6 @@ void ExoplanetsDialog::setUpdatesEnabled(int checkState)
 
 void ExoplanetsDialog::updateStateReceiver(Exoplanets::UpdateState state)
 {
-	//qDebug() << "ExoplanetsDialog::updateStateReceiver got a signal";
 	if (state==Exoplanets::Updating)
 		ui->nextUpdateLabel->setText(q_("Updating now..."));
 	else if (state==Exoplanets::DownloadError || state==Exoplanets::OtherError)
@@ -414,7 +415,6 @@ void ExoplanetsDialog::updateStateReceiver(Exoplanets::UpdateState state)
 
 void ExoplanetsDialog::updateCompleteReceiver(void)
 {
-	qDebug() << "[Exoplanets] Updating of catalog is complete";
         ui->nextUpdateLabel->setText(QString(q_("Exoplanets is updated")));
 	// display the status for another full interval before refreshing status
 	updateTimer->start();

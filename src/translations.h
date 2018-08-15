@@ -415,6 +415,10 @@ class Translations
 		N_("A Catalog of Rich Clusters of Galaxies");
 		// TRANSLATORS: Catalogue of objects (for "Lists" in the search tool)
 		N_("Hickson Compact Group");
+		// TRANSLATORS: Catalogue of objects (for "Lists" in the search tool)
+		N_("Abell Catalog of Planetary Nebulae");
+		// TRANSLATORS: Catalogue of objects (for "Lists" in the search tool)
+		N_("ESO/Uppsala Survey of the ESO(B) Atlas")
 		// TRANSLATORS: Type of objects (for "Lists" in the search tool)
 		N_("Dwarf galaxies");
 		// TRANSLATORS: Catalogue of objects (for "Lists" in the search tool)
@@ -469,6 +473,8 @@ class Translations
 		N_("Maori");
 		// TRANSLATORS: Name of the sky culture
 		N_("Mongolian");
+		// TRANSLATORS: Name of the sky culture
+		N_("Lokono");
 		// TRANSLATORS: Name of the sky culture
 		N_("Navajo");
 		// TRANSLATORS: Name of the sky culture
@@ -560,7 +566,7 @@ class Translations
 		// TRANSLATORS: Name of script
 		N_("Double eclipse from Deimos in 2031");
 		// TRANSLATORS: Name of script
-		N_("Eclipse from Olympus Mons Jan 10 2068");
+		N_("Eclipse from Olympus Mons Jan 2, 2021");
 		// TRANSLATORS: Name of script
 		N_("Occultation of Earth and Jupiter 2048");
 		// TRANSLATORS: Name of script
@@ -607,6 +613,16 @@ class Translations
 		N_("The Jack Bennett Catalog");
 		// TRANSLATORS: Name of script
 		N_("Best objects in the New General Catalog");
+		// TRANSLATORS: Name of script
+		N_("Jupiter and triple shadow phenomena");
+		// TRANSLATORS: Name of script
+		N_("Jupiter without Galilean satellites");
+		// TRANSLATORS: Name of script
+		N_("Skybox Tiles");
+		// TRANSLATORS: Name of script
+		N_("Occultations of bright stars by planets");
+		// TRANSLATORS: Name of script
+		N_("Mutual occultations of planets");
 		
 		// =====================================================================
 		// Script descriptions
@@ -644,6 +660,10 @@ class Translations
 		N_("Ben Crowell has created Binosky, an observing list of Deep Sky Objects for Binoculars. In the script we give a list of these 31 objects, ordered by Right Ascension (2000.0).");
 		N_("The Jack Bennett Catalog of Southern Deep-Sky Objects (152 objects in all). The Bennett catalog was contributed by Auke Slotegraaf.");
 		N_("This list of 111 objects by A.J. Crayon and Steve Coe is used by members of the Saguaro Astronomy Club of Phoenix, AZ, for the Best of the NGC achievement award.");
+		N_("Demonstration of the mid-time of rare events - triple shadow phenomena of the satellites of Jupiter from 1900 to 2100. All events are given in Dynamical Time.");
+		N_("The planet Jupiter sometimes appears to be without moons, when the four Galilean satellites are simultaneously invisible because they are passing across the planet's disk (transit), are behind the planet (occultation), or are in its shadow (eclipse). This script demonstrates these rare phenomena from 1900 to 2100 in Dynamical Time.");
+		N_("This script demonstrates interesting phenomena - occultations bright stars by planets, 2000 to 2040.");
+		N_("This script demonstrates interesting and very rare phenomena - mutual occultations of planets, 0 to 2500.");
 		
 		// =====================================================================
 		// List of GUI elements (Qt's dialogs)

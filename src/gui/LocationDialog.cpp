@@ -66,6 +66,7 @@ void LocationDialog::retranslate()
 		populatePlanetList();
 		populateCountryList();
 		populateTimeZonesList();
+		populateTooltips();
 	}
 }
 
@@ -174,6 +175,8 @@ void LocationDialog::createDialogContent()
 
 	connectEditSignals();
 
+	populateTooltips();
+
 	connect(core, SIGNAL(locationChanged(StelLocation)), this, SLOT(updateFromProgram(StelLocation)));
 
 	ui->citySearchLineEdit->setFocus();
@@ -190,6 +193,12 @@ void LocationDialog::handleDialogSizeChanged(QSizeF size)
 void LocationDialog::reloadLocations()
 {
 	allModel->setStringList(StelApp::getInstance().getLocationMgr().getAllMap().keys());
+}
+
+void LocationDialog::populateTooltips()
+{
+	ui->resetListPushButton->setToolTip(q_("Reset location list to show all known locations"));
+	ui->gpsToolButton->setToolTip(QString("<p>%1</p>").arg(q_("Toggle fetching GPS location. (Does not change time zone!) When satisfied, toggle off to let other programs access the GPS device.")));
 }
 
 // Update the widget to make sure it is synchrone if the location is changed programmatically
@@ -296,7 +305,7 @@ void LocationDialog::setFieldsFromLocation(const StelLocation& loc)
 	SolarSystem* ssm = GETSTELMODULE(SolarSystem);
 	PlanetP p = ssm->searchByEnglishName(loc.planetName);
 	StelModule* ls = StelApp::getInstance().getModule("LandscapeMgr");
-	if (ls->property("flagAtmosphereAutoEnable").toBool())
+	if (ls->property("flagEnvironmentAutoEnable").toBool())
 	{
 		if (loc.planetName != StelApp::getInstance().getCore()->getCurrentLocation().planetName)
 		{
@@ -739,7 +748,7 @@ void LocationDialog::gpsEnableQueryLocation(bool running)
 		StelApp::getInstance().getLocationMgr().locationFromGPS(0);
 		ui->gpsToolButton->setText(q_("GPS disconnecting..."));
 		QTimer::singleShot(1500, this, SLOT(resetGPSbuttonLabel()));
-	}
+	}	
 }
 
 void LocationDialog::gpsReturn(bool success)
@@ -752,7 +761,8 @@ void LocationDialog::gpsReturn(bool success)
 		ui->gpsToolButton->setText(QString("%1 %2").arg(q_("GPS location fix")).arg(gpsCount));
 		ui->useAsDefaultLocationCheckBox->setChecked(false);
 		ui->pushButtonReturnToDefault->setEnabled(true);
-		ui->useCustomTimeZoneCheckBox->setChecked(true);
+		ui->useCustomTimeZoneCheckBox->setChecked(true);		
+		ui->useIpQueryCheckBox->setChecked(false); // Disable IP query option when GPS is used!
 		resetCompleteList(); // in case we come back from Moon/Mars, we must get list back to show all (earth) locations...
 		updateTimeZoneControls(true);
 		StelLocation loc=core->getCurrentLocation();
@@ -765,6 +775,9 @@ void LocationDialog::gpsReturn(bool success)
 		{
 			ui->gpsToolButton->setStyleSheet(QString("QToolButton{ background: green; }"));
 		}
+		QSettings* conf = StelApp::getInstance().getSettings();
+		conf->setValue("init_location/location", loc.getID());
+		conf->setValue("init_location/last_location", QString("%1, %2, %3").arg(loc.latitude).arg(loc.longitude).arg(loc.altitude));
 	}
 	else
 	{

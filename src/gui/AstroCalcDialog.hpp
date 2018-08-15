@@ -18,8 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
 */
 
-#ifndef _ASTROCALCDIALOG_HPP_
-#define _ASTROCALCDIALOG_HPP_
+#ifndef ASTROCALCDIALOG_HPP
+#define ASTROCALCDIALOG_HPP
 
 #include <QObject>
 #include <QTreeWidget>
@@ -39,6 +39,8 @@
 
 class Ui_astroCalcDialogForm;
 class QListWidgetItem;
+class QSortFilterProxyModel;
+class QStringListModel;
 
 class AstroCalcDialog : public StelDialog
 {
@@ -76,12 +78,14 @@ public:
 	//! Defines the number and the order of the columns in the phenomena table
 	//! @enum PhenomenaColumns
 	enum PhenomenaColumns {
-		PhenomenaType,		//! type of phenomena
-		PhenomenaDate,		//! date and time of ephemeris		
-		PhenomenaObject1,	//! first object
-		PhenomenaObject2,	//! second object
-		PhenomenaSeparation,	//! angular separation
-		PhenomenaCount		//! total number of columns
+		PhenomenaType,			//! type of phenomena
+		PhenomenaDate,			//! date and time of ephemeris
+		PhenomenaObject1,		//! first object
+		PhenomenaObject2,		//! second object
+		PhenomenaSeparation,		//! angular separation
+		PhenomenaElongation,		//! elongation (from the Sun)
+		PhenomenaAngularDistance,	//! angular distance (from the Moon)
+		PhenomenaCount			//! total number of columns
 	};
 
 	//! Defines the type of graphs
@@ -92,7 +96,8 @@ public:
 		GraphDistanceVsTime	= 3,
 		GraphElongationVsTime	= 4,
 		GraphAngularSizeVsTime	= 5,
-		GraphPhaseAngleVsTime	= 6
+		GraphPhaseAngleVsTime	= 6,
+		GraphHDistanceVsTime	= 7
 	};
 
 	AstroCalcDialog(QObject* parent);
@@ -140,7 +145,7 @@ private slots:
 	void cleanupPhenomena();
 	void selectCurrentPhenomen(const QModelIndex &modelIndex);
 	void savePhenomena();
-	void savePhenomenaAngularSeparation(double v);
+	void savePhenomenaAngularSeparation();
 
 	void savePhenomenaCelestialBody(int index);
 	void savePhenomenaCelestialGroup(int index);
@@ -150,6 +155,8 @@ private slots:
 	void saveFirstCelestialBody(int index);
 	void saveSecondCelestialBody(int index);
 	void computePlanetaryData();
+	void drawDistanceGraph();
+	void mouseOverDistanceGraph(QMouseEvent *event);
 
 	//! Draw diagram 'Altitude vs. Time'
 	void drawAltVsTimeDiagram();
@@ -177,12 +184,14 @@ private slots:
 	void saveWutMagnitudeLimit(double mag);
 	void saveWutTimeInterval(int index);
 	void calculateWutObjects();
-	void selectWutObject();
+	void selectWutObject(const QModelIndex& index);
 	void saveWutObjects();
+	void searchWutClear();
 
 	void updateAstroCalcData();
 
 	void changePage(QListWidgetItem *current, QListWidgetItem *previous);
+	void changePCTab(int index);
 
 	void updateSolarSystemData();
 
@@ -194,6 +203,8 @@ private:
 	class StelObjectMgr* objectMgr;
 	class StelLocaleMgr* localeMgr;
 	class StelMovementMgr* mvMgr;
+	QStringListModel* wutModel;
+	QSortFilterProxyModel *proxyModel;
 	QSettings* conf;
 	QTimer *currentTimeLine;
 	QHash<QString,QString> wutObjects;
@@ -228,6 +239,7 @@ private:
 	void prepareAxesAndGraph();
 	void prepareXVsTimeAxesAndGraph();
 	void prepareMonthlyEleveationAxesAndGraph();
+	void prepareDistanceAxesAndGraph();
 	//! Populates the drop-down list of time intervals for WUT tool.
 	void populateTimeIntervalsList();
 	//! Populates the list of groups for WUT tool.
@@ -254,11 +266,11 @@ private:
 	bool findPrecise(QPair<double, double>* out, PlanetP object1, StelObjectP object2, double JD, double step, int prevSign);
 	void fillPhenomenaTable(const QMap<double, double> list, const PlanetP object1, const StelObjectP object2);
 
-	bool plotAltVsTime, plotAltVsTimeSun, plotAltVsTimeMoon, plotAltVsTimePositive, plotMonthlyElevation, plotMonthlyElevationPositive;
+	bool plotAltVsTime, plotAltVsTimeSun, plotAltVsTimeMoon, plotAltVsTimePositive, plotMonthlyElevation, plotMonthlyElevationPositive, plotDistanceGraph;
 	QString delimiter, acEndl;
 	QStringList ephemerisHeader, phenomenaHeader, positionsHeader;	
 	static float brightLimit;
-	static float minY, maxY, minYme, maxYme, minYsun, maxYsun, minYmoon, maxYmoon, transitX, minY1, maxY1, minY2, maxY2;
+	static double minY, maxY, minYme, maxYme, minYsun, maxYsun, minYmoon, maxYmoon, transitX, minY1, maxY1, minY2, maxY2, minYld, maxYld, minYad, maxYad;
 	static QString yAxis1Legend, yAxis2Legend;
 
 	//! Make sure that no tabs icons are outside of the viewport.
@@ -360,7 +372,7 @@ private:
 	{
 		int column = treeWidget()->sortColumn();
 
-		if (column == AstroCalcDialog::PhenomenaSeparation)
+		if (column == AstroCalcDialog::PhenomenaSeparation || column == AstroCalcDialog::PhenomenaElongation || column == AstroCalcDialog::PhenomenaAngularDistance)
 		{
 			return StelUtils::getDecAngle(text(column)) < StelUtils::getDecAngle(other.text(column));
 		}
@@ -371,4 +383,4 @@ private:
 	}
 };
 
-#endif // _ASTROCALCDIALOG_HPP_
+#endif // ASTROCALCDIALOG_HPP

@@ -16,8 +16,8 @@
  * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
-#ifndef _NOVAE_HPP_
-#define _NOVAE_HPP_
+#ifndef NOVAE_HPP
+#define NOVAE_HPP
 
 #include "StelObjectModule.hpp"
 #include "StelObject.hpp"
@@ -30,9 +30,9 @@
 #include <QList>
 #include <QSharedPointer>
 #include <QHash>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
 
-class QNetworkAccessManager;
-class QNetworkReply;
 class QSettings;
 class QTimer;
 class NovaeDialog;
@@ -230,7 +230,8 @@ private:
 
 	// variables and functions for the updater
 	UpdateState updateState;
-	QNetworkAccessManager* downloadMgr;
+	QNetworkAccessManager * networkManager;
+	QNetworkReply * downloadReply;
 	QString updateUrl;
 	class StelProgressController* progressBar;
 	QTimer* updateTimer;
@@ -238,6 +239,9 @@ private:
 	bool updatesEnabled;
 	QDateTime lastUpdate;
 	int updateFrequencyDays;
+
+	void startDownload(QString url);
+	void deleteDownloadProgressBar();
 
 	QSettings* conf;
 
@@ -249,7 +253,9 @@ private slots:
 	//! if the last update was longer than updateFrequencyHours ago then the update is
 	//! done.
 	void checkForUpdate(void);
-	void updateDownloadComplete(QNetworkReply* reply);
+
+	void updateDownloadProgress(qint64 bytesReceived, qint64 bytesTotal);
+	void downloadComplete(QNetworkReply * reply);
 
 };
 
@@ -269,4 +275,4 @@ public:
 	virtual QObjectList getExtensionList() const { return QObjectList(); }
 };
 
-#endif /*_NOVAE_HPP_*/
+#endif /*NOVAE_HPP*/

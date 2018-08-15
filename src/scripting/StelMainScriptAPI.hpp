@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
-#ifndef _STELMAINSCRIPTAPI_HPP_
-#define _STELMAINSCRIPTAPI_HPP_
+#ifndef STELMAINSCRIPTAPI_HPP
+#define STELMAINSCRIPTAPI_HPP
 
 #include <QObject>
 #include <QVariant>
@@ -113,7 +113,7 @@ public slots:
 	//! MorrisonStephenson1982, StephensonMorrison1984, StephensonHoulden, Espenak, Borkowski,
 	//! SchmadelZech1988, ChaprontTouze, StephensonMorrison1995, Stephenson1997, ChaprontMeeus,
 	//! JPLHorizons, MeeusSimons, MontenbruckPfleger, ReingoldDershowitz, MorrisonStephenson2004,
-	//! EspenakMeeus, Reijs, Banjevic, IslamSadiqQureshi, Custom.
+	//! EspenakMeeus, Reijs, Banjevic, IslamSadiqQureshi, Henriksson2017, Custom.
 	void setDeltaTAlgorithm(QString algorithmName);
 
 	//! Set time speed in JDay/sec
@@ -133,6 +133,13 @@ public slots:
 
 	//! Set the simulation time to the current system time, and the time rate to 1
 	void setRealTime();
+
+	//! Get the type of calculations in the simulation - is it "planetocentric calculations" or not
+	//! @return true if the calculations is planetocentric (geocentric on Earth), else return false
+	bool isPlanetocentricCalculations();
+
+	//! Set the flag for use planetocentric calculations
+	void setPlanetocentricCalculations(bool f);
 
 	//! Select an object by name
 	//! @param name the name of the object to select (english)
@@ -867,5 +874,5 @@ signals:
 	void requestSetHomePosition();
 };
 
-#endif // _STELMAINSCRIPTAPI_HPP_
+#endif // STELMAINSCRIPTAPI_HPP
 

@@ -146,11 +146,7 @@ void StelMainScriptAPI::setDate(const QString& dateStr, const QString& spec, con
 	StelCore* core = StelApp::getInstance().getCore();
 	double JD = jdFromDateString(dateStr, spec);
 	if (dateIsDT)
-	{
-		qWarning() << "StelMainScriptAPI::setDate() called with final Boolean set to indicate Dynamical Time. This is new in 0.14, make sure you did this intentionally.";
-		qWarning() << "This warning will go away in Stellarium 0.16, please update the script by then to be sure.";
 		core->setJDE(JD);
-	}
 	else
 		core->setJD(JD);
 
@@ -226,6 +222,20 @@ void StelMainScriptAPI::setRealTime()
 {
 	setTimeRate(1.0);
 	StelApp::getInstance().getCore()->setTimeNow();
+}
+
+bool StelMainScriptAPI::isPlanetocentricCalculations()
+{
+	bool r = true;
+	if (StelApp::getInstance().getCore()->getUseTopocentricCoordinates())
+		r = false;
+
+	return r;
+}
+
+void StelMainScriptAPI::setPlanetocentricCalculations(bool f)
+{
+	StelApp::getInstance().getCore()->setUseTopocentricCoordinates(!f);
 }
 
 void StelMainScriptAPI::setObserverLocation(double longitude, double latitude, double altitude, double duration, const QString& name, const QString& planet)

@@ -18,8 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
  */
 
-#ifndef _CONSTELLATIONMGR_HPP_
-#define _CONSTELLATIONMGR_HPP_
+#ifndef CONSTELLATIONMGR_HPP
+#define CONSTELLATIONMGR_HPP
 
 #include "StelObjectType.hpp"
 #include "StelObjectModule.hpp"
@@ -272,6 +272,9 @@ public slots:
 	//! Remove constellations from selected objects
 	void deselectConstellations(void);
 
+	//! Select all constellations
+	void selectAllConstellations(void);
+
 signals:
 	void artDisplayedChanged(const bool displayed) const;
 	void artFadeDurationChanged(const float duration) const;
@@ -394,4 +397,4 @@ private:
 	int constellationLineThickness;
 };
 
-#endif // _CONSTELLATIONMGR_HPP_
+#endif // CONSTELLATIONMGR_HPP

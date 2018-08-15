@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2018-05-06 13:54+0700\n"
+"POT-Creation-Date: 2018-05-27 15:56+0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Febri Muhnas <naasrule354@outlook.jp>, 2017\n"
 "Language-Team: Javanese (https://www.transifex.com/stellarium/teams/80998/jv/)\n"
@@ -11,7 +11,6 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Language: jv\n"
-"Plural-Forms: nplurals=1; plural=0;\n"
 
 #. (itstool) path: component/name
 #: stellarium.appdata.xml:7

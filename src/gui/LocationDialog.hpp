@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335, USA.
 */
  
-#ifndef _LOCATIONDIALOG_HPP_
-#define _LOCATIONDIALOG_HPP_
+#ifndef LOCATIONDIALOG_HPP
+#define LOCATIONDIALOG_HPP
 
 #include <QObject>
 #include "StelDialog.hpp"
@@ -83,6 +83,9 @@ private:
 	//! The original names are kept in the user data field of each QComboBox
 	//! item.
 	void populateTimeZonesList();
+
+	//! Populates tooltips for GUI elements.
+	void populateTooltips();
 	
 private slots:
 	//! Called whenever the StelLocationMgr is updated
@@ -169,4 +172,4 @@ private:
 
 };
 
-#endif // _LOCATIONDIALOG_HPP_
+#endif // _LOCATIONDIALOG_HPP
