@@ -35,8 +35,8 @@ ADD_DEFINITIONS(-DCOPYRIGHT_YEARS="${COPYRIGHT_YEARS}")
 # Write version of Stellarium to Stellarium User Guide
 CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/cmake/version.tex.cmake ${PROJECT_SOURCE_DIR}/guide/version.tex @ONLY NEWLINE_STYLE LF)
 
-# currently Qt 5.4 - 5.6 is recommended, we can no longer build with Qt 5.3, and 5.7 may have some bugs (on Mac? 5.7 is fine on Windows) 5.8 on Windows seems OK.
-SET(MINIMAL_QT_VERSION "5.4.0")
+# currently Qt 5.6/5.9 is recommended
+SET(MINIMAL_QT_VERSION "5.6.0")
 
 # Use customized cmake macros
 SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules)

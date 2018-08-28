@@ -51,19 +51,23 @@ QVector<QString> AstroCalcDialog::EphemerisListDates;
 QVector<float> AstroCalcDialog::EphemerisListMagnitudes;
 int AstroCalcDialog::DisplayedPositionIndex = -1;
 float AstroCalcDialog::brightLimit = 10.f;
-float AstroCalcDialog::minY = -90.f;
-float AstroCalcDialog::maxY = 90.f;
-float AstroCalcDialog::minYme = -90.f;
-float AstroCalcDialog::maxYme = 90.f;
-float AstroCalcDialog::minYsun = -90.f;
-float AstroCalcDialog::maxYsun = 90.f;
-float AstroCalcDialog::minYmoon = -90.f;
-float AstroCalcDialog::maxYmoon = 90.f;
-float AstroCalcDialog::minY1 = -1001.f;
-float AstroCalcDialog::maxY1 = 1001.f;
-float AstroCalcDialog::minY2 = -1001.f;
-float AstroCalcDialog::maxY2 = 1001.f;
-float AstroCalcDialog::transitX = -1.f;
+double AstroCalcDialog::minY = -90.;
+double AstroCalcDialog::maxY = 90.;
+double AstroCalcDialog::minYme = -90.;
+double AstroCalcDialog::maxYme = 90.;
+double AstroCalcDialog::minYsun = -90.;
+double AstroCalcDialog::maxYsun = 90.;
+double AstroCalcDialog::minYmoon = -90.;
+double AstroCalcDialog::maxYmoon = 90.;
+double AstroCalcDialog::minY1 = -1001.;
+double AstroCalcDialog::maxY1 = 1001.;
+double AstroCalcDialog::minY2 = -1001.;
+double AstroCalcDialog::maxY2 = 1001.;
+double AstroCalcDialog::transitX = -1.;
+double AstroCalcDialog::minYld = 0.;
+double AstroCalcDialog::maxYld = 90.;
+double AstroCalcDialog::minYad = 0.;
+double AstroCalcDialog::maxYad = 180.;
 QString AstroCalcDialog::yAxis1Legend = "";
 QString AstroCalcDialog::yAxis2Legend = "";
 
@@ -78,6 +82,7 @@ AstroCalcDialog::AstroCalcDialog(QObject* parent)
 	, plotAltVsTimePositive(false)
 	, plotMonthlyElevation(false)
 	, plotMonthlyElevationPositive(false)
+	, plotDistanceGraph(false)
 	, delimiter(", ")
 	, acEndl("\n")
 {
@@ -124,6 +129,7 @@ void AstroCalcDialog::retranslate()
 		populateFunctionsList();
 		prepareXVsTimeAxesAndGraph();
 		prepareMonthlyEleveationAxesAndGraph();
+		prepareDistanceAxesAndGraph();
 		drawAltVsTimeDiagram();
 		populateTimeIntervalsList();
 		populateWutGroups();
@@ -178,6 +184,8 @@ void AstroCalcDialog::createDialogContent()
 	// WUT
 	populateTimeIntervalsList();
 	populateWutGroups();
+	// PC
+	prepareDistanceAxesAndGraph();
 
 	double JD = core->getJD() + core->getUTCOffset(core->getJD()) / 24;
 	QDateTime currentDT = StelUtils::jdToQDateTime(JD);
@@ -305,17 +313,21 @@ void AstroCalcDialog::createDialogContent()
 
 	currentTimeLine = new QTimer(this);
 	connect(currentTimeLine, SIGNAL(timeout()), this, SLOT(drawCurrentTimeDiagram()));
-	connect(currentTimeLine, SIGNAL(timeout()), this, SLOT(computePlanetaryData()));	
+	connect(currentTimeLine, SIGNAL(timeout()), this, SLOT(computePlanetaryData()));
 	currentTimeLine->start(500); // Update 'now' line position every 0.5 seconds
 
 	connect(ui->firstCelestialBodyComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(saveFirstCelestialBody(int)));
 	connect(ui->secondCelestialBodyComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(saveSecondCelestialBody(int)));	
+	connect(ui->pcDistanceGraphPlot, SIGNAL(mouseMove(QMouseEvent*)), this, SLOT(mouseOverDistanceGraph(QMouseEvent*)));
 
 	connect(solarSystem, SIGNAL(solarSystemDataReloaded()), this, SLOT(updateSolarSystemData()));
 	connect(core, SIGNAL(locationChanged(StelLocation)), this, SLOT(updateAstroCalcData()));
 	connect(core, SIGNAL(locationChanged(StelLocation)), this, SLOT(drawAltVsTimeDiagram()));
 	connect(core, SIGNAL(locationChanged(StelLocation)), this, SLOT(drawMonthlyElevationGraph()));
+
 	connect(ui->stackListWidget, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)), this, SLOT(changePage(QListWidgetItem*, QListWidgetItem*)));
+	connect(ui->tabWidgetGraphs, SIGNAL(currentChanged(int)), this, SLOT(changeGraphsTab(int)));
+	connect(ui->tabWidgetPC, SIGNAL(currentChanged(int)), this, SLOT(changePCTab(int)));
 
 	updateTabBarListWidgetWidth();
 
@@ -323,7 +335,8 @@ void AstroCalcDialog::createDialogContent()
 	QString style = "QLabel { color: rgb(238, 238, 238); }";
 	ui->celestialPositionsTimeLabel->setStyleSheet(style);
 	ui->altVsTimeLabel->setStyleSheet(style);
-	ui->monthlyElevationLabel->setStyleSheet(style);
+	ui->monthlyElevationLabel->setStyleSheet(style);	
+	ui->pcDistanceGraphLegend->setStyleSheet(style);
 	ui->graphsFirstLabel->setStyleSheet(style);
 	ui->graphsCelestialBodyLabel->setStyleSheet(style);
 	ui->graphsSecondLabel->setStyleSheet(style);
@@ -1834,7 +1847,7 @@ void AstroCalcDialog::populateMajorPlanetList()
 
 	QComboBox* majorPlanet = ui->object1ComboBox;
 	QList<PlanetP> planets = solarSystem->getAllPlanets();
-	const StelTranslator& trans = StelApp::getInstance().getLocaleMgr().getSkyTranslator();
+	const StelTranslator& trans = localeMgr->getSkyTranslator();
 
 	// Save the current selection to be restored later
 	majorPlanet->blockSignals(true);
@@ -2065,7 +2078,7 @@ void AstroCalcDialog::drawAltVsTimeDiagram()
 				if (minYs > temp) minYs = temp;
 			}
 
-			minY =  (minY < minYs - 2.0) ? minY : minYs - 2.f;
+			minY =  (minY < minYs - 2.0) ? minY : minYs - 2.0;
 			maxY = (maxY > maxYs + 20.0) ? maxY : maxYs + 20.0;
 		}
 
@@ -2083,12 +2096,12 @@ void AstroCalcDialog::drawAltVsTimeDiagram()
 				if (minYm > temp) minYm = temp;
 			}
 
-			minY =  (minY < minYm - 2.0) ? minY : minYm - 2.f;
+			minY =  (minY < minYm - 2.0) ? minY : minYm - 2.0;
 			maxY = (maxY > maxYm + 2.0) ? maxY : maxYm + 2.0;
 		}
 
-		if (plotAltVsTimePositive && minY<0.f)
-			minY = 0;
+		if (plotAltVsTimePositive && minY<0.0)
+			minY = 0.0;
 
 		prepareAxesAndGraph();
 		drawCurrentTimeDiagram();
@@ -2265,7 +2278,7 @@ void AstroCalcDialog::drawXVsTimeGraphs()
 		StelUtils::getDateFromJulianDay(currentJD, &year, &month, &day);
 		StelUtils::getJDFromDate(&startJD, year, 1, 1, 0, 0, 0);
 
-		float width = 1.0f;
+		double width = 1.0;
 		int dYear = (int)core->getCurrentPlanet()->getSiderealPeriod() + 3;
 
 		for (int i = -2; i <= dYear; i++)
@@ -2287,7 +2300,7 @@ void AstroCalcDialog::drawXVsTimeGraphs()
 				case GraphDistanceVsTime:
 					distance = ssObj->getJ2000EquatorialPos(core).length();
 					if (distance < 0.1)
-						distance *= AU / 1000.f;
+						distance *= AU / 1000.;
 					aY.append(distance);
 					break;
 				case GraphElongationVsTime:
@@ -2302,6 +2315,12 @@ void AstroCalcDialog::drawXVsTimeGraphs()
 				case GraphPhaseAngleVsTime:
 					aY.append(ssObj->getPhaseAngle(core->getObserverHeliocentricEclipticPos()) * 180. / M_PI);
 					break;
+				case GraphHDistanceVsTime:
+					distance = ssObj->getHeliocentricEclipticPos().length();
+					if (distance < 0.1)
+						distance *= AU / 1000.;
+					aY.append(distance);
+					break;
 			}
 
 			switch (ui->graphsSecondComboBox->currentData().toInt())
@@ -2315,7 +2334,7 @@ void AstroCalcDialog::drawXVsTimeGraphs()
 				case GraphDistanceVsTime:
 					distance = ssObj->getJ2000EquatorialPos(core).length();
 					if (distance < 0.1)
-						distance *= AU / 1000.f;
+						distance *= AU / 1000.;
 					bY.append(distance);
 					break;
 				case GraphElongationVsTime:
@@ -2330,6 +2349,11 @@ void AstroCalcDialog::drawXVsTimeGraphs()
 				case GraphPhaseAngleVsTime:
 					bY.append(ssObj->getPhaseAngle(core->getObserverHeliocentricEclipticPos()) * 180. / M_PI);
 					break;
+				case GraphHDistanceVsTime:
+					distance = ssObj->getHeliocentricEclipticPos().length();
+					if (distance < 0.1)
+						distance *= AU / 1000.;
+					bY.append(distance);
 			}
 
 			core->update(0.0);
@@ -2347,7 +2371,7 @@ void AstroCalcDialog::drawXVsTimeGraphs()
 			if (minYa > temp) minYa = temp;
 		}
 
-		width = (maxYa - minYa) / 50.f;
+		width = (maxYa - minYa) / 50.0;
 		minY1 = minYa - width;
 		maxY1 = maxYa + width;
 
@@ -2360,7 +2384,7 @@ void AstroCalcDialog::drawXVsTimeGraphs()
 			if (minYa > temp) minYa = temp;
 		}
 
-		width = (maxYa - minYa) / 50.f;
+		width = (maxYa - minYa) / 50.0;
 		minY2 = minYa - width;
 		maxY2 = maxYa + width;
 
@@ -2414,6 +2438,10 @@ void AstroCalcDialog::populateFunctionsList()
 	functions.append(cf);
 	cf.first = q_("Phase angle vs. Time");
 	cf.second = GraphPhaseAngleVsTime;
+	functions.append(cf);
+	// TRANSLATORS: The phrase "Heliocentric distance" may be long in some languages and you can short it to use in the drop-down list.
+	cf.first = q_("Heliocentric distance vs. Time");
+	cf.second = GraphHDistanceVsTime;
 	functions.append(cf);
 
 	QComboBox* first = ui->graphsFirstComboBox;
@@ -2476,34 +2504,40 @@ void AstroCalcDialog::prepareXVsTimeAxesAndGraph()
 	{
 		case GraphMagnitudeVsTime:
 			yAxis1Legend = q_("Magnitude");
-			if (minY1 < -1000.f) minY1 = 0.f;
-			if (maxY1 > 1000.f) maxY1 = 6.f;
+			if (minY1 < -1000.) minY1 = 0.0;
+			if (maxY1 > 1000.) maxY1 = 6.0;
 			direction1 = true;
 			break;
 		case GraphPhaseVsTime:
 			yAxis1Legend = QString("%1, %").arg(q_("Phase"));
-			if (minY1 < -1000.f) minY1 = 0.f;
-			if (maxY1 > 1000.f) maxY1 = 100.f;
+			if (minY1 < -1000.) minY1 = 0.0;
+			if (maxY1 > 1000.) maxY1 = 100.0;
 			break;
 		case GraphDistanceVsTime:
 			yAxis1Legend = QString("%1, %2").arg(q_("Distance"), distMU);
-			if (minY1 < -1000.f) minY1 = 0.f;
-			if (maxY1 > 1000.f) maxY1 = 50.f;
+			if (minY1 < -1000.) minY1 = 0.0;
+			if (maxY1 > 1000.) maxY1 = 50.0;
 			break;
 		case GraphElongationVsTime:
 			yAxis1Legend = QString("%1, %2").arg(q_("Elongation"), QChar(0x00B0));
-			if (minY1 < -1000.f) minY1 = 0.f;
-			if (maxY1 > 1000.f) maxY1 = 180.f;
+			if (minY1 < -1000.) minY1 = 0.0;
+			if (maxY1 > 1000.) maxY1 = 180.0;
 			break;
 		case GraphAngularSizeVsTime:
 			yAxis1Legend = QString("%1, %2").arg(q_("Angular size"), asMU);
-			if (minY1 < -1000.f) minY1 = 0.f;
-			if (maxY1 > 1000.f) maxY1 = 30.f;
+			if (minY1 < -1000.) minY1 = 0.0;
+			if (maxY1 > 1000.) maxY1 = 30.0;
 			break;
 		case GraphPhaseAngleVsTime:
 			yAxis1Legend = QString("%1, %2").arg(q_("Phase angle"), QChar(0x00B0));
-			if (minY1 < -1000.f) minY1 = 0.f;
-			if (maxY1 > 1000.f) maxY1 = 180.f;
+			if (minY1 < -1000.) minY1 = 0.0;
+			if (maxY1 > 1000.) maxY1 = 180.0;
+			break;
+		case GraphHDistanceVsTime:
+			// TRANSLATORS: The phrase "Heliocentric distance" may be long in some languages and you can short it.
+			yAxis1Legend = QString("%1, %2").arg(q_("Heliocentric distance"), distMU);
+			if (minY1 < -1000.) minY1 = 0.0;
+			if (maxY1 > 1000.) maxY1 = 50.0;
 			break;
 	}
 
@@ -2511,40 +2545,47 @@ void AstroCalcDialog::prepareXVsTimeAxesAndGraph()
 	{
 		case GraphMagnitudeVsTime:
 			yAxis2Legend = q_("Magnitude");
-			if (minY2 < -1000.f) minY2 = 0.f;
-			if (maxY2 > 1000.f) maxY2 = 6.f;
+			if (minY2 < -1000.) minY2 = 0.0;
+			if (maxY2 > 1000.) maxY2 = 6.0;
 			direction2 = true;
 			break;
 		case GraphPhaseVsTime:
 			yAxis2Legend = QString("%1, %").arg(q_("Phase"));
-			if (minY2 < -1000.f) minY2 = 0.f;
-			if (maxY2 > 1000.f) maxY2 = 100.f;
+			if (minY2 < -1000.) minY2 = 0.0;
+			if (maxY2 > 1000.) maxY2 = 100.0;
 			break;
 		case GraphDistanceVsTime:
 			yAxis2Legend = QString("%1, %2").arg(q_("Distance"), distMU);
-			if (minY2 < -1000.f) minY2 = 0.f;
-			if (maxY2 > 1000.f) maxY2 = 50.f;
+			if (minY2 < -1000.) minY2 = 0.0;
+			if (maxY2 > 1000.) maxY2 = 50.0;
 			break;
 		case GraphElongationVsTime:
 			yAxis2Legend = QString("%1, %2").arg(q_("Elongation"), QChar(0x00B0));
-			if (minY2 < -1000.f) minY2 = 0.f;
-			if (maxY2 > 1000.f) maxY2 = 180.f;
+			if (minY2 < -1000.) minY2 = 0.0;
+			if (maxY2 > 1000.) maxY2 = 180.0;
 			break;
 		case GraphAngularSizeVsTime:
 			yAxis2Legend = QString("%1, %2").arg(q_("Angular size"), asMU);
-			if (minY2 < -1000.f) minY2 = 0.f;
-			if (maxY2 > 1000.f) maxY2 = 30.f;
+			if (minY2 < -1000.) minY2 = 0.0;
+			if (maxY2 > 1000.) maxY2 = 30.0;
 			break;
 		case GraphPhaseAngleVsTime:
 			yAxis2Legend = QString("%1, %2").arg(q_("Phase angle"), QChar(0x00B0));
-			if (minY2 < -1000.f) minY2 = 0.f;
-			if (maxY2 > 1000.f) maxY2 = 180.f;
+			if (minY2 < -1000.) minY2 = 0.0;
+			if (maxY2 > 1000.) maxY2 = 180.0;
+			break;
+		case GraphHDistanceVsTime:
+			// TRANSLATORS: The phrase "Heliocentric distance" may be long in some languages and you can short it.
+			yAxis2Legend = QString("%1, %2").arg(q_("Heliocentric distance"), distMU);
+			if (minY2 < -1000.) minY2 = 0.0;
+			if (maxY2 > 1000.) maxY2 = 50.0;
 			break;
 	}
 
 	QColor axisColor(Qt::white);
 	QPen axisPen(axisColor, 1);
 
+	ui->graphsPlot->setLocale(QLocale(localeMgr->getAppLanguage()));
 	ui->graphsPlot->xAxis->setLabel(xAxisStr);
 	ui->graphsPlot->yAxis->setLabel(yAxis1Legend);
 	ui->graphsPlot->yAxis2->setLabel(yAxis2Legend);
@@ -2604,6 +2645,7 @@ void AstroCalcDialog::prepareMonthlyEleveationAxesAndGraph()
 	QColor axisColor(Qt::white);
 	QPen axisPen(axisColor, 1);
 
+	ui->monthlyElevationGraph->setLocale(QLocale(localeMgr->getAppLanguage()));
 	ui->monthlyElevationGraph->xAxis->setLabel(xAxisStr);
 	ui->monthlyElevationGraph->yAxis->setLabel(yAxisStr);
 
@@ -2733,8 +2775,8 @@ void AstroCalcDialog::drawMonthlyElevationGraph()
 		minYme = minYa - 2.0;
 		maxYme = maxYa + 2.0;
 
-		if (plotMonthlyElevationPositive && minYme<0.f)
-			minYme = 0.f;
+		if (plotMonthlyElevationPositive && minYme<0.0)
+			minYme = 0.0;
 
 		prepareMonthlyEleveationAxesAndGraph();
 
@@ -2823,9 +2865,9 @@ void AstroCalcDialog::setPhenomenaHeaderNames()
 	phenomenaHeader << q_("Date and Time");
 	phenomenaHeader << q_("Object 1");
 	phenomenaHeader << q_("Object 2");
-	phenomenaHeader << q_("Separation");
-	phenomenaHeader << q_("Elongation");
-	phenomenaHeader << q_("Angular distance");
+	phenomenaHeader << q_("Separation");	
+	phenomenaHeader << q_("Solar Elongation");
+	phenomenaHeader << q_("Lunar Elongation");
 	ui->phenomenaTreeWidget->setHeaderLabels(phenomenaHeader);
 
 	// adjust the column width
@@ -3038,12 +3080,12 @@ void AstroCalcDialog::calculatePhenomena()
 		double currentJDE = core->getJDE(); // save current JDE
 		double startJD = StelUtils::qDateTimeToJd(QDateTime(ui->phenomenFromDateEdit->date()));
 		double stopJD = StelUtils::qDateTimeToJd(QDateTime(ui->phenomenToDateEdit->date().addDays(1)));
-		startJD = startJD - core->getUTCOffset(startJD) / 24;
-		stopJD = stopJD - core->getUTCOffset(stopJD) / 24;
+		startJD = startJD - core->getUTCOffset(startJD) / 24.;
+		stopJD = stopJD - core->getUTCOffset(stopJD) / 24.;
 
 		// Calculate the limits on coordinates for speed-up of calculations
 		double coordsLimit = std::abs(core->getCurrentPlanet()->getRotObliquity(currentJDE)) + std::abs(planet->getRotObliquity(currentJDE)) + 0.026;
-		coordsLimit += separation * M_PI / 180;
+		coordsLimit += separation * M_PI / 180.;
 		double ra, dec;
 
 		if (obj2Type < 10)
@@ -3276,17 +3318,17 @@ QMap<double, double> AstroCalcDialog::findClosestApproach(PlanetP& object1, Plan
 	if (object1->getEnglishName() == "Jupiter" || object2->getEnglishName() == "Jupiter" || object1->getEnglishName() == "Saturn" || object2->getEnglishName() == "Saturn")
 	{
 		if (step0 > 365.25)
-			step0 = 365.f;
+			step0 = 365.;
 	}
 	if (object1->getEnglishName() == "Mars" || object2->getEnglishName() == "Mars")
 	{
-		if (step0 > 10.f)
-			step0 = 10.f;
+		if (step0 > 10.)
+			step0 = 10.;
 	}
 	if (object1->getEnglishName() == "Venus" || object2->getEnglishName() == "Venus" || object1->getEnglishName() == "Mercury" || object2->getEnglishName() == "Mercury")
 	{
-		if (step0 > 5.f)
-			step0 = 5.f;
+		if (step0 > 5.)
+			step0 = 5.;
 	}
 	if (object1->getEnglishName() == "Moon" || object2->getEnglishName() == "Moon")
 	{
@@ -3304,8 +3346,8 @@ QMap<double, double> AstroCalcDialog::findClosestApproach(PlanetP& object1, Plan
 		sgn = StelUtils::sign(dist - prevDist);
 
 		double factor = qAbs((dist - prevDist) / dist);
-		if (factor > 10.f)
-			step = step0 * factor / 10.f;
+		if (factor > 10.)
+			step = step0 * factor / 10.;
 		else
 			step = step0;
 
@@ -3355,7 +3397,7 @@ bool AstroCalcDialog::findPrecise(QPair<double, double>* out, PlanetP object1, P
 		return false;
 
 	prevDist = findDistance(JD, object1, object2, opposition);
-	step = -step / 2.f;
+	step = -step / 2.;
 	prevSign = -prevSign;
 
 	while (true)
@@ -3363,7 +3405,7 @@ bool AstroCalcDialog::findPrecise(QPair<double, double>* out, PlanetP object1, P
 		JD += step;
 		dist = findDistance(JD, object1, object2, opposition);
 
-		if (qAbs(step) < 1.f / 1440.f)
+		if (qAbs(step) < 1. / 1440.)
 		{
 			out->first = JD - step / 2.0;
 			out->second = findDistance(JD - step / 2.0, object1, object2, opposition);
@@ -3495,17 +3537,17 @@ QMap<double, double> AstroCalcDialog::findClosestApproach(PlanetP& object1, Nebu
 	if (object1->getEnglishName() == "Jupiter" || object1->getEnglishName() == "Saturn")
 	{
 		if (step0 > 365.25)
-			step0 = 365.f;
+			step0 = 365.;
 	}
 	if (object1->getEnglishName() == "Mars")
 	{
-		if (step0 > 10.f)
-			step0 = 10.f;
+		if (step0 > 10.)
+			step0 = 10.;
 	}
 	if (object1->getEnglishName() == "Venus" || object1->getEnglishName() == "Mercury")
 	{
-		if (step0 > 5.f)
-			step0 = 5.f;
+		if (step0 > 5.)
+			step0 = 5.;
 	}
 	if (object1->getEnglishName() == "Moon")
 	{
@@ -3523,8 +3565,8 @@ QMap<double, double> AstroCalcDialog::findClosestApproach(PlanetP& object1, Nebu
 		sgn = StelUtils::sign(dist - prevDist);
 
 		double factor = qAbs((dist - prevDist) / dist);
-		if (factor > 10.f)
-			step = step0 * factor / 10.f;
+		if (factor > 10.)
+			step = step0 * factor / 10.;
 		else
 			step = step0;
 
@@ -3572,7 +3614,7 @@ bool AstroCalcDialog::findPrecise(QPair<double, double>* out, PlanetP object1, N
 		return false;
 
 	prevDist = findDistance(JD, object1, object2);
-	step = -step / 2.f;
+	step = -step / 2.;
 	prevSign = -prevSign;
 
 	while (true)
@@ -3580,7 +3622,7 @@ bool AstroCalcDialog::findPrecise(QPair<double, double>* out, PlanetP object1, N
 		JD += step;
 		dist = findDistance(JD, object1, object2);
 
-		if (qAbs(step) < 1.f / 1440.f)
+		if (qAbs(step) < 1. / 1440.)
 		{
 			out->first = JD - step / 2.0;
 			out->second = findDistance(JD - step / 2.0, object1, object2);
@@ -3709,12 +3751,12 @@ QMap<double, double> AstroCalcDialog::findClosestApproach(PlanetP& object1, Stel
 	}
 	if (object1->getEnglishName() == "Mars")
 	{
-		if (step0 > 5.f)
+		if (step0 > 5.)
 			step0 = 5.0;
 	}
 	if (object1->getEnglishName() == "Venus" || object1->getEnglishName() == "Mercury")
 	{
-		if (step0 > 2.5f)
+		if (step0 > 2.5)
 			step0 = 2.5;
 	}
 	if (object1->getEnglishName() == "Moon")
@@ -3733,8 +3775,8 @@ QMap<double, double> AstroCalcDialog::findClosestApproach(PlanetP& object1, Stel
 		sgn = StelUtils::sign(dist - prevDist);
 
 		double factor = qAbs((dist - prevDist) / dist);
-		if (factor > 10.f)
-			step = step0 * factor / 10.f;
+		if (factor > 10.)
+			step = step0 * factor / 10.;
 		else
 			step = step0;
 
@@ -3783,7 +3825,7 @@ bool AstroCalcDialog::findPrecise(QPair<double, double>* out, PlanetP object1, S
 		return false;
 
 	prevDist = findDistance(JD, object1, object2);
-	step = -step / 2.f;
+	step = -step / 2.;
 	prevSign = -prevSign;
 
 	while (true)
@@ -3791,7 +3833,7 @@ bool AstroCalcDialog::findPrecise(QPair<double, double>* out, PlanetP object1, S
 		JD += step;
 		dist = findDistance(JD, object1, object2);
 
-		if (qAbs(step) < 1.f / 1440.f)
+		if (qAbs(step) < 1. / 1440.)
 		{
 			out->first = JD - step / 2.0;
 			out->second = findDistance(JD - step / 2.0, object1, object2);
@@ -3831,27 +3873,71 @@ void AstroCalcDialog::changePage(QListWidgetItem* current, QListWidgetItem* prev
 	if (ui->stackListWidget->row(current) == 0)
 		currentCelestialPositions();
 
-	// special case - plot the graph when tab 'Alt. vs Time' is visible
+	// special case - graphs
 	if (ui->stackListWidget->row(current) == 3)
+	{
+		int idx = ui->tabWidgetGraphs->currentIndex();
+		if (idx==0) // First tab - 'Alt. vs Time' is visible
+		{
+			plotAltVsTime = true;
+			drawAltVsTimeDiagram(); // Is object already selected?
+		}
+		else
+			plotAltVsTime = false;
+
+		if (idx==1) // Second tab - 'Monthly Elevation' is visible
+		{
+			plotMonthlyElevation = true;
+			drawMonthlyElevationGraph(); // Is object already selected?
+		}
+		else
+			plotMonthlyElevation = false;
+
+	}
+
+	// special case (PCalc)
+	if (ui->stackListWidget->row(current) == 5)
+	{
+		int index = ui->tabWidgetPC->currentIndex();
+		if (index==0) // First tab: Data
+		{
+			plotDistanceGraph = false;
+			computePlanetaryData();
+		}
+		if (index==1) // Second tab: Graphs
+		{
+			plotDistanceGraph = true;
+			drawDistanceGraph();
+		}
+	}
+}
+
+void AstroCalcDialog::changePCTab(int index)
+{
+	if (index==0) // First tab: Data
+	{
+		plotDistanceGraph = false;
+		computePlanetaryData();
+	}
+	if (index==1) // Second tab: Graphs
+	{
+		plotDistanceGraph = true;
+		drawDistanceGraph();
+	}
+}
+
+void AstroCalcDialog::changeGraphsTab(int index)
+{
+	if (index==0) // First tab: 'Alt. vs Time'
 	{
 		plotAltVsTime = true;
 		drawAltVsTimeDiagram(); // Is object already selected?
 	}
-	else
-		plotAltVsTime = false;
-
-	// special case - plot the graph when tab 'Monthly Elevation' is visible
-	if (ui->stackListWidget->row(current) == 4)
+	if (index==1) // Second tab: 'Monthly Elevation'
 	{
 		plotMonthlyElevation = true;
 		drawMonthlyElevationGraph(); // Is object already selected?
 	}
-	else
-		plotMonthlyElevation = false;
-
-	// special case (PCalc)
-	if (ui->stackListWidget->row(current) == 7)
-		computePlanetaryData();
 }
 
 void AstroCalcDialog::updateTabBarListWidgetWidth()
@@ -4492,6 +4578,7 @@ void AstroCalcDialog::saveFirstCelestialBody(int index)
 	conf->setValue("astrocalc/first_celestial_body", celestialBody->itemData(index).toString());
 
 	computePlanetaryData();
+	drawDistanceGraph();
 }
 
 void AstroCalcDialog::saveSecondCelestialBody(int index)
@@ -4501,6 +4588,7 @@ void AstroCalcDialog::saveSecondCelestialBody(int index)
 	conf->setValue("astrocalc/second_celestial_body", celestialBody->itemData(index).toString());
 
 	computePlanetaryData();
+	drawDistanceGraph();
 }
 
 void AstroCalcDialog::computePlanetaryData()
@@ -4638,3 +4726,173 @@ void AstroCalcDialog::computePlanetaryData()
 	QString sizeRatio = QString("%1 (%2 %4 / %3 %4)").arg(QString::number(sratio, 'f', ss), QString::number(fcbs, 'f', 1), QString::number(scbs, 'f', 1) , km);
 	ui->labelEquatorialRadiiRatioValue->setText(sizeRatio);
 }
+
+void AstroCalcDialog::prepareDistanceAxesAndGraph()
+{
+	QString xAxisStr = q_("Days from today");
+	QString yAxis1Legend = QString("%1, %2").arg(q_("Linear distance"), qc_("AU", "distance, astronomical unit"));
+	QString yAxis2Legend = QString("%1, %2").arg(q_("Angular distance"), QChar(0x00B0)); // decimal degrees
+
+	QColor axisColor(Qt::white);
+	QPen axisPen(axisColor, 1);
+
+	ui->pcDistanceGraphPlot->xAxis->setLabel(xAxisStr);
+	ui->pcDistanceGraphPlot->yAxis->setLabel(yAxis1Legend);
+	ui->pcDistanceGraphPlot->yAxis2->setLabel(yAxis2Legend);
+
+	ui->pcDistanceGraphPlot->xAxis->setRange(-300, 300);
+	ui->pcDistanceGraphPlot->xAxis->setScaleType(QCPAxis::stLinear);
+	ui->pcDistanceGraphPlot->xAxis->setLabelColor(axisColor);
+	ui->pcDistanceGraphPlot->xAxis->setTickLabelColor(axisColor);
+	ui->pcDistanceGraphPlot->xAxis->setBasePen(axisPen);
+	ui->pcDistanceGraphPlot->xAxis->setTickPen(axisPen);
+	ui->pcDistanceGraphPlot->xAxis->setSubTickPen(axisPen);
+	ui->pcDistanceGraphPlot->xAxis->setAutoTicks(true);
+	ui->pcDistanceGraphPlot->xAxis->setAutoTickCount(15);
+
+	ui->pcDistanceGraphPlot->yAxis->setRange(minYld, maxYld);
+	ui->pcDistanceGraphPlot->yAxis->setScaleType(QCPAxis::stLinear);
+	ui->pcDistanceGraphPlot->yAxis->setLabelColor(axisColor);
+	ui->pcDistanceGraphPlot->yAxis->setTickLabelColor(axisColor);
+	ui->pcDistanceGraphPlot->yAxis->setBasePen(axisPen);
+	ui->pcDistanceGraphPlot->yAxis->setTickPen(axisPen);
+	ui->pcDistanceGraphPlot->yAxis->setSubTickPen(axisPen);
+
+	ui->pcDistanceGraphPlot->yAxis2->setRange(minYad, maxYad);
+	ui->pcDistanceGraphPlot->yAxis2->setScaleType(QCPAxis::stLinear);
+	ui->pcDistanceGraphPlot->yAxis2->setLabelColor(axisColor);
+	ui->pcDistanceGraphPlot->yAxis2->setTickLabelColor(axisColor);
+	ui->pcDistanceGraphPlot->yAxis2->setBasePen(axisPen);
+	ui->pcDistanceGraphPlot->yAxis2->setTickPen(axisPen);
+	ui->pcDistanceGraphPlot->yAxis2->setSubTickPen(axisPen);
+	ui->pcDistanceGraphPlot->yAxis2->setVisible(true);
+
+	ui->pcDistanceGraphPlot->clearGraphs();
+	ui->pcDistanceGraphPlot->addGraph(ui->pcDistanceGraphPlot->xAxis, ui->pcDistanceGraphPlot->yAxis);
+	ui->pcDistanceGraphPlot->setBackground(QBrush(QColor(86, 87, 90)));
+	ui->pcDistanceGraphPlot->graph(0)->setPen(QPen(Qt::red, 1));
+	ui->pcDistanceGraphPlot->graph(0)->setLineStyle(QCPGraph::lsLine);
+	ui->pcDistanceGraphPlot->graph(0)->rescaleAxes(true);
+
+	ui->pcDistanceGraphPlot->addGraph(ui->pcDistanceGraphPlot->xAxis, ui->pcDistanceGraphPlot->yAxis2);
+	ui->pcDistanceGraphPlot->setBackground(QBrush(QColor(86, 87, 90)));
+	ui->pcDistanceGraphPlot->graph(1)->setPen(QPen(Qt::yellow, 1));
+	ui->pcDistanceGraphPlot->graph(1)->setLineStyle(QCPGraph::lsLine);
+	ui->pcDistanceGraphPlot->graph(1)->rescaleAxes(true);
+}
+
+void AstroCalcDialog::drawDistanceGraph()
+{
+	// special case - plot the graph when tab is visible
+	if (!plotDistanceGraph)
+		return;
+
+	Q_ASSERT(ui->firstCelestialBodyComboBox);
+	Q_ASSERT(ui->secondCelestialBodyComboBox);
+
+	QComboBox* fbody = ui->firstCelestialBodyComboBox;
+	QComboBox* sbody = ui->secondCelestialBodyComboBox;
+
+	QString firstCelestialBody = fbody->currentData(Qt::UserRole).toString();
+	QString secondCelestialBody = sbody->currentData(Qt::UserRole).toString();
+	QString currentPlanet = core->getCurrentPlanet()->getEnglishName();
+
+	PlanetP firstCBId = solarSystem->searchByEnglishName(firstCelestialBody);
+	PlanetP secondCBId = solarSystem->searchByEnglishName(secondCelestialBody);
+
+	if (firstCBId==secondCBId)
+	{
+		ui->pcDistanceGraphPlot->graph(0)->clearData();
+		ui->pcDistanceGraphPlot->graph(1)->clearData();
+		ui->pcDistanceGraphPlot->replot();
+		return;
+	}
+
+	// X axis - time; Y axis - altitude
+	QList<double> aX, aY1, aY2;
+	Vec3d posFCB, posSCB;
+	double currentJD = core->getJD();
+	double JD, distanceAu, r, dd;
+	bool sign;
+	for (int i = -305; i <= 305; i++)
+	{
+		JD = currentJD + i;
+		core->setJD(JD);
+		posFCB = firstCBId->getJ2000EquatorialPos(core);
+		posSCB = secondCBId->getJ2000EquatorialPos(core);
+		distanceAu = (posFCB - posSCB).length();
+		r = std::acos(sin(posFCB.latitude()) * sin(posSCB.latitude()) + cos(posFCB.latitude()) * cos(posSCB.latitude()) * cos(posFCB.longitude() - posSCB.longitude()));
+		StelUtils::radToDecDeg(r, sign, dd);
+		aX.append(i);
+		aY1.append(distanceAu);
+		if (firstCelestialBody != currentPlanet && secondCelestialBody != currentPlanet)
+			aY2.append(dd);
+		core->update(0.0);
+	}
+	core->setJD(currentJD);
+
+	QVector<double> x = aX.toVector(), y1 = aY1.toVector(), y2 = aY2.toVector();
+
+	double minY1a = aY1.first();
+	double maxY1a = aY1.first();
+	double minY2a = aY2.first();
+	double maxY2a = aY2.first();
+
+	for (auto temp : aY1)
+	{
+		if (maxY1a < temp) maxY1a = temp;
+		if (minY1a > temp) minY1a = temp;
+	}
+	for (auto temp : aY2)
+	{
+		if (maxY2a < temp) maxY2a = temp;
+		if (minY2a > temp) minY2a = temp;
+	}
+
+	minYld = minY1a;
+	maxYld = maxY1a;
+	minYad = minY2a;
+	maxYad = maxY2a;
+
+	prepareDistanceAxesAndGraph();
+
+	ui->pcDistanceGraphPlot->graph(0)->setData(x, y1);
+	ui->pcDistanceGraphPlot->graph(0)->setName("[LD]");
+	ui->pcDistanceGraphPlot->graph(1)->setData(x, y2);
+	ui->pcDistanceGraphPlot->graph(1)->setName("[AD]");	
+	ui->pcDistanceGraphPlot->replot();	
+}
+
+void AstroCalcDialog::mouseOverDistanceGraph(QMouseEvent* event)
+{
+	double x = ui->pcDistanceGraphPlot->xAxis->pixelToCoord(event->pos().x());
+	double y = ui->pcDistanceGraphPlot->yAxis->pixelToCoord(event->pos().y());
+	double y2 = ui->pcDistanceGraphPlot->yAxis2->pixelToCoord(event->pos().y());
+
+	QCPAbstractPlottable* abstractGraph = ui->pcDistanceGraphPlot->plottableAt(event->pos(), false);
+	QCPGraph* graph = qobject_cast<QCPGraph*>(abstractGraph);
+
+	if (x > ui->pcDistanceGraphPlot->xAxis->range().lower && x < ui->pcDistanceGraphPlot->xAxis->range().upper
+	    && y > ui->pcDistanceGraphPlot->yAxis->range().lower && y < ui->pcDistanceGraphPlot->yAxis->range().upper)
+	{
+		if (graph)
+		{
+			QString info;
+			if (graph->name()=="[LD]")
+				info = QString("%1: %2 %3<br />%7: %8").arg(q_("Linear distance"), QString::number(y), qc_("AU", "distance, astronomical unit"), q_("Day"), QString::number(x));
+
+			if (graph->name()=="[AD]")
+				info = QString("%1: %2%3<br />%7: %8").arg(q_("Angular distance"), QString::number(y2), QChar(0x00B0), q_("Day"), QString::number(x));
+
+			QToolTip::hideText();
+			QToolTip::showText(event->globalPos(), info, ui->pcDistanceGraphPlot, ui->pcDistanceGraphPlot->rect());
+		}
+		else
+			QToolTip::hideText();
+	}
+
+	ui->pcDistanceGraphPlot->update();
+	ui->pcDistanceGraphPlot->rescaleAxes();
+	ui->pcDistanceGraphPlot->replot();
+}
+

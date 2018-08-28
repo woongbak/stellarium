@@ -24,6 +24,7 @@
 #include "LabelMgr.hpp"
 #include "ConstellationMgr.hpp"
 #include "AsterismMgr.hpp"
+#include "MilkyWay.hpp"
 #include "SkyGui.hpp"
 #include "StelActionMgr.hpp"
 #include "StelApp.hpp"
@@ -125,6 +126,7 @@ Oculars::Oculars()
 	, absoluteStarScaleCCD(1.0)
 	, flagMoonScaleMain(false)
 	, flagMinorBodiesScaleMain(false)
+	, milkyWaySaturation(1.0)
 	, maxEyepieceAngle(0.0)
 	, flagRequireSelection(true)
 	, flagLimitMagnitude(false)
@@ -591,8 +593,8 @@ void Oculars::init()
 		// assume all is well
 		ready = true;
 
-		setFlagRequireSelection(settings->value("require_selection_to_zoom", 1.0).toBool());
-		flagScaleImageCircle = settings->value("use_max_exit_circle", 0.0).toBool();
+		setFlagRequireSelection(settings->value("require_selection_to_zoom", true).toBool());
+		flagScaleImageCircle = settings->value("use_max_exit_circle", false).toBool();
 		int ocularCount = settings->value("ocular_count", 0).toInt();
 		int actualOcularCount = ocularCount;
 		for (int index = 0; index < ocularCount; index++)
@@ -784,6 +786,8 @@ void Oculars::setFlagScaleImageCircle(bool state)
 		determineMaxEyepieceAngle();
 	}
 	flagScaleImageCircle = state;
+	settings->setValue("use_max_exit_circle", state);
+	settings->sync();
 	emit flagScaleImageCircleChanged(state);
 }
 
@@ -2126,6 +2130,7 @@ void Oculars::unzoomOcular()
 	if (flagHideGridsLines)
 		toggleLines(true);
 
+	StelApp::getInstance().getStelPropertyManager()->setStelPropertyValue("MilkyWay.saturation", milkyWaySaturation);
 	skyDrawer->setFlagLuminanceAdaptation(flagAdaptationMain);
 	skyDrawer->setFlagStarMagnitudeLimit(flagLimitStarsMain);
 	skyDrawer->setFlagPlanetMagnitudeLimit(flagLimitPlanetsMain);
@@ -2198,6 +2203,8 @@ void Oculars::zoom(bool zoomedIn)
 			flagMoonScaleMain		= propMgr->getStelPropertyValue("SolarSystem.flagMoonScale").toBool();
 			flagMinorBodiesScaleMain	= propMgr->getStelPropertyValue("SolarSystem.flagMinorBodyScale").toBool();
 
+			milkyWaySaturation	= propMgr->getStelPropertyValue("MilkyWay.saturation").toFloat();
+
 			flipHorzMain = core->getFlipHorz();
 			flipVertMain = core->getFlipVert();
 
@@ -2253,6 +2260,7 @@ void Oculars::zoomOcular()
 		toggleLines(false);
 
 	skyDrawer->setFlagLuminanceAdaptation(false);
+	StelApp::getInstance().getStelPropertyManager()->setStelPropertyValue("MilkyWay.saturation", 0.f);
 
 	GETSTELMODULE(SolarSystem)->setFlagMoonScale(false);
 	GETSTELMODULE(SolarSystem)->setFlagMinorBodyScale(false);

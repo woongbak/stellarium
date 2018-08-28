@@ -1239,6 +1239,9 @@ void ConfigurationDialog::newStarCatalogData()
 	Q_ASSERT(starCatalogDownloadReply);
 	Q_ASSERT(progressBar);
 
+	// Ignore data from redirection.  (Not needed after Qt 5.6)
+	if (!starCatalogDownloadReply->attribute(QNetworkRequest::RedirectionTargetAttribute).isNull())
+		return;
 	int size = starCatalogDownloadReply->bytesAvailable();
 	progressBar->setValue((float)progressBar->getValue()+(float)size/1024);
 	currentDownloadFile->write(starCatalogDownloadReply->read(size));
@@ -1277,6 +1280,7 @@ void ConfigurationDialog::downloadStars()
 	req.setRawHeader("User-Agent", StelUtils::getUserAgentString().toLatin1());
 	starCatalogDownloadReply = StelApp::getInstance().getNetworkAccessManager()->get(req);
 	starCatalogDownloadReply->setReadBufferSize(1024*1024*2);	
+	connect(starCatalogDownloadReply, SIGNAL(readyRead()), this, SLOT(newStarCatalogData()));
 	connect(starCatalogDownloadReply, SIGNAL(finished()), this, SLOT(downloadFinished()));
 	connect(starCatalogDownloadReply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(downloadError(QNetworkReply::NetworkError)));
 
