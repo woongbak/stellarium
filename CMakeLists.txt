@@ -36,7 +36,7 @@ ADD_DEFINITIONS(-DCOPYRIGHT_YEARS="${COPYRIGHT_YEARS}")
 CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/cmake/version.tex.cmake ${PROJECT_SOURCE_DIR}/guide/version.tex @ONLY NEWLINE_STYLE LF)
 
 # currently Qt 5.6/5.9 is recommended
-SET(MINIMAL_QT_VERSION "5.6.0")
+SET(MINIMAL_QT_VERSION "5.4.0")
 
 # Use customized cmake macros
 SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules)
@@ -435,7 +435,6 @@ IF(${Qt5Gui_OPENGL_IMPLEMENTATION} MATCHES "GLES")
      MESSAGE(STATUS "Building an OpenGL ES build (${Qt5Gui_OPENGL_IMPLEMENTATION})")
      SET(STEL_GLES_LIBS Qt5::Gui_EGL Qt5::Gui_GLESv2)
 ENDIF()
-
 
 # Tell CMake to run moc when necessary:
 SET(CMAKE_AUTOMOC ON)
