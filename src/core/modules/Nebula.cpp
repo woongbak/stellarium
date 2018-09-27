@@ -30,6 +30,7 @@
 #include "StelCore.hpp"
 #include "StelPainter.hpp"
 #include "SolarSystem.hpp"
+#include "RefractionExtinction.hpp"
 
 #include <QTextStream>
 #include <QFile>
@@ -157,6 +158,32 @@ Nebula::~Nebula()
 {
 }
 
+QString Nebula::getMagnitudeInfoString(const StelCore *core, const InfoStringGroup& flags, const double alt_app, const int decimals) const
+{
+	QString res;
+	if (vMag < 50.f && flags&Magnitude)
+	{
+		QString emag = "";
+		QString tmag = q_("Magnitude");
+		if (nType == NebDn)
+			tmag = q_("Opacity");
+
+		if (nType != NebDn && core->getSkyDrawer()->getFlagHasAtmosphere() && (alt_app>-2.0*M_PI/180.0)) // Don't show extincted magnitude much below horizon where model is meaningless.
+		{
+			const Extinction &extinction=core->getSkyDrawer()->getExtinction();
+			float airmass=extinction.airmass(alt_app, true);
+
+			emag = QString(" (%1 <b>%2</b> %3 <b>%4</b> %5)").arg(q_("reduced to"), QString::number(getVMagnitudeWithExtinction(core), 'f', decimals), q_("by"), QString::number(airmass, 'f', 2), q_("Airmasses"));
+		}
+		res = QString("%1: <b>%2</b>%3<br />").arg(tmag, QString::number(getVMagnitude(core), 'f', decimals), emag);
+	}
+	if (bMag < 50.f && vMag > 50.f && flags&Magnitude)
+		res.append(QString("%1: <b>%2</b> (%3: B)<br />").arg(q_("Magnitude"), QString::number(bMag, 'f', decimals), q_("Photometric system")));
+	// TODO: Extinction for B magnitude? Or show B magnitude in addition to valid V magnitude?
+
+	return res;
+}
+
 QString Nebula::getInfoString(const StelCore *core, const InfoStringGroup& flags) const
 {
 	QString str;
@@ -247,20 +274,8 @@ QString Nebula::getInfoString(const StelCore *core, const InfoStringGroup& flags
 			oss << QString("%1: <b>%2</b> (%3)").arg(q_("Type"), getTypeString(), mt) << "<br>";
 	}
 
-	if (vMag < 50.f && flags&Magnitude)
-	{
-		QString emag = "";
-		QString tmag = q_("Magnitude");
-		if (nType == NebDn)
-			tmag = q_("Opacity");
+	oss << getMagnitudeInfoString(core, flags, alt_app, 2);
 
-		if (nType != NebDn && core->getSkyDrawer()->getFlagHasAtmosphere() && (alt_app>-3.0*M_PI/180.0)) // Don't show extincted magnitude much below horizon where model is meaningless.
-			emag = QString(" (%1: <b>%2</b>)").arg(q_("extincted to"), QString::number(getVMagnitudeWithExtinction(core), 'f', 2));
-
-		oss << QString("%1: <b>%2</b>%3").arg(tmag, QString::number(getVMagnitude(core), 'f', 2), emag) << "<br />";
-	}
-	if (bMag < 50.f && vMag > 50.f && flags&Magnitude)
-		oss << QString("%1: <b>%2</b> (%3: B)").arg(q_("Magnitude"), QString::number(bMag, 'f', 2), q_("Photometric system")) << "<br />";
 
 	if (flags&Extra)
 	{
@@ -289,7 +304,7 @@ QString Nebula::getInfoString(const StelCore *core, const InfoStringGroup& flags
 
 		if (getSurfaceBrightness(core)<99)
 		{
-			if (core->getSkyDrawer()->getFlagHasAtmosphere() && (alt_app>-3.0*M_PI/180.0) && getSurfaceBrightnessWithExtinction(core)<99) // Don't show extincted surface brightness much below horizon where model is meaningless.
+			if (core->getSkyDrawer()->getFlagHasAtmosphere() && (alt_app>-2.0*M_PI/180.0) && getSurfaceBrightnessWithExtinction(core)<99) // Don't show extincted surface brightness much below horizon where model is meaningless.
 			{
 				oss << QString("%1: <b>%2</b> %5 (%3: <b>%4</b> %5)").arg(sb, QString::number(getSurfaceBrightness(core, flagUseArcsecSurfaceBrightness), 'f', 2),
 											  ae, QString::number(getSurfaceBrightnessWithExtinction(core, flagUseArcsecSurfaceBrightness), 'f', 2), mu) << "<br />";

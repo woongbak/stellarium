@@ -43,6 +43,7 @@
 #include "StelOBJ.hpp"
 #include "StelOpenGLArray.hpp"
 #include "StelHips.hpp"
+#include "RefractionExtinction.hpp"
 
 #include <limits>
 #include <QByteArray>
@@ -267,7 +268,7 @@ Planet::Planet(const QString& englishName,
 			qWarning()<<"Cannot resolve path to model file"<<aobjModelName<<"of object"<<englishName;
 		}
 	}
-	if (englishName!="Pluto") // TODO: add some far-out slow object types: other Plutoids, KBO, SDO, OCO, ...
+	if ((pType <= isDwarfPlanet) && (englishName!="Pluto")) // concentrate on "inner" objects, KBO etc. stay at 1/s recomputation.
 	{
 		deltaJDE = 0.001*StelCore::JD_SECOND;
 	}
@@ -424,12 +425,9 @@ QString Planet::getInfoString(const StelCore* core, const InfoStringGroup& flags
 
 	if (flags&Magnitude && getVMagnitude(core)!=std::numeric_limits<float>::infinity())
 	{
-		QString emag = "";
-		if (core->getSkyDrawer()->getFlagHasAtmosphere() && (alt_app>-3.0*M_PI/180.0)) // Don't show extincted magnitude much below horizon where model is meaningless.
-			emag = QString(" (%1: <b>%2</b>)").arg(q_("extincted to"), QString::number(getVMagnitudeWithExtinction(core), 'f', 2));
-
-		oss << QString("%1: <b>%2</b>%3").arg(q_("Magnitude"), QString::number(getVMagnitude(core), 'f', 2), emag) << "<br />";
+		oss << getMagnitudeInfoString(core, flags, alt_app, 2);
 	}
+
 	if (flags&AbsoluteMagnitude && (getAbsoluteMagnitude() > -99.))
 	{
 		oss << QString("%1: %2").arg(q_("Absolute Magnitude")).arg(getAbsoluteMagnitude(), 0, 'f', 2) << "<br />";
@@ -858,6 +856,7 @@ bool willCastShadow(const Planet* thisPlanet, const Planet* p)
 	static const double sunRadius = 696000./AU;
 	double d = planetPos.length() / (p->getRadius()/sunRadius+1);
 	double penumbraRadius = (shadowDistance-d)/d*sunRadius;
+	// TODO: Note that Earth's shadow should be enlarged a bit. (6-7% following Danjon?)
 	
 	double penumbraCenterToThisPlanetCenterDistance = (ppVector*shadowDistance-thisPos).length();
 	
@@ -1781,6 +1780,7 @@ void Planet::PlanetShaderVars::initLocations(QOpenGLShaderProgram* p)
 
 	// Moon-specific variables
 	GL(earthShadow = p->uniformLocation("earthShadow"));
+	GL(eclipsePush = p->uniformLocation("eclipsePush"));
 	GL(normalMap = p->uniformLocation("normalMap"));
 
 	// Rings-specific variables
@@ -2049,7 +2049,7 @@ bool Planet::initShader()
 		transformFShader = "void main()\n{ }\n";
 	}
 #endif
-	GL(transformShaderProgram = createShader("transformShaderProgam", transformShaderVars, transformVShader, transformFShader,QByteArray(),attrLoc));
+	GL(transformShaderProgram = createShader("transformShaderProgram", transformShaderVars, transformVShader, transformFShader,QByteArray(),attrLoc));
 
 	//check if ALL shaders have been created correctly
 	shaderError = !(planetShaderProgram&&
@@ -2649,6 +2649,18 @@ void Planet::drawSphere(StelPainter* painter, float screenSz, bool drawOnlyRing)
 		{
 			GL(texEarthShadow->bind(3));
 			GL(moonShaderProgram->setUniformValue(moonShaderVars.earthShadow, 3));
+			// Ad-hoc visibility improvement during lunar eclipses:
+			// During partial umbra phase, make moon brighter so that the bright limb and umbra border has more visibility.
+			// When the moon is about half in umbra (geoc.elong 179.4), we start to raise its brightness.
+			float push=1.0f;
+			const double elong=getElongation(ssm->getEarth()->getEclipticPos()) * (180.0/M_PI);
+			const float x=elong - 179.5f;
+			if (x>0.0)
+				push+=20.0f * x;
+			if (x>0.1)
+				push=3.0f;
+
+			GL(moonShaderProgram->setUniformValue(moonShaderVars.eclipsePush, (GLfloat) push)); // constant for now...
 		}
 	}
 
