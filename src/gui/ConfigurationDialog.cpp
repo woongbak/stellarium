@@ -300,14 +300,19 @@ void ConfigurationDialog::createDialogContent()
 	connect(ui->diskViewportCheckbox, SIGNAL(toggled(bool)), this, SLOT(setDiskViewport(bool)));
 	connectBoolProperty(ui->autoZoomResetsDirectionCheckbox, "StelMovementMgr.flagAutoZoomOutResetsDirection");
 
-	connectBoolProperty(ui->showFlipButtonsCheckbox,			"StelGui.flagShowFlipButtons");
-	connectBoolProperty(ui->showNebulaBgButtonCheckbox,		"StelGui.flagShowNebulaBackgroundButton");
+	connectBoolProperty(ui->showQuitButtonCheckBox,		"StelGui.flagShowQuitButton");
+	connectBoolProperty(ui->showFlipButtonsCheckbox,	"StelGui.flagShowFlipButtons");
+	connectBoolProperty(ui->showNebulaBgButtonCheckbox,	"StelGui.flagShowNebulaBackgroundButton");
 	connectBoolProperty(ui->showBookmarksButtonCheckBox,	"StelGui.flagShowBookmarksButton");
-	connectBoolProperty(ui->showICRSGridButtonCheckBox,		"StelGui.flagShowICRSGridButton");
+	connectBoolProperty(ui->showICRSGridButtonCheckBox,	"StelGui.flagShowICRSGridButton");
 	connectBoolProperty(ui->showGalacticGridButtonCheckBox,	"StelGui.flagShowGalacticGridButton");
 	connectBoolProperty(ui->showEclipticGridButtonCheckBox,	"StelGui.flagShowEclipticGridButton");
-	connectBoolProperty(ui->showHipsButtonCheckBox,			"StelGui.flagShowHiPSButton");
-	connectBoolProperty(ui->showDSSButtonCheckbox,			"StelGui.flagShowDSSButton");
+	connectBoolProperty(ui->showHipsButtonCheckBox,		"StelGui.flagShowHiPSButton");
+	connectBoolProperty(ui->showDSSButtonCheckbox,		"StelGui.flagShowDSSButton");
+	connectBoolProperty(ui->showGotoSelectedButtonCheckBox,	"StelGui.flagShowGotoSelectedObjectButton");
+	connectBoolProperty(ui->showNightmodeButtonCheckBox,	"StelGui.flagShowNightmodeButton");
+	connectBoolProperty(ui->showFullscreenButtonCheckBox,	"StelGui.flagShowFullscreenButton");
+
 	connectBoolProperty(ui->showConstellationBoundariesButtonCheckBox, "StelGui.flagShowConstellationBoundariesButton");
 	connectBoolProperty(ui->showAsterismLinesButtonCheckBox,	"StelGui.flagShowAsterismLinesButton");
 	connectBoolProperty(ui->showAsterismLabelsButtonCheckBox,	"StelGui.flagShowAsterismLabelsButton");
@@ -317,7 +322,7 @@ void ConfigurationDialog::createDialogContent()
 
 	connectBoolProperty(ui->mouseTimeoutCheckbox, "MainView.flagCursorTimeout");
 	connectDoubleProperty(ui->mouseTimeoutSpinBox, "MainView.cursorTimeout");
-	connectBoolProperty(ui->useButtonsBackgroundCheckBox, "MainView.flagUseButtonsBackground");
+	connectBoolProperty(ui->useButtonsBackgroundCheckBox, "StelGui.flagUseButtonsBackground");
 	connectBoolProperty(ui->indicationMountModeCheckBox, "StelMovementMgr.flagIndicationMountMode");
 
 	// Dithering
@@ -692,6 +697,7 @@ void ConfigurationDialog::saveAllSettings()
 	conf->setValue("viewing/flag_equinox_points",			propMgr->getStelPropertyValue("GridLinesMgr.equinoxPointsDisplayed").toBool());
 	conf->setValue("viewing/flag_solstice_J2000_points",	propMgr->getStelPropertyValue("GridLinesMgr.solsticeJ2000PointsDisplayed").toBool());
 	conf->setValue("viewing/flag_solstice_points",			propMgr->getStelPropertyValue("GridLinesMgr.solsticePointsDisplayed").toBool());
+	conf->setValue("viewing/flag_antisolar_point",			propMgr->getStelPropertyValue("GridLinesMgr.antisolarPointDisplayed").toBool());
 
 	conf->setValue("viewing/flag_constellation_drawing",	propMgr->getStelPropertyValue("ConstellationMgr.linesDisplayed").toBool());
 	conf->setValue("viewing/flag_constellation_name",		propMgr->getStelPropertyValue("ConstellationMgr.namesDisplayed").toBool());
@@ -791,11 +797,11 @@ void ConfigurationDialog::saveAllSettings()
 	conf->setValue("landscape/flag_fog",					propMgr->getStelPropertyValue("LandscapeMgr.fogDisplayed").toBool());
 	conf->setValue("landscape/flag_enable_illumination_layer",	propMgr->getStelPropertyValue("LandscapeMgr.illuminationDisplayed").toBool());
 	conf->setValue("landscape/flag_enable_labels",			propMgr->getStelPropertyValue("LandscapeMgr.labelsDisplayed").toBool());
-	conf->setValue("landscape/flag_minimal_brightness",              propMgr->getStelPropertyValue("LandscapeMgr.flagLandscapeUseMinimalBrightness").toBool());
+	conf->setValue("landscape/flag_minimal_brightness",		propMgr->getStelPropertyValue("LandscapeMgr.flagLandscapeUseMinimalBrightness").toBool());
 	conf->setValue("landscape/flag_landscape_sets_minimal_brightness", propMgr->getStelPropertyValue("LandscapeMgr.flagLandscapeSetsMinimalBrightness").toBool());
-	conf->setValue("landscape/minimal_brightness",                      propMgr->getStelPropertyValue("LandscapeMgr.defaultMinimalBrightness").toFloat());
+	conf->setValue("landscape/minimal_brightness",			propMgr->getStelPropertyValue("LandscapeMgr.defaultMinimalBrightness").toFloat());
 	conf->setValue("stars/init_bortle_scale",					propMgr->getStelPropertyValue("StelSkyDrawer.bortleScaleIndex").toInt());
-	conf->setValue("landscape/atmospheric_extinction_coefficient",     propMgr->getStelPropertyValue("StelSkyDrawer.extinctionCoefficient").toFloat());
+	conf->setValue("landscape/atmospheric_extinction_coefficient",	propMgr->getStelPropertyValue("StelSkyDrawer.extinctionCoefficient").toFloat());
 	conf->setValue("landscape/pressure_mbar",				propMgr->getStelPropertyValue("StelSkyDrawer.atmospherePressure").toFloat());
 	conf->setValue("landscape/temperature_C",				propMgr->getStelPropertyValue("StelSkyDrawer.atmosphereTemperature").toFloat());
 
@@ -868,26 +874,29 @@ void ConfigurationDialog::saveAllSettings()
 	}
 
 	// toolbar auto-hide status
-	StelApp& app = StelApp::getInstance();
-	conf->setValue("gui/auto_hide_horizontal_toolbar",			gui->getAutoHideHorizontalButtonBar());
-	conf->setValue("gui/auto_hide_vertical_toolbar",			gui->getAutoHideVerticalButtonBar());
-	conf->setValue("gui/flag_show_nebulae_background_button",	gui->getFlagShowNebulaBackgroundButton());
-	conf->setValue("gui/flag_show_dss_button",				gui->getFlagShowDSSButton());
-	conf->setValue("gui/flag_show_hips_button",				gui->getFlagShowHiPSButton());
-	conf->setValue("gui/flag_show_bookmarks_button",			gui->getFlagShowBookmarksButton());
-	conf->setValue("gui/flag_show_icrs_grid_button",			gui->getFlagShowICRSGridButton());
-	conf->setValue("gui/flag_show_galactic_grid_button",		gui->getFlagShowGalacticGridButton());
-	conf->setValue("gui/flag_show_ecliptic_grid_button",		gui->getFlagShowEclipticGridButton());
-	conf->setValue("gui/flag_show_boundaries_button",			gui->getFlagShowConstellationBoundariesButton());
-	conf->setValue("gui/flag_show_asterism_lines_button",		gui->getFlagShowAsterismLinesButton());
-	conf->setValue("gui/flag_show_asterism_labels_button",		gui->getFlagShowAsterismLabelsButton());
-	conf->setValue("gui/flag_show_decimal_degrees",			app.getFlagShowDecimalDegrees());
-	conf->setValue("gui/flag_use_azimuth_from_south",			app.getFlagSouthAzimuthUsage());
-	conf->setValue("gui/flag_use_formatting_output",			app.getFlagUseFormattingOutput());
-	conf->setValue("gui/flag_use_ccs_designations",			app.getFlagUseCCSDesignation());
-	conf->setValue("gui/flag_time_jd",						gui->getButtonBar()->getFlagTimeJd());
-	conf->setValue("gui/flag_show_buttons_background",		StelMainView::getInstance().getFlagUseButtonsBackground());
-	conf->setValue("gui/flag_indication_mount_mode",			mvmgr->getFlagIndicationMountMode());
+	conf->setValue("gui/auto_hide_horizontal_toolbar",		propMgr->getStelPropertyValue("StelGui.autoHideHorizontalButtonBar").toBool());
+	conf->setValue("gui/auto_hide_vertical_toolbar",		propMgr->getStelPropertyValue("StelGui.autoHideVerticalButtonBar").toBool());
+	conf->setValue("gui/flag_show_quit_button",			propMgr->getStelPropertyValue("StelGui.flagShowQuitButton").toBool());
+	conf->setValue("gui/flag_show_nebulae_background_button",	propMgr->getStelPropertyValue("StelGui.flagShowNebulaBackgroundButton").toBool());
+	conf->setValue("gui/flag_show_dss_button",			propMgr->getStelPropertyValue("StelGui.flagShowDSSButton").toBool());
+	conf->setValue("gui/flag_show_hips_button",			propMgr->getStelPropertyValue("StelGui.flagShowHiPSButton").toBool());
+	conf->setValue("gui/flag_show_goto_selected_button",	propMgr->getStelPropertyValue("StelGui.flagShowGotoSelectedObjectButton").toBool());
+	conf->setValue("gui/flag_show_nightmode_button",		propMgr->getStelPropertyValue("StelGui.flagShowNightmodeButton").toBool());
+	conf->setValue("gui/flag_show_fullscreen_button",		propMgr->getStelPropertyValue("StelGui.flagShowFullscreenButton").toBool());
+	conf->setValue("gui/flag_show_bookmarks_button",		propMgr->getStelPropertyValue("StelGui.flagShowBookmarksButton").toBool());
+	conf->setValue("gui/flag_show_icrs_grid_button",		propMgr->getStelPropertyValue("StelGui.flagShowICRSGridButton").toBool());
+	conf->setValue("gui/flag_show_galactic_grid_button",	propMgr->getStelPropertyValue("StelGui.flagShowGalacticGridButton").toBool());
+	conf->setValue("gui/flag_show_ecliptic_grid_button",	propMgr->getStelPropertyValue("StelGui.flagShowEclipticGridButton").toBool());
+	conf->setValue("gui/flag_show_boundaries_button",		propMgr->getStelPropertyValue("StelGui.flagShowConstellationBoundariesButton").toBool());
+	conf->setValue("gui/flag_show_asterism_lines_button",	propMgr->getStelPropertyValue("StelGui.flagShowAsterismLinesButton").toBool());
+	conf->setValue("gui/flag_show_asterism_labels_button",	propMgr->getStelPropertyValue("StelGui.flagShowAsterismLabelsButton").toBool());
+	conf->setValue("gui/flag_show_decimal_degrees",		propMgr->getStelPropertyValue("StelApp.flagShowDecimalDegrees").toBool());
+	conf->setValue("gui/flag_use_azimuth_from_south",		propMgr->getStelPropertyValue("StelApp.flagUseAzimuthFromSouth").toBool());
+	conf->setValue("gui/flag_use_formatting_output",		propMgr->getStelPropertyValue("StelApp.flagUseFormattingOutput").toBool());
+	conf->setValue("gui/flag_use_ccs_designations",		propMgr->getStelPropertyValue("StelApp.flagUseCCSDesignation").toBool());
+	conf->setValue("gui/flag_time_jd",					gui->getButtonBar()->getFlagTimeJd());
+	conf->setValue("gui/flag_show_buttons_background",	propMgr->getStelPropertyValue("StelGui.flagUseButtonsBackground").toBool());
+	conf->setValue("gui/flag_indication_mount_mode",		mvmgr->getFlagIndicationMountMode());
 
 	// configuration dialog / navigation tab
 	conf->setValue("navigation/flag_enable_zoom_keys",		mvmgr->getFlagEnableZoomKeys());
@@ -907,8 +916,8 @@ void ConfigurationDialog::saveAllSettings()
 	conf->setValue("localization/date_display_format",		localeManager.getDateFormatStr());
 
 	// configuration dialog / tools tab
-	conf->setValue("gui/flag_show_flip_buttons",			gui->getFlagShowFlipButtons());
-	conf->setValue("video/viewport_effect",				app.getViewportEffect());
+	conf->setValue("gui/flag_show_flip_buttons",			propMgr->getStelPropertyValue("StelGui.flagShowFlipButtons").toBool());
+	conf->setValue("video/viewport_effect",				StelApp::getInstance().getViewportEffect());
 	conf->setValue("projection/viewport",				StelProjector::maskTypeToString(proj->getMaskType()));
 	conf->setValue("projection/viewport_center_offset_x",	core->getCurrentStelProjectorParams().viewportCenterOffset[0]);
 	conf->setValue("projection/viewport_center_offset_y",	core->getCurrentStelProjectorParams().viewportCenterOffset[1]);
@@ -916,8 +925,8 @@ void ConfigurationDialog::saveAllSettings()
 	conf->setValue("projection/flip_vert",				core->getCurrentStelProjectorParams().flipVert);
 	conf->setValue("viewing/flag_gravity_labels",			proj->getFlagGravityLabels());
 	conf->setValue("navigation/auto_zoom_out_resets_direction",	mvmgr->getFlagAutoZoomOutResetsDirection());
-	conf->setValue("gui/flag_mouse_cursor_timeout",		StelMainView::getInstance().getFlagCursorTimeout());
-	conf->setValue("gui/mouse_cursor_timeout",			StelMainView::getInstance().getCursorTimeout());
+	conf->setValue("gui/flag_mouse_cursor_timeout",		propMgr->getStelPropertyValue("MainView.flagCursorTimeout").toBool());
+	conf->setValue("gui/mouse_cursor_timeout",			propMgr->getStelPropertyValue("MainView.cursorTimeout").toFloat());
 
 	conf->setValue("main/screenshot_dir",				StelFileMgr::getScreenshotDir());
 	conf->setValue("main/invert_screenshots_colors",		propMgr->getStelPropertyValue("MainView.flagInvertScreenShotColors").toBool());
